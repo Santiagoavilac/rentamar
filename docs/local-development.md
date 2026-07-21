@@ -100,7 +100,10 @@ Tras cambiar el esquema, regenerar `src/lib/supabase/types.ts` (Supabase MCP
 `create_booking_with_hold.p_guest_phone` a `string | null` (el generador siempre
 emite `string`, pero el parámetro SQL acepta NULL).
 
-## Pendiente Fase 3
+## Panel administrativo
 
-Supabase CLI para stack local, migraciones vía CLI, edge functions locales,
-seed diferenciado por entorno, cron productivo para expiración.
+Fase 3 agrega `/admin`. Antes del primer login, crear el primer administrador
+con `npx tsx scripts/create-admin.mts`; el script requiere las mismas variables
+de Supabase de servidor y no debe ejecutarse con secretos pegados en la terminal
+compartida. Consultar `docs/admin.md` y `docs/operations.md` para roles y
+operación.

@@ -113,6 +113,16 @@ export async function updatePropertyAction(
     assertAdminAction(session.role, "property.manage");
     const input = parsePropertyForm(formData);
     const { before, after } = await properties.updateProperty(propertyId, input);
+    const previousPrice = (before as { base_price_minor?: number }).base_price_minor;
+    const nextPriceMinor = Math.round(Number(input.basePrice) * 100);
+    if (previousPrice !== nextPriceMinor) {
+      await rates.changeBasePrice(
+        propertyId,
+        input.basePrice,
+        "Actualización de propiedad",
+        session.userId,
+      );
+    }
     const ctx = await buildAuditContext(session);
     await writeAudit({
       ...ctx,
@@ -175,6 +185,43 @@ export async function addPropertyImageAction(
       entityType: "property",
       entityId: propertyId,
       after: { url: params.url, isCover: params.isCover },
+    });
+  } catch (error) {
+    return fail(error);
+  }
+  revalidatePath(`/admin/properties/${propertyId}`);
+  return OK;
+}
+
+export async function uploadPropertyImageAction(
+  propertyId: string,
+  _prev: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  try {
+    const session = await requireStaff();
+    await assertSameOrigin();
+    assertAdminAction(session.role, "property.manage");
+    const file = formData.get("image");
+    if (!(file instanceof File))
+      throw new AppError("VALIDATION_ERROR", "Seleccioná una imagen", 422);
+    const meta = imageMetaSchema.parse({
+      altText: str(formData.get("altText")),
+      isCover: bool(formData.get("isCover")),
+    });
+    const result = await properties.uploadPropertyImage({
+      propertyId,
+      file,
+      altText: meta.altText || null,
+      isCover: Boolean(meta.isCover),
+    });
+    const ctx = await buildAuditContext(session);
+    await writeAudit({
+      ...ctx,
+      action: "property.image.upload",
+      entityType: "property",
+      entityId: propertyId,
+      after: { imageId: result.id, isCover: Boolean(meta.isCover) },
     });
   } catch (error) {
     return fail(error);
@@ -436,8 +483,10 @@ export async function bookingAction(
     const src = eventSource(session.role);
 
     let result: { ok: boolean; status: string; refundRequired?: boolean };
-    if (op === "cancel") result = await bookings.cancelBooking(bookingId, reason, session.userId, src);
-    else if (op === "expire") result = await bookings.expireBooking(bookingId, reason, session.userId, src);
+    if (op === "cancel")
+      result = await bookings.cancelBooking(bookingId, reason, session.userId, src);
+    else if (op === "expire")
+      result = await bookings.expireBooking(bookingId, reason, session.userId, src);
     else if (op === "manual_review")
       result = await bookings.markManualReview(bookingId, reason, session.userId, src);
     else result = await bookings.confirmManual(bookingId, reason, session.userId, src);

@@ -1,0 +1,114 @@
+import Link from "next/link";
+import {
+  getProperty,
+  getPropertyImages,
+  getPropertyAmenities,
+  listAmenities,
+} from "@/lib/admin/properties";
+import { listRates, listPriceHistory } from "@/lib/admin/rates";
+import {
+  createRateAction,
+  updatePropertyAction,
+  uploadPropertyImageAction,
+} from "@/lib/admin/actions";
+import { AdminPageHeader, KeyValue, Money, Panel, StatusBadge } from "@/components/admin/ui";
+import { ImageUploadForm, PropertyForm, RateForm } from "@/components/admin/forms";
+
+export default async function PropertyDetailPage({
+  params,
+}: {
+  params: Promise<{ propertyId: string }>;
+}) {
+  const { propertyId } = await params;
+  const [property, images, amenityIds, amenities, rates, history] = await Promise.all([
+    getProperty(propertyId),
+    getPropertyImages(propertyId),
+    getPropertyAmenities(propertyId),
+    listAmenities(),
+    listRates(propertyId),
+    listPriceHistory(propertyId),
+  ]);
+  const action = updatePropertyAction.bind(null, propertyId);
+  const uploadAction = uploadPropertyImageAction.bind(null, propertyId);
+  const rateAction = createRateAction.bind(null, propertyId);
+  return (
+    <>
+      <AdminPageHeader
+        title={property.name}
+        description={`/${property.slug}`}
+        action={
+          <Link href="/admin/properties" className="text-sm font-semibold text-cyan-700">
+            Volver al catálogo
+          </Link>
+        }
+      />
+      <div className="grid gap-5 xl:grid-cols-[1.4fr_.6fr]">
+        <Panel>
+          <h2 className="mb-4 font-bold">Datos de la propiedad</h2>
+          <PropertyForm action={action} values={property} />
+        </Panel>
+        <div className="grid gap-5">
+          <Panel>
+            <h2 className="mb-3 font-bold">Estado actual</h2>
+            <dl className="grid grid-cols-2 gap-4">
+              <KeyValue label="Estado">
+                <StatusBadge value={property.status} />
+              </KeyValue>
+              <KeyValue label="Precio">
+                <Money amount={property.base_price_minor} currency={property.currency} />
+              </KeyValue>
+              <KeyValue label="Imágenes">{images.length}</KeyValue>
+              <KeyValue label="Amenities">
+                {amenityIds.length} de {amenities.length}
+              </KeyValue>
+            </dl>
+          </Panel>
+          <Panel>
+            <h2 className="mb-3 font-bold">Imágenes</h2>
+            <ImageUploadForm action={uploadAction} />
+            {images.length ? (
+              <ul className="mt-4 grid gap-2 text-sm">
+                {images.map((image) => (
+                  <li key={image.id}>
+                    {image.is_cover ? "Portada · " : ""}
+                    {image.alt_text || "Sin texto alternativo"}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </Panel>
+          <Panel>
+            <h2 className="mb-3 font-bold">Nueva tarifa estacional</h2>
+            <RateForm action={rateAction} />
+            <h3 className="mt-5 font-bold">Tarifas activas</h3>
+            {rates.length ? (
+              <ul className="mt-3 grid gap-2 text-sm">
+                {rates.map((r) => (
+                  <li key={r.id}>
+                    {r.start_date} a {r.end_date} · <Money amount={r.nightly_price_minor} />
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-2 text-sm text-slate-600">Sin tarifas estacionales.</p>
+            )}
+          </Panel>
+          <Panel>
+            <h2 className="font-bold">Cambios de precio</h2>
+            {history.length ? (
+              <ul className="mt-3 grid gap-2 text-sm">
+                {history.slice(0, 5).map((h) => (
+                  <li key={h.id}>
+                    {h.change_type} · {new Date(h.created_at).toLocaleDateString("es-BO")}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-2 text-sm text-slate-600">Sin historial todavía.</p>
+            )}
+          </Panel>
+        </div>
+      </div>
+    </>
+  );
+}

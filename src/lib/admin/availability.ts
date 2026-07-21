@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { AppError, mapPostgresError } from "@/lib/errors";
 import type { AvailabilityBlockInput } from "@/lib/validation";
+import type { Database } from "@/lib/supabase/types";
 
 // Un daterange de Postgres llega serializado como texto "[2026-01-01,2026-01-05)".
 export function parseDateRange(range: string): { from: string; to: string } | null {
@@ -15,14 +16,14 @@ export type CalendarBlock = {
   id: string;
   from: string;
   to: string;
-  type: string;
+  type: Database["public"]["Enums"]["availability_block_type"];
   reason: string | null;
 };
 
 export type CalendarBooking = {
   from: string;
   to: string;
-  status: string;
+  status: "active" | "converted" | "released" | "expired";
 };
 
 export async function listActiveBlocks(propertyId: string): Promise<CalendarBlock[]> {
@@ -34,13 +35,11 @@ export async function listActiveBlocks(propertyId: string): Promise<CalendarBloc
     .eq("status", "active")
     .order("created_at", { ascending: false });
   if (error) throw new AppError("INTERNAL_ERROR", "Error interno", 500);
-  return (data ?? [])
-    .map((b) => {
-      const range = parseDateRange(String(b.stay_range));
-      if (!range) return null;
-      return { id: b.id, from: range.from, to: range.to, type: b.type, reason: b.reason };
-    })
-    .filter((b): b is CalendarBlock => b !== null);
+  return (data ?? []).flatMap<CalendarBlock>((b) => {
+    const range = parseDateRange(String(b.stay_range));
+    if (!range) return [];
+    return [{ id: b.id, from: range.from, to: range.to, type: b.type, reason: b.reason }];
+  });
 }
 
 // Holds que ocupan fechas (reservas vigentes o confirmadas), para pintar el calendario.
@@ -55,12 +54,11 @@ export async function listOccupiedRanges(propertyId: string): Promise<CalendarBo
   const now = Date.now();
   return (data ?? [])
     .filter((h) => h.status === "converted" || new Date(h.expires_at).getTime() > now)
-    .map((h) => {
+    .flatMap<CalendarBooking>((h) => {
       const range = parseDateRange(String(h.stay_range));
-      if (!range) return null;
-      return { from: range.from, to: range.to, status: h.status };
-    })
-    .filter((b): b is CalendarBooking => b !== null);
+      if (!range) return [];
+      return [{ from: range.from, to: range.to, status: h.status }];
+    });
 }
 
 export async function createBlock(input: AvailabilityBlockInput, actorId: string) {

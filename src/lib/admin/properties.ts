@@ -152,9 +152,13 @@ export async function updateProperty(
     .maybeSingle();
   if (!before) throw new NotFoundError("Propiedad no encontrada");
 
+  // El precio base se cambia exclusivamente vía change_property_base_price para
+  // preservar price_change_history. Esta actualización cubre los demás campos.
+  const { base_price_minor, ...row } = toRow(input);
+  void base_price_minor;
   const { data: after, error } = await supabase
     .from("properties")
-    .update(toRow(input))
+    .update(row)
     .eq("id", id)
     .select(PROPERTY_COLUMNS)
     .single();
@@ -200,12 +204,48 @@ export async function addPropertyImage(params: {
   return { id: data.id };
 }
 
+// La subida siempre ocurre del lado del servidor con service role. No se confía en
+// el nombre ni en la extensión entregados por el navegador.
+export async function uploadPropertyImage(params: {
+  propertyId: string;
+  file: File;
+  altText: string | null;
+  isCover: boolean;
+}) {
+  const allowed: Record<string, string> = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+  };
+  const extension = allowed[params.file.type];
+  if (!extension || params.file.size <= 0 || params.file.size > 8 * 1024 * 1024) {
+    throw new AppError(
+      "VALIDATION_ERROR",
+      "La imagen debe ser JPG, PNG o WebP y pesar hasta 8 MB",
+      422,
+    );
+  }
+  const supabase = createAdminClient();
+  const path = `${params.propertyId}/${crypto.randomUUID()}.${extension}`;
+  const { error: uploadError } = await supabase.storage
+    .from("property-images")
+    .upload(path, params.file, {
+      contentType: params.file.type,
+      upsert: false,
+    });
+  if (uploadError) throw new AppError("INTERNAL_ERROR", "No se pudo subir la imagen", 500);
+  const { data: publicUrl } = supabase.storage.from("property-images").getPublicUrl(path);
+  try {
+    return await addPropertyImage({ ...params, url: publicUrl.publicUrl });
+  } catch (error) {
+    await supabase.storage.from("property-images").remove([path]);
+    throw error;
+  }
+}
+
 export async function setCoverImage(propertyId: string, imageId: string) {
   const supabase = createAdminClient();
-  await supabase
-    .from("property_images")
-    .update({ is_cover: false })
-    .eq("property_id", propertyId);
+  await supabase.from("property_images").update({ is_cover: false }).eq("property_id", propertyId);
   const { error } = await supabase
     .from("property_images")
     .update({ is_cover: true })
