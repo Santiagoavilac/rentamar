@@ -1,0 +1,13 @@
+/node_modules
+/.next
+/out
+/build
+*.tsbuildinfo
+.playwright-cli
+public/media/output/playwright
+.DS_Store
+*.pem
+.env*
+!.env.example
+next-env.d.ts
+.vercel
