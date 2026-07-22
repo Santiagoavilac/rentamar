@@ -7,6 +7,7 @@ const navigation = [
   ["/admin/properties", "Propiedades"],
   ["/admin/calendar", "Calendario"],
   ["/admin/pricing", "Tarifas"],
+  ["/admin/mapa", "Mapa"],
   ["/admin/bookings", "Reservas"],
   ["/admin/payments", "Pagos"],
   ["/admin/audit", "Auditoría"],

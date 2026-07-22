@@ -3,8 +3,10 @@ import { redirect } from "next/navigation";
 import { createClient } from "./supabase/server";
 import { ForbiddenError } from "./errors";
 import type { Database } from "./supabase/types";
+import { canPerformAdminAction, assertAdminAction, type StaffRole } from "./permissions";
 
-export type StaffRole = "admin" | "operator";
+export type { StaffRole, AdminAction } from "./permissions";
+export { canPerformAdminAction, assertAdminAction };
 export type UserRole = Database["public"]["Enums"]["user_role"];
 
 export type StaffSession = {
@@ -13,46 +15,6 @@ export type StaffSession = {
   fullName: string | null;
   email: string | null;
 };
-
-// Acciones del panel. Única fuente de verdad de permisos: la UI oculta botones por
-// conveniencia, pero TODA mutación revalida el permiso en el servidor con
-// assertAdminAction. Nunca se dispersan comparaciones `role === "admin"` por la app.
-export type AdminAction =
-  | "property.manage"
-  | "rate.manage"
-  | "availability.manage"
-  | "booking.review"
-  | "booking.cancel"
-  | "booking.manual_review"
-  | "booking.confirm_manual"
-  | "payment.review"
-  | "payment.manual_review"
-  | "audit.read"
-  | "user.manage"
-  | "role.change";
-
-// Acciones reservadas a admin. El operator puede hacer todo lo demás.
-const ADMIN_ONLY: ReadonlySet<AdminAction> = new Set<AdminAction>([
-  "booking.confirm_manual",
-  "audit.read",
-  "user.manage",
-  "role.change",
-]);
-
-// Matriz de permisos central. Devuelve true si el rol puede ejecutar la acción.
-export function canPerformAdminAction(role: StaffRole, action: AdminAction): boolean {
-  if (role === "admin") return true;
-  if (role === "operator") return !ADMIN_ONLY.has(action);
-  return false;
-}
-
-// Lanza ForbiddenError (403) si el rol no puede ejecutar la acción. Se llama en
-// cada server action ANTES de invocar la RPC service-role.
-export function assertAdminAction(role: StaffRole, action: AdminAction): void {
-  if (!canPerformAdminAction(role, action)) {
-    throw new ForbiddenError();
-  }
-}
 
 // Lee la sesión actual y verifica que el perfil sea staff (admin/operator).
 // Devuelve null si no hay sesión o si el usuario no es staff (p. ej. un guest).

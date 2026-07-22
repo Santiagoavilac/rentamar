@@ -1,4 +1,3 @@
-// Generado con Supabase MCP (generate_typescript_types). Regenerar tras cambios de esquema.
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
@@ -361,6 +360,132 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      map_items: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          description: string | null;
+          icon_key: string;
+          id: string;
+          is_visible: boolean;
+          linked_property_id: string | null;
+          map_id: string;
+          metadata: Json;
+          name: string;
+          normalized_height: number;
+          normalized_width: number;
+          normalized_x: number;
+          normalized_y: number;
+          rotation: number;
+          status: Database["public"]["Enums"]["map_item_status"];
+          type: Database["public"]["Enums"]["map_item_type"];
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          description?: string | null;
+          icon_key: string;
+          id?: string;
+          is_visible?: boolean;
+          linked_property_id?: string | null;
+          map_id: string;
+          metadata?: Json;
+          name: string;
+          normalized_height?: number;
+          normalized_width?: number;
+          normalized_x: number;
+          normalized_y: number;
+          rotation?: number;
+          status?: Database["public"]["Enums"]["map_item_status"];
+          type: Database["public"]["Enums"]["map_item_type"];
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string | null;
+          description?: string | null;
+          icon_key?: string;
+          id?: string;
+          is_visible?: boolean;
+          linked_property_id?: string | null;
+          map_id?: string;
+          metadata?: Json;
+          name?: string;
+          normalized_height?: number;
+          normalized_width?: number;
+          normalized_x?: number;
+          normalized_y?: number;
+          rotation?: number;
+          status?: Database["public"]["Enums"]["map_item_status"];
+          type?: Database["public"]["Enums"]["map_item_type"];
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "map_items_linked_property_id_fkey";
+            columns: ["linked_property_id"];
+            isOneToOne: false;
+            referencedRelation: "properties";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "map_items_map_id_fkey";
+            columns: ["map_id"];
+            isOneToOne: false;
+            referencedRelation: "maps";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      maps: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          image_height: number | null;
+          image_url: string | null;
+          image_width: number | null;
+          name: string;
+          published_at: string | null;
+          published_data: Json | null;
+          slug: string;
+          status: Database["public"]["Enums"]["map_status"];
+          updated_at: string;
+          version: number;
+        };
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          image_height?: number | null;
+          image_url?: string | null;
+          image_width?: number | null;
+          name: string;
+          published_at?: string | null;
+          published_data?: Json | null;
+          slug: string;
+          status?: Database["public"]["Enums"]["map_status"];
+          updated_at?: string;
+          version?: number;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          image_height?: number | null;
+          image_url?: string | null;
+          image_width?: number | null;
+          name?: string;
+          published_at?: string | null;
+          published_data?: Json | null;
+          slug?: string;
+          status?: Database["public"]["Enums"]["map_status"];
+          updated_at?: string;
+          version?: number;
+        };
+        Relationships: [];
       };
       mock_payment_state: {
         Row: {
@@ -965,12 +1090,7 @@ export type Database = {
     Enums: {
       availability_block_status: "active" | "released" | "expired";
       availability_block_type:
-        | "maintenance"
-        | "internal_use"
-        | "owner_use"
-        | "operational"
-        | "manual"
-        | "other";
+        "maintenance" | "internal_use" | "owner_use" | "operational" | "manual" | "other";
       booking_event_source: "system" | "guest" | "admin" | "operator" | "payment" | "expiration";
       booking_event_type:
         | "created"
@@ -983,13 +1103,7 @@ export type Database = {
         | "refund_required"
         | "note";
       booking_payment_status:
-        | "unpaid"
-        | "pending"
-        | "paid"
-        | "expired"
-        | "failed"
-        | "refunded"
-        | "refund_required";
+        "unpaid" | "pending" | "paid" | "expired" | "failed" | "refunded" | "refund_required";
       booking_status:
         | "draft"
         | "pending_payment"
@@ -999,6 +1113,20 @@ export type Database = {
         | "completed"
         | "manual_review";
       hold_status: "active" | "converted" | "expired" | "released";
+      map_item_status: "draft" | "published" | "archived";
+      map_item_type:
+        | "house"
+        | "tower"
+        | "restaurant"
+        | "clubhouse"
+        | "entrance"
+        | "pool"
+        | "sports"
+        | "parking"
+        | "office"
+        | "social_area"
+        | "poi";
+      map_status: "draft" | "published" | "archived";
       payment_event_source:
         "create" | "browser_poll" | "manual_verify" | "cron" | "admin" | "reconciliation";
       payment_method: "qr";
@@ -1177,6 +1305,21 @@ export const Constants = {
         "manual_review",
       ],
       hold_status: ["active", "converted", "expired", "released"],
+      map_item_status: ["draft", "published", "archived"],
+      map_item_type: [
+        "house",
+        "tower",
+        "restaurant",
+        "clubhouse",
+        "entrance",
+        "pool",
+        "sports",
+        "parking",
+        "office",
+        "social_area",
+        "poi",
+      ],
+      map_status: ["draft", "published", "archived"],
       payment_event_source: [
         "create",
         "browser_poll",

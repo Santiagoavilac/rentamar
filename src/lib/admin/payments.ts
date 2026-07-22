@@ -18,11 +18,7 @@ export type PaymentListRow = {
   created_at: string;
 };
 
-export async function listPayments(params: {
-  page: number;
-  pageSize: number;
-  status?: string;
-}) {
+export async function listPayments(params: { page: number; pageSize: number; status?: string }) {
   const supabase = await createClient();
   const from = (params.page - 1) * params.pageSize;
   const to = from + params.pageSize - 1;
@@ -71,7 +67,9 @@ export async function listPaymentEvents(paymentId: string) {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("payment_events")
-    .select("id, source, event_type, old_status, new_status, provider_status_code, error_code, created_at")
+    .select(
+      "id, source, event_type, old_status, new_status, provider_status_code, error_code, created_at",
+    )
     .eq("payment_id", paymentId)
     .order("created_at", { ascending: false });
   if (error) throw new AppError("INTERNAL_ERROR", "Error interno", 500);

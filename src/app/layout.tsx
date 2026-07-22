@@ -18,6 +18,7 @@ export const metadata: Metadata = {
   applicationName: "RentaMar",
   icons: {
     icon: "/favicon.svg",
+    apple: "/apple-touch-icon.png",
   },
   openGraph: {
     type: "website",

@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { Menu, X } from "lucide-react";
-import Wordmark from "./Wordmark";
 import { navLinks } from "@/lib/nav";
 
 export default function Navbar() {
@@ -35,8 +35,20 @@ export default function Navbar() {
         aria-label="Principal"
         className="mx-auto flex max-w-[1400px] items-center justify-between gap-4 px-5 py-4 sm:px-8"
       >
-        <a href="#inicio" className="rounded-md" aria-label="RentaMar, ir al inicio">
-          <Wordmark />
+        <a
+          href="#inicio"
+          className="inline-flex items-center gap-2 rounded-full"
+          aria-label="RentaMar, ir al inicio"
+        >
+          <Image
+            src="/rentamar-logo.jpg"
+            alt="RentaMar"
+            width={44}
+            height={44}
+            priority
+            className="h-11 w-11 rounded-full object-cover ring-1 ring-white/20"
+          />
+          <span className="sr-only">RentaMar</span>
         </a>
 
         <ul className="hidden items-center gap-8 lg:flex">

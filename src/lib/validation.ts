@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { MAP_ITEM_TYPES } from "./maps/icons";
 
 const isoDate = z
   .string()
@@ -167,6 +168,46 @@ export const listQuerySchema = z.object({
   page: z.coerce.number().int().min(1).max(10000).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
 });
+
+// ---------- Mapa interactivo ----------
+// Coordenadas normalizadas: valor unitario en [0,1]. Se validan antes de guardar,
+// además de las CHECK constraints de la DB (defensa en profundidad).
+export const normalizedUnit = z.number().min(0).max(1);
+
+export const mapItemTypeSchema = z.enum(MAP_ITEM_TYPES);
+
+export const mapItemStatusSchema = z.enum(["draft", "published", "archived"]);
+
+// Alta/edición de un marcador. El icon_key NO se acepta del cliente: se deriva del
+// tipo en el servidor (ICON_KEY_BY_TYPE). linkedPropertyId es opcional (vínculo a un
+// inmueble existente) y se valida como uuid o null.
+export const mapItemInputSchema = z.object({
+  type: mapItemTypeSchema,
+  name: z.string().trim().min(1).max(160),
+  description: z.string().trim().max(2000).optional().or(z.literal("")),
+  normalizedX: normalizedUnit,
+  normalizedY: normalizedUnit,
+  normalizedWidth: normalizedUnit.gt(0),
+  normalizedHeight: normalizedUnit.gt(0),
+  rotation: z.number().min(-360).max(360),
+  isVisible: z.boolean(),
+  linkedPropertyId: z.uuid().nullable(),
+});
+
+// Movimiento (drag): solo posición, para no reescribir el resto del marcador.
+export const mapItemMoveSchema = z.object({
+  normalizedX: normalizedUnit,
+  normalizedY: normalizedUnit,
+});
+
+export const mapCreateSchema = z.object({
+  slug: slugSchema,
+  name: z.string().trim().min(2).max(160),
+});
+
+export type MapItemInput = z.infer<typeof mapItemInputSchema>;
+export type MapItemMoveInput = z.infer<typeof mapItemMoveSchema>;
+export type MapCreateInput = z.infer<typeof mapCreateSchema>;
 
 export type PropertyInput = z.infer<typeof propertyInputSchema>;
 export type RateInput = z.infer<typeof rateInputSchema>;

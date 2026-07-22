@@ -113,15 +113,35 @@ async function callBookingRpc(
   return data as unknown as BookingActionResult;
 }
 
-export function cancelBooking(id: string, reason: string, actorId: string, source: "admin" | "operator") {
+export function cancelBooking(
+  id: string,
+  reason: string,
+  actorId: string,
+  source: "admin" | "operator",
+) {
   return callBookingRpc("cancel_booking", id, reason, actorId, source);
 }
-export function expireBooking(id: string, reason: string, actorId: string, source: "admin" | "operator") {
+export function expireBooking(
+  id: string,
+  reason: string,
+  actorId: string,
+  source: "admin" | "operator",
+) {
   return callBookingRpc("expire_booking_admin", id, reason, actorId, source);
 }
-export function markManualReview(id: string, reason: string, actorId: string, source: "admin" | "operator") {
+export function markManualReview(
+  id: string,
+  reason: string,
+  actorId: string,
+  source: "admin" | "operator",
+) {
   return callBookingRpc("mark_booking_manual_review", id, reason, actorId, source);
 }
-export function confirmManual(id: string, reason: string, actorId: string, source: "admin" | "operator") {
+export function confirmManual(
+  id: string,
+  reason: string,
+  actorId: string,
+  source: "admin" | "operator",
+) {
   return callBookingRpc("confirm_booking_manual", id, reason, actorId, source);
 }

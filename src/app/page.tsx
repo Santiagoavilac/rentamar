@@ -1,6 +1,7 @@
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import FeaturedProperties from "@/components/FeaturedProperties";
+import MapSection from "@/components/map/MapSection";
 import ExperienceSection from "@/components/ExperienceSection";
 import HowItWorks from "@/components/HowItWorks";
 import OwnerSection from "@/components/OwnerSection";
@@ -20,6 +21,7 @@ export default function Home() {
         <Hero />
         <div className="bg-cream text-night">
           <FeaturedProperties />
+          <MapSection />
           <ExperienceSection />
           <HowItWorks />
           <OwnerSection />
