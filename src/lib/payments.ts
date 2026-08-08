@@ -154,13 +154,16 @@ export async function createPaymentForBooking(params: {
     Boolean(params.token) && tokenMatches(params.token as string, booking.access_token_hash);
   if (!isOwner && !hasToken) throw new UnauthorizedBookingAccessError();
 
-  const provider = getPaymentProvider();
+  // El canal 'transfer' no usa proveedor externo: el cliente transfiere por fuera y
+  // sube el comprobante. No se llama a getPaymentProvider ni se adjunta QR.
+  const isTransfer = params.input.provider === "transfer";
+  const providerMode = isTransfer ? "manual" : getPaymentProvider().mode;
   const expiresAt = new Date(Date.now() + PAYMENT_TTL_MINUTES * 60_000).toISOString();
 
   const { data: intent, error: intentErr } = await supabase.rpc("create_payment_intent", {
     p_booking_id: params.bookingId,
     p_provider: params.input.provider,
-    p_provider_mode: provider.mode,
+    p_provider_mode: providerMode,
     p_method: params.input.method,
     p_idempotency_key: randomBytes(24).toString("base64url"),
     p_expires_at: expiresAt,
@@ -169,9 +172,10 @@ export async function createPaymentForBooking(params: {
 
   const { isNew, paymentId } = intent as unknown as { isNew: boolean; paymentId: string };
 
-  // Solo si el intento es nuevo llamamos al proveedor y adjuntamos su QR. Ante
-  // reutilización (doble clic / segunda pestaña) no se genera un segundo QR.
-  if (isNew) {
+  // Solo si el intento es nuevo y hay proveedor externo llamamos y adjuntamos su QR.
+  // Ante reutilización (doble clic / segunda pestaña) no se genera un segundo QR.
+  if (isNew && !isTransfer) {
+    const provider = getPaymentProvider();
     let created;
     try {
       created = await provider.createPayment({

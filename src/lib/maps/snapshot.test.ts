@@ -14,6 +14,7 @@ function item(overrides: Partial<SnapshotSourceItem>): SnapshotSourceItem {
     normalized_height: 0.04,
     rotation: 0,
     linked_property_id: null,
+    linked_tower_id: null,
     metadata: {},
     status: "draft",
     is_visible: true,
@@ -36,6 +37,12 @@ describe("buildPublishedData", () => {
     const [entry] = buildPublishedData([item({ id: "x" })]);
     expect(entry).not.toHaveProperty("status");
     expect(entry).not.toHaveProperty("is_visible");
+  });
+
+  it("conserva la relación de una torre en el snapshot", () => {
+    const towerId = "11111111-1111-4111-8111-111111111111";
+    const [entry] = buildPublishedData([item({ type: "tower", linked_tower_id: towerId })]);
+    expect(entry.linked_tower_id).toBe(towerId);
   });
 
   it("devuelve arreglo vacío si no hay marcadores publicables", () => {

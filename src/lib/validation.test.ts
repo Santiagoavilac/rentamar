@@ -36,7 +36,14 @@ describe("createBookingSchema", () => {
     checkIn: "2026-08-10",
     checkOut: "2026-08-13",
     guestCount: 2,
-    guest: { name: "Ana", email: "ana@example.com", phone: "70000000" },
+    guest: {
+      name: "Ana",
+      email: "ana@example.com",
+      phone: "70000000",
+      documentId: "8452317",
+      nationality: "Boliviana",
+      city: "Santa Cruz",
+    },
   };
 
   it("acepta reserva válida", () => {

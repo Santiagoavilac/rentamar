@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import type { PublishedMap } from "@/lib/maps/public";
 import type { PublishedMapItem } from "@/lib/maps/snapshot";
 import { iconSrc, LABEL_BY_TYPE, type MapItemType } from "@/lib/maps/icons";
@@ -27,6 +28,9 @@ export function MapViewer({ map }: { map: PublishedMap }) {
   const [ty, setTy] = useState(0);
   const [selected, setSelected] = useState<PublishedMapItem | null>(null);
   const [dragging, setDragging] = useState(false);
+  const selectedTower = selected?.linked_tower_id
+    ? (map.towers.find((tower) => tower.id === selected.linked_tower_id) ?? null)
+    : null;
 
   // Punteros activos (para distinguir 1 = pan de 2 = pinch) y estado del pinch.
   const pointers = useRef<Map<number, Pointer>>(new Map());
@@ -237,6 +241,7 @@ export function MapViewer({ map }: { map: PublishedMap }) {
             <button
               key={item.id}
               type="button"
+              onPointerDown={(event) => event.stopPropagation()}
               onClick={(e) => {
                 e.stopPropagation();
                 if (panStart.current?.moved) return;
@@ -244,8 +249,18 @@ export function MapViewer({ map }: { map: PublishedMap }) {
               }}
               className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full bg-deep p-1.5 text-cream shadow-md ring-2 ring-white transition hover:scale-110"
               style={{ left: `${item.normalized_x * 100}%`, top: `${item.normalized_y * 100}%` }}
-              title={item.name}
-              aria-label={item.name}
+              title={
+                item.linked_tower_id
+                  ? (map.towers.find((tower) => tower.id === item.linked_tower_id)?.name ??
+                    item.name)
+                  : item.name
+              }
+              aria-label={
+                item.linked_tower_id
+                  ? (map.towers.find((tower) => tower.id === item.linked_tower_id)?.name ??
+                    item.name)
+                  : item.name
+              }
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -261,13 +276,13 @@ export function MapViewer({ map }: { map: PublishedMap }) {
       </div>
 
       {selected ? (
-        <div className="absolute bottom-3 left-3 right-3 z-10 mx-auto max-w-sm rounded-xl bg-white p-4 shadow-lg">
+        <div className="absolute bottom-3 left-3 right-3 z-10 mx-auto max-h-[70%] max-w-lg overflow-y-auto rounded-xl bg-white p-4 shadow-lg">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-turquoise">
                 {LABEL_BY_TYPE[selected.type as MapItemType] ?? selected.type}
               </p>
-              <h3 className="mt-1 font-bold text-night">{selected.name}</h3>
+              <h3 className="mt-1 font-bold text-night">{selectedTower?.name ?? selected.name}</h3>
             </div>
             <button
               type="button"
@@ -278,10 +293,34 @@ export function MapViewer({ map }: { map: PublishedMap }) {
               ✕
             </button>
           </div>
-          {selected.description ? (
-            <p className="mt-2 text-sm text-slate-600">{selected.description}</p>
+          {(selectedTower?.description ?? selected.description) ? (
+            <p className="mt-2 text-sm text-slate-600">
+              {selectedTower?.description ?? selected.description}
+            </p>
           ) : null}
-          {selected.linked_property_id ? (
+          {selectedTower ? (
+            <div className="mt-4 border-t border-slate-200 pt-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Departamentos
+              </p>
+              {selectedTower.departments.length ? (
+                <ul className="mt-2 grid gap-2">
+                  {selectedTower.departments.map((department) => (
+                    <li key={department.id}>
+                      <Link
+                        href={`/propiedades/${department.slug}`}
+                        className="block rounded-lg bg-slate-50 px-3 py-2 text-sm font-semibold text-cyan-700 hover:bg-cyan-50 hover:underline"
+                      >
+                        {department.name}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-2 text-sm text-slate-600">Sin departamentos disponibles</p>
+              )}
+            </div>
+          ) : selected.linked_property_id ? (
             <a
               href="#propiedades"
               onClick={() => setSelected(null)}

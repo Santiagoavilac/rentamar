@@ -4,7 +4,6 @@ import FeaturedProperties from "@/components/FeaturedProperties";
 import MapSection from "@/components/map/MapSection";
 import ExperienceSection from "@/components/ExperienceSection";
 import HowItWorks from "@/components/HowItWorks";
-import OwnerSection from "@/components/OwnerSection";
 import Footer from "@/components/Footer";
 
 export default function Home() {
@@ -24,7 +23,6 @@ export default function Home() {
           <MapSection />
           <ExperienceSection />
           <HowItWorks />
-          <OwnerSection />
         </div>
       </main>
       <Footer />

@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { AppError, mapPostgresError } from "@/lib/errors";
 import { decimalStringToMinor } from "@/lib/money";
 import type { RateInput } from "@/lib/validation";
+import type { PropertyPricingInput } from "@/lib/validation";
 
 export async function listRates(propertyId: string) {
   const supabase = await createClient();
@@ -26,6 +27,65 @@ export async function listPriceHistory(propertyId: string, limit = 50) {
     .limit(limit);
   if (error) throw new AppError("INTERNAL_ERROR", "Error interno", 500);
   return data ?? [];
+}
+
+export async function listStayPrices(propertyId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("property_stay_prices")
+    .select("id, nights, total_price_minor")
+    .eq("property_id", propertyId)
+    .order("nights", { ascending: true });
+  if (error) throw new AppError("INTERNAL_ERROR", "Error interno", 500);
+  return data ?? [];
+}
+
+export async function savePropertyPricing(
+  propertyId: string,
+  input: PropertyPricingInput,
+  actorId: string,
+) {
+  const supabase = createAdminClient();
+  const prices = input.prices.map((price) => ({
+    nights: price.nights,
+    totalMinor: decimalStringToMinor(price.total),
+  }));
+  const { data, error } = await supabase.rpc("save_property_pricing", {
+    p_property_id: propertyId,
+    p_base_price_minor: decimalStringToMinor(input.basePrice),
+    p_duration_pricing_enabled: input.durationPricingEnabled,
+    p_prices: prices,
+    p_actor_id: actorId,
+    p_reason: input.reason,
+  });
+  if (error) throw mapPostgresError(error.message);
+  return data as unknown as {
+    propertyId: string;
+    basePriceMinor: number;
+    durationPricingEnabled: boolean;
+  };
+}
+
+// El precio de reserva para afiliados se carga junto con la propiedad, pero pasa
+// por esta RPC para quedar registrado en price_change_history.
+export async function saveAffiliatePricing(
+  propertyId: string,
+  nightlyMinor: number | null,
+  reason: string,
+  actorId: string,
+) {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase.rpc("set_property_affiliate_pricing", {
+    p_property_id: propertyId,
+    p_nightly_minor: nightlyMinor,
+    p_reason: reason,
+    p_actor_id: actorId,
+  });
+  if (error) throw mapPostgresError(error.message);
+  return data as unknown as {
+    propertyId: string;
+    affiliateNightlyPriceMinor: number | null;
+  };
 }
 
 export async function createRate(propertyId: string, input: RateInput, actorId: string) {

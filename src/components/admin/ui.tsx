@@ -38,6 +38,16 @@ export function StatusBadge({ value }: { value: string | null | undefined }) {
   );
 }
 
+export function formatDateTime(value: string): string {
+  return new Date(value).toLocaleString("es-BO", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export function Money({ amount, currency = "BOB" }: { amount: number; currency?: string }) {
   return <>{formatCurrency(amount, currency)}</>;
 }

@@ -3,11 +3,12 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { AppError, NotFoundError, SlugTakenError } from "@/lib/errors";
 import { decimalStringToMinor } from "@/lib/money";
+import { saveAffiliatePricing } from "./rates";
 import type { PropertyInput } from "@/lib/validation";
 
 // Columnas explícitas: nunca se hace select("*") ni se aceptan campos arbitrarios.
 const PROPERTY_COLUMNS =
-  "id, name, slug, short_description, description, property_type, zone, status, featured, base_price_minor, currency, bedrooms, bathrooms, beds, max_guests, minimum_nights, check_in_time, check_out_time, created_at, updated_at";
+  "id, name, slug, short_description, description, rules, location_reference, property_type, zone, tower_id, status, featured, base_price_minor, duration_pricing_enabled, currency, bedrooms, bathrooms, beds, max_guests, minimum_nights, check_in_time, check_out_time, affiliate_nightly_price_minor, created_at, updated_at";
 
 export type AdminPropertyRow = {
   id: string;
@@ -109,11 +110,17 @@ function toRow(input: PropertyInput) {
     slug: input.slug,
     short_description: input.shortDescription || null,
     description: input.description || null,
+    rules: input.rules || null,
+    location_reference: input.locationReference || null,
     property_type: input.propertyType || null,
     zone: input.zone || null,
+    tower_id: input.towerId,
     status: input.status,
     featured: input.featured,
     base_price_minor: decimalStringToMinor(input.basePrice),
+    affiliate_nightly_price_minor: input.affiliatePrice
+      ? decimalStringToMinor(input.affiliatePrice)
+      : null,
     bedrooms: input.bedrooms,
     bathrooms: input.bathrooms,
     beds: input.beds,
@@ -143,6 +150,7 @@ export async function createProperty(input: PropertyInput): Promise<{ id: string
 export async function updateProperty(
   id: string,
   input: PropertyInput,
+  actorId: string,
 ): Promise<{ before: unknown; after: unknown }> {
   const supabase = createAdminClient();
   const { data: before } = await supabase
@@ -152,10 +160,18 @@ export async function updateProperty(
     .maybeSingle();
   if (!before) throw new NotFoundError("Propiedad no encontrada");
 
-  // El precio base se cambia exclusivamente vía change_property_base_price para
-  // preservar price_change_history. Esta actualización cubre los demás campos.
-  const { base_price_minor, ...row } = toRow(input);
+  // Los precios se cambian por RPC dedicada para preservar price_change_history:
+  // el base con change_property_base_price y el de afiliados acá abajo.
+  const { base_price_minor, affiliate_nightly_price_minor, ...row } = toRow(input);
   void base_price_minor;
+  // `undefined` = el rol no puede editar el precio de afiliados y el campo ni
+  // siquiera se renderizó, así que se conserva el valor actual.
+  if (
+    input.affiliatePrice !== undefined &&
+    affiliate_nightly_price_minor !== before.affiliate_nightly_price_minor
+  ) {
+    await saveAffiliatePricing(id, affiliate_nightly_price_minor, "Edición de propiedad", actorId);
+  }
   const { data: after, error } = await supabase
     .from("properties")
     .update(row)

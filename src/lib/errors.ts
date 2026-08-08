@@ -163,6 +163,70 @@ export class NotFoundError extends AppError {
   }
 }
 
+// ---------- Fase 4 — canal de afiliados ----------
+
+export class AffiliateDisabledError extends AppError {
+  constructor() {
+    super(
+      "AFFILIATE_DISABLED",
+      "Esta propiedad todavía no tiene precio de afiliado cargado",
+      409,
+    );
+  }
+}
+
+export class AffiliatePendingLimitError extends AppError {
+  constructor() {
+    super(
+      "AFFILIATE_PENDING_LIMIT",
+      "Ya tenés varias solicitudes pendientes de confirmación. Esperá a que se resuelvan.",
+      429,
+    );
+  }
+}
+
+// ---------- Módulo de copropietarios ----------
+
+export class CoOwnerInactiveError extends AppError {
+  constructor() {
+    super("CO_OWNER_INACTIVE", "La cuenta de copropietario está desactivada", 403);
+  }
+}
+
+export class UsernameTakenError extends AppError {
+  constructor() {
+    super("USERNAME_TAKEN", "Ya existe una cuenta con ese usuario", 409);
+  }
+}
+
+export class CoOwnerHasStaysError extends AppError {
+  constructor() {
+    super(
+      "CO_OWNER_HAS_STAYS",
+      "La cuenta tiene estadías registradas: desactivala en lugar de eliminarla",
+      409,
+    );
+  }
+}
+
+// ---------- Módulo de personal de limpieza ----------
+
+export class CleanerInactiveError extends AppError {
+  constructor() {
+    super("CLEANER_INACTIVE", "La cuenta de limpieza está desactivada", 403);
+  }
+}
+
+export class CleanerHasReportsError extends AppError {
+  constructor() {
+    super(
+      "CLEANER_HAS_REPORTS",
+      "La cuenta tiene partes de limpieza registrados: desactivala en lugar de eliminarla",
+      409,
+    );
+  }
+}
+
 // Traduce un error de Postgres (lanzado por las funciones SQL) a un error de dominio.
 export function mapPostgresError(message: string | undefined): AppError {
   switch (message) {
@@ -207,11 +271,46 @@ export function mapPostgresError(message: string | undefined): AppError {
     case "BOOKING_EXPIRED":
       return new BookingExpiredError();
     case "BLOCK_NOT_FOUND":
+    case "AVAILABILITY_BLOCK_NOT_FOUND":
       return new NotFoundError("Bloqueo no encontrado");
+    case "AVAILABILITY_BLOCK_INACTIVE":
+      return new BookingInvalidStateError();
+    case "AVAILABILITY_BLOCK_CONFLICT":
+      return new AvailabilityBlockedError();
+    case "INVALID_HOLD_EXPIRATION":
+      return new ValidationError("El vencimiento debe estar en el futuro");
     case "RATE_NOT_FOUND":
       return new NotFoundError("Tarifa no encontrada");
+    case "INVALID_STAY_PRICE":
+      return new ValidationError(
+        "El precio por estadía debe ser positivo y no superar el precio normal",
+      );
+    case "DUPLICATE_STAY_NIGHTS":
+      return new ValidationError("No repitas una cantidad de noches");
+    case "STAY_PRICE_ABOVE_BASE":
+      return new ValidationError("Ajustá los precios por estadía antes de reducir el precio base");
+    case "AFFILIATE_DISABLED":
+      return new AffiliateDisabledError();
+    case "AFFILIATE_PENDING_LIMIT":
+      return new AffiliatePendingLimitError();
     case "USER_NOT_FOUND":
       return new NotFoundError("Usuario no encontrado");
+    // Módulo de copropietarios.
+    case "CO_OWNER_INACTIVE":
+      return new CoOwnerInactiveError();
+    case "CO_OWNER_HAS_STAYS":
+      return new CoOwnerHasStaysError();
+    case "INVALID_STAY_RANGE":
+    case "INVALID_TIME_RANGE":
+      return new ValidationError("La salida debe ser posterior a la entrada");
+    case "CLEANER_INACTIVE":
+      return new CleanerInactiveError();
+    case "CLEANER_HAS_REPORTS":
+      return new CleanerHasReportsError();
+    case "INVALID_GUEST_COUNT":
+      return new ValidationError("Debe haber al menos un adulto y ningún menor negativo");
+    case "MISSING_GUEST_DATA":
+      return new ValidationError("Completá nombre, CI y teléfono");
     case "VALIDATION_ERROR":
       return new ValidationError();
     default:

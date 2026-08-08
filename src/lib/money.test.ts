@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { minorToDecimalString, decimalStringToMinor, formatCurrency } from "./money";
+import {
+  minorToDecimalString,
+  decimalStringToMinor,
+  formatCurrency,
+  calculateDiscountPercent,
+} from "./money";
 
 describe("money helpers", () => {
   it("convierte minor a string decimal", () => {
@@ -30,5 +35,11 @@ describe("money helpers", () => {
 
   it("formatea moneda BOB", () => {
     expect(formatCurrency(52000, "BOB")).toBe("Bs 520,00");
+  });
+
+  it("calcula el porcentaje de descuento sin usar dinero flotante", () => {
+    expect(calculateDiscountPercent(100000, 95000)).toBe(5);
+    expect(calculateDiscountPercent(150000, 135000)).toBe(10);
+    expect(calculateDiscountPercent(100000, 110000)).toBe(0);
   });
 });

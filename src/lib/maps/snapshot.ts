@@ -16,6 +16,8 @@ export type PublishedMapItem = {
   normalized_height: number;
   rotation: number;
   linked_property_id: string | null;
+  // Opcional para seguir leyendo snapshots publicados antes de incorporar torres.
+  linked_tower_id?: string | null;
   metadata: Record<string, unknown>;
 };
 
@@ -42,6 +44,7 @@ export function buildPublishedData(items: SnapshotSourceItem[]): PublishedMapIte
       normalized_height: it.normalized_height,
       rotation: it.rotation,
       linked_property_id: it.linked_property_id,
+      linked_tower_id: it.linked_tower_id ?? null,
       metadata: it.metadata,
     }));
 }

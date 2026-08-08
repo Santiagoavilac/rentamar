@@ -4,16 +4,17 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { AppError, NotFoundError, SlugTakenError } from "@/lib/errors";
 import { iconKeyForType, type MapItemType } from "@/lib/maps/icons";
 import { buildPublishedData, type PublishedMapItem } from "@/lib/maps/snapshot";
+import { findIncompleteTowerPlacements } from "@/lib/maps/towers";
 import type { MapItemInput, MapItemMoveInput, MapCreateInput } from "@/lib/validation";
 
 export type { PublishedMapItem };
 
 // Columnas explícitas: nunca select("*") ni campos arbitrarios del cliente.
 const MAP_COLUMNS =
-  "id, slug, name, image_url, image_width, image_height, version, status, published_at, created_at, updated_at";
+  "id, slug, name, image_url, image_width, image_height, version, published_image_url, published_image_width, published_image_height, published_version, status, published_at, created_at, updated_at";
 
 const ITEM_COLUMNS =
-  "id, map_id, type, icon_key, name, description, normalized_x, normalized_y, normalized_width, normalized_height, rotation, status, is_visible, linked_property_id, metadata, created_at, updated_at";
+  "id, map_id, type, icon_key, name, description, normalized_x, normalized_y, normalized_width, normalized_height, rotation, status, is_visible, linked_property_id, linked_tower_id, metadata, created_at, updated_at";
 
 export type AdminMapRow = {
   id: string;
@@ -23,6 +24,10 @@ export type AdminMapRow = {
   image_width: number | null;
   image_height: number | null;
   version: number;
+  published_image_url: string | null;
+  published_image_width: number | null;
+  published_image_height: number | null;
+  published_version: number | null;
   status: "draft" | "published" | "archived";
   published_at: string | null;
   created_at: string;
@@ -44,6 +49,7 @@ export type AdminMapItemRow = {
   status: "draft" | "published" | "archived";
   is_visible: boolean;
   linked_property_id: string | null;
+  linked_tower_id: string | null;
   metadata: Record<string, unknown>;
   created_at: string;
   updated_at: string;
@@ -77,6 +83,7 @@ export async function getMapForEditor(
     .from("map_items")
     .select(ITEM_COLUMNS)
     .eq("map_id", (map as AdminMapRow).id)
+    .neq("status", "archived")
     .order("created_at", { ascending: true });
   if (itemsError) throw new AppError("INTERNAL_ERROR", "Error interno", 500);
 
@@ -84,6 +91,11 @@ export async function getMapForEditor(
 }
 
 export type LinkablePropertyOption = { id: string; name: string; slug: string };
+export type MapTowerOption = {
+  id: string;
+  name: string;
+  description: string | null;
+};
 
 // Opciones para el selector "vincular a propiedad" del editor. Solo id/name/slug:
 // nunca precio, dueño ni datos privados (el mapa es contenido de marketing).
@@ -95,6 +107,18 @@ export async function listLinkableProperties(): Promise<LinkablePropertyOption[]
     .order("name", { ascending: true });
   if (error) throw new AppError("INTERNAL_ERROR", "Error interno", 500);
   return (data ?? []) as LinkablePropertyOption[];
+}
+
+export async function listTowersForMap(): Promise<MapTowerOption[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("towers")
+    .select("id, name, description")
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true })
+    .order("name", { ascending: true });
+  if (error) throw new AppError("INTERNAL_ERROR", "Error interno", 500);
+  return (data ?? []) as MapTowerOption[];
 }
 
 // ---------- Escrituras (service-role, columnas explícitas) ----------
@@ -130,6 +154,7 @@ function toItemRow(input: MapItemInput) {
     rotation: input.rotation,
     is_visible: input.isVisible,
     linked_property_id: input.linkedPropertyId,
+    linked_tower_id: input.linkedTowerId,
   };
 }
 
@@ -144,7 +169,12 @@ export async function createItem(
     .insert({ map_id: mapId, created_by: userId, ...toItemRow(input) })
     .select("id")
     .single();
-  if (error) throw new AppError("INTERNAL_ERROR", "Error interno", 500);
+  if (error) {
+    if (/duplicate key|unique/i.test(error.message)) {
+      throw new AppError("TOWER_ALREADY_PLACED", "Esta torre ya está ubicada en el mapa", 409);
+    }
+    throw new AppError("INTERNAL_ERROR", "Error interno", 500);
+  }
   return { id: data.id };
 }
 
@@ -184,19 +214,47 @@ export async function deleteItem(itemId: string): Promise<void> {
 // 'published'. El visor solo lee este snapshot, así los borradores nunca se exponen.
 export async function publishMap(mapId: string): Promise<{ count: number }> {
   const supabase = createAdminClient();
-  const { data: items, error } = await supabase
-    .from("map_items")
-    .select(ITEM_COLUMNS)
-    .eq("map_id", mapId);
-  if (error) throw new AppError("INTERNAL_ERROR", "Error interno", 500);
+  const [mapResult, itemResult, towerResult] = await Promise.all([
+    supabase
+      .from("maps")
+      .select("image_url, image_width, image_height, version")
+      .eq("id", mapId)
+      .maybeSingle(),
+    supabase.from("map_items").select(ITEM_COLUMNS).eq("map_id", mapId),
+    supabase
+      .from("towers")
+      .select("id, name")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true }),
+  ]);
+  if (mapResult.error || itemResult.error || towerResult.error || !mapResult.data) {
+    throw new AppError("INTERNAL_ERROR", "Error interno", 500);
+  }
 
-  const snapshot = buildPublishedData((items ?? []) as AdminMapItemRow[]);
+  const snapshot = buildPublishedData((itemResult.data ?? []) as AdminMapItemRow[]);
+  const incomplete = findIncompleteTowerPlacements(
+    towerResult.data ?? [],
+    (itemResult.data ?? []) as AdminMapItemRow[],
+  );
+  if (incomplete.length > 0) {
+    throw new AppError(
+      "INCOMPLETE_TOWER_PLACEMENT",
+      `Ubicá exactamente una vez cada torre activa antes de publicar. Pendientes: ${incomplete
+        .map((tower) => tower.name)
+        .join(", ")}`,
+      422,
+    );
+  }
   const publishedIds = snapshot.map((it) => it.id);
 
   const { error: mapError } = await supabase
     .from("maps")
     .update({
       published_data: snapshot as never,
+      published_image_url: mapResult.data.image_url,
+      published_image_width: mapResult.data.image_width,
+      published_image_height: mapResult.data.image_height,
+      published_version: mapResult.data.version,
       published_at: new Date().toISOString(),
       status: "published",
     })

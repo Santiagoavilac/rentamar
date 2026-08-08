@@ -22,10 +22,14 @@ export type PriceItem = {
 export type Quote = {
   currency: string;
   nights: number;
+  originalSubtotalMinor: number;
   subtotalMinor: number;
   cleaningFeeMinor: number;
   serviceFeeMinor: number;
   discountMinor: number;
+  discountPercent: number;
+  pricingMode: "nightly" | "duration";
+  durationPriceMinor: number | null;
   totalMinor: number;
   items: PriceItem[];
 };
@@ -90,6 +94,19 @@ export async function createBooking(input: CreateBookingInput): Promise<CreatedB
   if (error) throw mapPostgresError(error.message);
 
   const result = data as unknown as Omit<CreatedBooking, "accessToken">;
+
+  // Los datos de la declaración jurada se guardan aparte en vez de sumar parámetros a la
+  // RPC: recrear una función `security definer` de este tamaño en producción es más
+  // riesgoso que un update acotado a la fila que la propia RPC acaba de devolver.
+  await supabase
+    .from("bookings")
+    .update({
+      guest_document_id: input.guest.documentId,
+      guest_nationality: input.guest.nationality,
+      guest_city: input.guest.city,
+    })
+    .eq("id", result.bookingId);
+
   return { ...result, accessToken: token };
 }
 
@@ -98,11 +115,18 @@ export type BookingView = {
   bookingCode: string;
   status: string;
   propertyId: string;
+  propertyName: string;
+  checkInTime: string;
+  checkOutTime: string;
   checkIn: string;
   checkOut: string;
   guests: number;
   nights: number;
   currency: string;
+  subtotalMinor: number;
+  cleaningFeeMinor: number;
+  serviceFeeMinor: number;
+  discountMinor: number;
   totalMinor: number;
   holdExpiresAt: string | null;
   guestName: string;
@@ -120,7 +144,7 @@ export async function getBookingForAccess(params: {
   const { data: booking, error } = await supabase
     .from("bookings")
     .select(
-      "id, booking_code, status, property_id, check_in, check_out, guests, nights, currency, total_minor, hold_expires_at, guest_name, guest_id, access_token_hash",
+      "id, booking_code, status, property_id, check_in, check_out, guests, nights, currency, subtotal_minor, cleaning_fee_minor, service_fee_minor, discount_minor, total_minor, hold_expires_at, guest_name, guest_id, access_token_hash, properties(name, check_in_time, check_out_time)",
     )
     .eq("id", params.bookingId)
     .maybeSingle();
@@ -146,11 +170,18 @@ export async function getBookingForAccess(params: {
     bookingCode: booking.booking_code,
     status: booking.status,
     propertyId: booking.property_id,
+    propertyName: booking.properties?.name ?? "Propiedad",
+    checkInTime: booking.properties?.check_in_time?.slice(0, 5) ?? "15:00",
+    checkOutTime: booking.properties?.check_out_time?.slice(0, 5) ?? "11:00",
     checkIn: booking.check_in,
     checkOut: booking.check_out,
     guests: booking.guests,
     nights: booking.nights,
     currency: booking.currency,
+    subtotalMinor: booking.subtotal_minor,
+    cleaningFeeMinor: booking.cleaning_fee_minor,
+    serviceFeeMinor: booking.service_fee_minor,
+    discountMinor: booking.discount_minor,
     totalMinor: booking.total_minor,
     holdExpiresAt: booking.hold_expires_at,
     guestName: booking.guest_name,

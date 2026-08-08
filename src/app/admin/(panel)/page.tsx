@@ -33,6 +33,19 @@ export default async function AdminHome() {
           <p className="mt-1 text-sm text-slate-600">Solo reservas confirmadas o completadas.</p>
         </Panel>
         <Panel>
+          <h2 className="font-bold">Solicitudes de afiliados</h2>
+          <p className="mt-3 text-2xl">{m.affiliatePendingRequests}</p>
+          <p className="mt-1 text-sm text-slate-600">
+            Bloquean fechas hasta que se confirmen o se cancelen. No suman a los ingresos.
+          </p>
+          <Link
+            className="mt-3 inline-block text-sm font-semibold text-cyan-700"
+            href="/admin/affiliates"
+          >
+            Revisar solicitudes
+          </Link>
+        </Panel>
+        <Panel>
           <h2 className="font-bold">Propiedades publicadas</h2>
           <p className="mt-3 text-2xl">{m.publishedProperties}</p>
           <Link

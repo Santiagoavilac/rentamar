@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { navLinks } from "@/lib/nav";
 
@@ -35,8 +36,8 @@ export default function Navbar() {
         aria-label="Principal"
         className="mx-auto flex max-w-[1400px] items-center justify-between gap-4 px-5 py-4 sm:px-8"
       >
-        <a
-          href="#inicio"
+        <Link
+          href="/"
           className="inline-flex items-center gap-2 rounded-full"
           aria-label="RentaMar, ir al inicio"
         >
@@ -49,28 +50,28 @@ export default function Navbar() {
             className="h-11 w-11 rounded-full object-cover ring-1 ring-white/20"
           />
           <span className="sr-only">RentaMar</span>
-        </a>
+        </Link>
 
         <ul className="hidden items-center gap-8 lg:flex">
           {navLinks.map((link) => (
             <li key={link.label}>
-              <a
+              <Link
                 href={link.href}
                 className="text-sm text-cream/75 transition-colors hover:text-cream"
               >
                 {link.label}
-              </a>
+              </Link>
             </li>
           ))}
         </ul>
 
         <div className="flex items-center gap-2">
-          <a
-            href="#propiedades"
+          <Link
+            href="/#propiedades"
             className="hidden rounded-full bg-turquoise px-5 py-2.5 text-sm font-semibold text-deep transition-transform hover:-translate-y-0.5 hover:bg-turquoise-soft sm:inline-flex"
           >
             Explorar
-          </a>
+          </Link>
           <button
             type="button"
             className="glass-pill inline-flex h-11 w-11 items-center justify-center rounded-full text-cream lg:hidden"
@@ -89,23 +90,23 @@ export default function Navbar() {
           <ul className="flex flex-col">
             {navLinks.map((link) => (
               <li key={link.label}>
-                <a
+                <Link
                   href={link.href}
                   onClick={() => setOpen(false)}
                   className="block rounded-2xl px-4 py-3 text-base text-cream/85 transition-colors hover:bg-white/10 hover:text-cream"
                 >
                   {link.label}
-                </a>
+                </Link>
               </li>
             ))}
             <li className="mt-2">
-              <a
-                href="#propiedades"
+              <Link
+                href="/#propiedades"
                 onClick={() => setOpen(false)}
                 className="block rounded-2xl bg-turquoise px-4 py-3 text-center text-base font-semibold text-deep"
               >
                 Explorar
-              </a>
+              </Link>
             </li>
           </ul>
         </div>

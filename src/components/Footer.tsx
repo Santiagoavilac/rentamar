@@ -2,7 +2,7 @@ import { Instagram } from "lucide-react";
 import Wordmark from "./Wordmark";
 
 const columns: { title: string; links: string[] }[] = [
-  { title: "Explorar", links: ["Alojamientos", "Experiencias", "Mar Adentro", "Propietarios"] },
+  { title: "Explorar", links: ["Alojamientos", "Experiencias", "Mar Adentro", "Copropietarios"] },
   { title: "RentaMar", links: ["Contacto", "Términos", "Privacidad"] },
 ];
 
@@ -45,10 +45,16 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="mx-auto mt-12 max-w-[1400px] border-t border-night/10 pt-6">
+      <div className="mx-auto mt-12 flex max-w-[1400px] flex-wrap items-center justify-between gap-3 border-t border-night/10 pt-6">
         <p className="text-xs text-night/45">
           © {new Date().getFullYear()} RentaMar. Todos los derechos reservados.
         </p>
+        <a
+          href="/limpieza/login"
+          className="text-xs text-night/45 transition-colors hover:text-night"
+        >
+          Personal de limpieza
+        </a>
       </div>
     </footer>
   );

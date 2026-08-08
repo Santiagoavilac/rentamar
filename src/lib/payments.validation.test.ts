@@ -11,7 +11,7 @@ describe("createPaymentSchema", () => {
     const r = createPaymentSchema.safeParse({});
     expect(r.success).toBe(true);
     if (r.success) {
-      expect(r.data.provider).toBe("mock");
+      expect(r.data.provider).toBe("transfer");
       expect(r.data.method).toBe("qr");
     }
   });

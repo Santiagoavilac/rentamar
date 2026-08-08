@@ -13,6 +13,8 @@ import {
 } from "@/lib/admin/actions";
 import { AdminPageHeader, KeyValue, Money, Panel, StatusBadge } from "@/components/admin/ui";
 import { ImageUploadForm, PropertyForm, RateForm } from "@/components/admin/forms";
+import { requireStaff, canPerformAdminAction } from "@/lib/auth";
+import { listTowerOptions } from "@/lib/admin/towers";
 
 export default async function PropertyDetailPage({
   params,
@@ -20,13 +22,15 @@ export default async function PropertyDetailPage({
   params: Promise<{ propertyId: string }>;
 }) {
   const { propertyId } = await params;
-  const [property, images, amenityIds, amenities, rates, history] = await Promise.all([
+  const session = await requireStaff();
+  const [property, images, amenityIds, amenities, rates, history, towers] = await Promise.all([
     getProperty(propertyId),
     getPropertyImages(propertyId),
     getPropertyAmenities(propertyId),
     listAmenities(),
     listRates(propertyId),
     listPriceHistory(propertyId),
+    listTowerOptions(),
   ]);
   const action = updatePropertyAction.bind(null, propertyId);
   const uploadAction = uploadPropertyImageAction.bind(null, propertyId);
@@ -45,7 +49,12 @@ export default async function PropertyDetailPage({
       <div className="grid gap-5 xl:grid-cols-[1.4fr_.6fr]">
         <Panel>
           <h2 className="mb-4 font-bold">Datos de la propiedad</h2>
-          <PropertyForm action={action} values={property} />
+          <PropertyForm
+            action={action}
+            values={property}
+            towers={towers}
+            canManageAffiliates={canPerformAdminAction(session.role, "affiliate.manage")}
+          />
         </Panel>
         <div className="grid gap-5">
           <Panel>

@@ -12,6 +12,7 @@ const base = {
   rotation: 0,
   isVisible: true,
   linkedPropertyId: null,
+  linkedTowerId: null,
 };
 
 describe("validación de marcadores del mapa", () => {
@@ -35,6 +36,27 @@ describe("validación de marcadores del mapa", () => {
 
   it("rechaza un linkedPropertyId que no es uuid", () => {
     expect(mapItemInputSchema.safeParse({ ...base, linkedPropertyId: "abc" }).success).toBe(false);
+  });
+
+  it("exige que una torre se vincule a una torre general y no a una propiedad", () => {
+    const linkedTowerId = "11111111-1111-4111-8111-111111111111";
+    expect(
+      mapItemInputSchema.safeParse({
+        ...base,
+        type: "tower",
+        linkedTowerId,
+      }).success,
+    ).toBe(true);
+    expect(mapItemInputSchema.safeParse({ ...base, type: "tower" }).success).toBe(false);
+    expect(
+      mapItemInputSchema.safeParse({
+        ...base,
+        type: "tower",
+        linkedTowerId,
+        linkedPropertyId: "22222222-2222-4222-8222-222222222222",
+      }).success,
+    ).toBe(false);
+    expect(mapItemInputSchema.safeParse({ ...base, linkedTowerId }).success).toBe(false);
   });
 
   it("el movimiento solo admite coordenadas unitarias", () => {

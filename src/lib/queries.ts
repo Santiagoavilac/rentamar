@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createClient } from "./supabase/server";
 import type { Property } from "./properties";
 
@@ -17,9 +18,15 @@ export type PropertyDetail = {
   basePriceMinor: number;
   currency: string;
   minimumNights: number;
+  checkInTime: string;
+  checkOutTime: string;
+  rules: string | null;
+  locationReference: string | null;
+  durationPricingEnabled: boolean;
   images: { url: string; altText: string | null; isCover: boolean; sortOrder: number }[];
   amenities: { name: string; slug: string; icon: string | null }[];
   rates: { startDate: string; endDate: string; nightlyPriceMinor: number; label: string | null }[];
+  stayPrices: { nights: number; totalPriceMinor: number }[];
   bookedRanges: string[];
 };
 
@@ -60,9 +67,9 @@ export async function getPublishedProperties(filters: ListFilters = {}): Promise
       id: p.slug,
       name: p.name,
       zone: p.zone ?? "",
-      guests: p.max_guests,
+      guests: p.base_price_minor > 0 ? p.max_guests : undefined,
       bedrooms: p.bedrooms,
-      priceFrom: Math.round(p.base_price_minor / 100),
+      priceFrom: p.base_price_minor > 0 ? Math.round(p.base_price_minor / 100) : undefined,
       currency: "Bs",
       image: cover?.url ?? "",
       alt: cover?.alt_text ?? p.name,
@@ -70,12 +77,12 @@ export async function getPublishedProperties(filters: ListFilters = {}): Promise
   });
 }
 
-export async function getPropertyBySlug(slug: string): Promise<PropertyDetail | null> {
+export const getPropertyBySlug = cache(async (slug: string): Promise<PropertyDetail | null> => {
   const supabase = await createClient();
   const { data: p, error } = await supabase
     .from("properties")
     .select(
-      "id, name, slug, short_description, description, property_type, zone, max_guests, bedrooms, beds, bathrooms, base_price_minor, currency, minimum_nights, status, property_images(url, alt_text, is_cover, sort_order), property_amenities(amenities(name, slug, icon)), property_rates(start_date, end_date, nightly_price_minor, label)",
+      "id, name, slug, short_description, description, rules, location_reference, property_type, zone, max_guests, bedrooms, beds, bathrooms, base_price_minor, currency, minimum_nights, check_in_time, check_out_time, duration_pricing_enabled, status, property_images(url, alt_text, is_cover, sort_order), property_amenities(amenities(name, slug, icon)), property_rates(start_date, end_date, nightly_price_minor, label), property_stay_prices(nights, total_price_minor)",
     )
     .eq("slug", slug)
     .eq("status", "published")
@@ -86,14 +93,17 @@ export async function getPropertyBySlug(slug: string): Promise<PropertyDetail | 
 
   const today = new Date();
   const to = new Date();
-  to.setMonth(to.getMonth() + 6);
+  to.setMonth(to.getMonth() + 12);
   const fmt = (d: Date) => d.toISOString().slice(0, 10);
 
-  const { data: availability } = await supabase.rpc("get_property_availability", {
-    p_property_id: p.id,
-    p_from: fmt(today),
-    p_to: fmt(to),
-  });
+  const { data: availability } =
+    p.base_price_minor > 0
+      ? await supabase.rpc("get_property_availability", {
+          p_property_id: p.id,
+          p_from: fmt(today),
+          p_to: fmt(to),
+        })
+      : { data: [] };
 
   const amenities = (
     (p.property_amenities ?? []) as { amenities: PropertyDetail["amenities"][number] | null }[]
@@ -116,12 +126,19 @@ export async function getPropertyBySlug(slug: string): Promise<PropertyDetail | 
     basePriceMinor: p.base_price_minor,
     currency: p.currency,
     minimumNights: p.minimum_nights,
-    images: (p.property_images ?? []).map((img) => ({
-      url: img.url,
-      altText: img.alt_text,
-      isCover: img.is_cover,
-      sortOrder: img.sort_order,
-    })),
+    checkInTime: p.check_in_time.slice(0, 5),
+    checkOutTime: p.check_out_time.slice(0, 5),
+    rules: p.rules,
+    locationReference: p.location_reference,
+    durationPricingEnabled: p.duration_pricing_enabled,
+    images: [...(p.property_images ?? [])]
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map((img) => ({
+        url: img.url,
+        altText: img.alt_text,
+        isCover: img.is_cover,
+        sortOrder: img.sort_order,
+      })),
     amenities,
     rates: (p.property_rates ?? []).map((r) => ({
       startDate: r.start_date,
@@ -129,6 +146,10 @@ export async function getPropertyBySlug(slug: string): Promise<PropertyDetail | 
       nightlyPriceMinor: r.nightly_price_minor,
       label: r.label,
     })),
+    stayPrices: (p.property_stay_prices ?? []).map((price) => ({
+      nights: price.nights,
+      totalPriceMinor: price.total_price_minor,
+    })),
     bookedRanges: ((availability ?? []) as { stay_range: string }[]).map((r) => r.stay_range),
   };
-}
+});

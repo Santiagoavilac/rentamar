@@ -32,6 +32,24 @@ export type Database = {
         };
         Relationships: [];
       };
+      app_settings: {
+        Row: {
+          key: string;
+          updated_at: string;
+          value: Json;
+        };
+        Insert: {
+          key: string;
+          updated_at?: string;
+          value: Json;
+        };
+        Update: {
+          key?: string;
+          updated_at?: string;
+          value?: Json;
+        };
+        Relationships: [];
+      };
       audit_logs: {
         Row: {
           action: string;
@@ -126,6 +144,44 @@ export type Database = {
             columns: ["property_id"];
             isOneToOne: false;
             referencedRelation: "properties";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      booking_companions: {
+        Row: {
+          booking_id: string;
+          created_at: string;
+          document_id: string;
+          full_name: string;
+          id: string;
+          phone: string | null;
+          sort_order: number;
+        };
+        Insert: {
+          booking_id: string;
+          created_at?: string;
+          document_id: string;
+          full_name: string;
+          id?: string;
+          phone?: string | null;
+          sort_order?: number;
+        };
+        Update: {
+          booking_id?: string;
+          created_at?: string;
+          document_id?: string;
+          full_name?: string;
+          id?: string;
+          phone?: string | null;
+          sort_order?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "booking_companions_booking_id_fkey";
+            columns: ["booking_id"];
+            isOneToOne: false;
+            referencedRelation: "bookings";
             referencedColumns: ["id"];
           },
         ];
@@ -269,8 +325,10 @@ export type Database = {
       bookings: {
         Row: {
           access_token_hash: string | null;
+          affiliate_document_id: string | null;
           booking_code: string;
           cancelled_at: string | null;
+          channel: Database["public"]["Enums"]["booking_channel"];
           check_in: string;
           check_out: string;
           cleaning_fee_minor: number;
@@ -279,9 +337,12 @@ export type Database = {
           created_at: string;
           currency: string;
           discount_minor: number;
-          guest_email: string;
+          guest_city: string | null;
+          guest_document_id: string | null;
+          guest_email: string | null;
           guest_id: string | null;
           guest_name: string;
+          guest_nationality: string | null;
           guest_phone: string | null;
           guests: number;
           hold_expires_at: string | null;
@@ -297,8 +358,10 @@ export type Database = {
         };
         Insert: {
           access_token_hash?: string | null;
+          affiliate_document_id?: string | null;
           booking_code: string;
           cancelled_at?: string | null;
+          channel?: Database["public"]["Enums"]["booking_channel"];
           check_in: string;
           check_out: string;
           cleaning_fee_minor?: number;
@@ -307,9 +370,12 @@ export type Database = {
           created_at?: string;
           currency?: string;
           discount_minor?: number;
-          guest_email: string;
+          guest_city?: string | null;
+          guest_document_id?: string | null;
+          guest_email?: string | null;
           guest_id?: string | null;
           guest_name: string;
+          guest_nationality?: string | null;
           guest_phone?: string | null;
           guests: number;
           hold_expires_at?: string | null;
@@ -325,8 +391,10 @@ export type Database = {
         };
         Update: {
           access_token_hash?: string | null;
+          affiliate_document_id?: string | null;
           booking_code?: string;
           cancelled_at?: string | null;
+          channel?: Database["public"]["Enums"]["booking_channel"];
           check_in?: string;
           check_out?: string;
           cleaning_fee_minor?: number;
@@ -335,9 +403,12 @@ export type Database = {
           created_at?: string;
           currency?: string;
           discount_minor?: number;
-          guest_email?: string;
+          guest_city?: string | null;
+          guest_document_id?: string | null;
+          guest_email?: string | null;
           guest_id?: string | null;
           guest_name?: string;
+          guest_nationality?: string | null;
           guest_phone?: string | null;
           guests?: number;
           hold_expires_at?: string | null;
@@ -361,6 +432,312 @@ export type Database = {
           },
         ];
       };
+      cleaner_accounts: {
+        Row: {
+          created_at: string;
+          full_name: string;
+          id: string;
+          is_active: boolean;
+          updated_at: string;
+          username: string;
+        };
+        Insert: {
+          created_at?: string;
+          full_name: string;
+          id: string;
+          is_active?: boolean;
+          updated_at?: string;
+          username: string;
+        };
+        Update: {
+          created_at?: string;
+          full_name?: string;
+          id?: string;
+          is_active?: boolean;
+          updated_at?: string;
+          username?: string;
+        };
+        Relationships: [];
+      };
+      cleaning_reports: {
+        Row: {
+          account_id: string;
+          created_at: string;
+          entry_time: string;
+          exit_time: string;
+          full_name: string;
+          id: string;
+          property_id: string | null;
+          property_name: string;
+          username: string;
+          work_date: string;
+        };
+        Insert: {
+          account_id: string;
+          created_at?: string;
+          entry_time: string;
+          exit_time: string;
+          full_name: string;
+          id?: string;
+          property_id?: string | null;
+          property_name: string;
+          username: string;
+          work_date: string;
+        };
+        Update: {
+          account_id?: string;
+          created_at?: string;
+          entry_time?: string;
+          exit_time?: string;
+          full_name?: string;
+          id?: string;
+          property_id?: string | null;
+          property_name?: string;
+          username?: string;
+          work_date?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "cleaning_reports_account_id_fkey";
+            columns: ["account_id"];
+            isOneToOne: false;
+            referencedRelation: "cleaner_accounts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "cleaning_reports_property_id_fkey";
+            columns: ["property_id"];
+            isOneToOne: false;
+            referencedRelation: "properties";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      co_owner_accounts: {
+        Row: {
+          created_at: string;
+          id: string;
+          is_active: boolean;
+          property_name: string;
+          room_count: number;
+          updated_at: string;
+          username: string;
+        };
+        Insert: {
+          created_at?: string;
+          id: string;
+          is_active?: boolean;
+          property_name: string;
+          room_count: number;
+          updated_at?: string;
+          username: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          is_active?: boolean;
+          property_name?: string;
+          room_count?: number;
+          updated_at?: string;
+          username?: string;
+        };
+        Relationships: [];
+      };
+      co_owner_stay_guests: {
+        Row: {
+          birth_date: string;
+          created_at: string;
+          document_id: string;
+          full_name: string;
+          id: string;
+          phone: string | null;
+          sort_order: number;
+          stay_id: string;
+        };
+        Insert: {
+          birth_date: string;
+          created_at?: string;
+          document_id: string;
+          full_name: string;
+          id?: string;
+          phone?: string | null;
+          sort_order?: number;
+          stay_id: string;
+        };
+        Update: {
+          birth_date?: string;
+          created_at?: string;
+          document_id?: string;
+          full_name?: string;
+          id?: string;
+          phone?: string | null;
+          sort_order?: number;
+          stay_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "co_owner_stay_guests_stay_id_fkey";
+            columns: ["stay_id"];
+            isOneToOne: false;
+            referencedRelation: "co_owner_stays";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      co_owner_stays: {
+        Row: {
+          account_id: string;
+          adults: number;
+          birth_date: string | null;
+          check_in_at: string;
+          check_out_at: string;
+          city: string | null;
+          created_at: string;
+          document_id: string;
+          full_name: string;
+          id: string;
+          minors: number;
+          nationality: string | null;
+          phone: string;
+          property_name: string;
+          room_count: number;
+          username: string;
+        };
+        Insert: {
+          account_id: string;
+          adults: number;
+          birth_date?: string | null;
+          check_in_at: string;
+          check_out_at: string;
+          city?: string | null;
+          created_at?: string;
+          document_id: string;
+          full_name: string;
+          id?: string;
+          minors?: number;
+          nationality?: string | null;
+          phone: string;
+          property_name: string;
+          room_count: number;
+          username: string;
+        };
+        Update: {
+          account_id?: string;
+          adults?: number;
+          birth_date?: string | null;
+          check_in_at?: string;
+          check_out_at?: string;
+          city?: string | null;
+          created_at?: string;
+          document_id?: string;
+          full_name?: string;
+          id?: string;
+          minors?: number;
+          nationality?: string | null;
+          phone?: string;
+          property_name?: string;
+          room_count?: number;
+          username?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "co_owner_stays_account_id_fkey";
+            columns: ["account_id"];
+            isOneToOne: false;
+            referencedRelation: "co_owner_accounts";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      declarations: {
+        Row: {
+          accepted_at: string;
+          booking_id: string | null;
+          created_at: string;
+          data_snapshot: Json;
+          document_version: string;
+          generated_at: string;
+          id: string;
+          pdf_path: string;
+          stay_id: string | null;
+        };
+        Insert: {
+          accepted_at: string;
+          booking_id?: string | null;
+          created_at?: string;
+          data_snapshot: Json;
+          document_version: string;
+          generated_at?: string;
+          id?: string;
+          pdf_path: string;
+          stay_id?: string | null;
+        };
+        Update: {
+          accepted_at?: string;
+          booking_id?: string | null;
+          created_at?: string;
+          data_snapshot?: Json;
+          document_version?: string;
+          generated_at?: string;
+          id?: string;
+          pdf_path?: string;
+          stay_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "declarations_booking_id_fkey";
+            columns: ["booking_id"];
+            isOneToOne: false;
+            referencedRelation: "bookings";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "declarations_stay_id_fkey";
+            columns: ["stay_id"];
+            isOneToOne: false;
+            referencedRelation: "co_owner_stays";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      id_documents: {
+        Row: {
+          booking_id: string;
+          created_at: string;
+          file_path: string;
+          id: string;
+          mime_type: string;
+          side: string;
+          size_bytes: number;
+        };
+        Insert: {
+          booking_id: string;
+          created_at?: string;
+          file_path: string;
+          id?: string;
+          mime_type: string;
+          side: string;
+          size_bytes: number;
+        };
+        Update: {
+          booking_id?: string;
+          created_at?: string;
+          file_path?: string;
+          id?: string;
+          mime_type?: string;
+          side?: string;
+          size_bytes?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "id_documents_booking_id_fkey";
+            columns: ["booking_id"];
+            isOneToOne: false;
+            referencedRelation: "bookings";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       map_items: {
         Row: {
           created_at: string;
@@ -370,6 +747,7 @@ export type Database = {
           id: string;
           is_visible: boolean;
           linked_property_id: string | null;
+          linked_tower_id: string | null;
           map_id: string;
           metadata: Json;
           name: string;
@@ -390,6 +768,7 @@ export type Database = {
           id?: string;
           is_visible?: boolean;
           linked_property_id?: string | null;
+          linked_tower_id?: string | null;
           map_id: string;
           metadata?: Json;
           name: string;
@@ -410,6 +789,7 @@ export type Database = {
           id?: string;
           is_visible?: boolean;
           linked_property_id?: string | null;
+          linked_tower_id?: string | null;
           map_id?: string;
           metadata?: Json;
           name?: string;
@@ -428,6 +808,13 @@ export type Database = {
             columns: ["linked_property_id"];
             isOneToOne: false;
             referencedRelation: "properties";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "map_items_linked_tower_id_fkey";
+            columns: ["linked_tower_id"];
+            isOneToOne: false;
+            referencedRelation: "towers";
             referencedColumns: ["id"];
           },
           {
@@ -450,6 +837,10 @@ export type Database = {
           name: string;
           published_at: string | null;
           published_data: Json | null;
+          published_image_height: number | null;
+          published_image_url: string | null;
+          published_image_width: number | null;
+          published_version: number | null;
           slug: string;
           status: Database["public"]["Enums"]["map_status"];
           updated_at: string;
@@ -465,6 +856,10 @@ export type Database = {
           name: string;
           published_at?: string | null;
           published_data?: Json | null;
+          published_image_height?: number | null;
+          published_image_url?: string | null;
+          published_image_width?: number | null;
+          published_version?: number | null;
           slug: string;
           status?: Database["public"]["Enums"]["map_status"];
           updated_at?: string;
@@ -480,6 +875,10 @@ export type Database = {
           name?: string;
           published_at?: string | null;
           published_data?: Json | null;
+          published_image_height?: number | null;
+          published_image_url?: string | null;
+          published_image_width?: number | null;
+          published_version?: number | null;
           slug?: string;
           status?: Database["public"]["Enums"]["map_status"];
           updated_at?: string;
@@ -561,6 +960,63 @@ export type Database = {
           },
           {
             foreignKeyName: "payment_events_payment_id_fkey";
+            columns: ["payment_id"];
+            isOneToOne: false;
+            referencedRelation: "payments";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      payment_receipts: {
+        Row: {
+          ai_result: number | null;
+          ai_status: string;
+          attempt_no: number;
+          booking_id: string;
+          created_at: string;
+          file_path: string;
+          id: string;
+          mime_type: string;
+          payment_id: string;
+          sha256: string;
+          size_bytes: number;
+        };
+        Insert: {
+          ai_result?: number | null;
+          ai_status?: string;
+          attempt_no: number;
+          booking_id: string;
+          created_at?: string;
+          file_path: string;
+          id?: string;
+          mime_type: string;
+          payment_id: string;
+          sha256: string;
+          size_bytes: number;
+        };
+        Update: {
+          ai_result?: number | null;
+          ai_status?: string;
+          attempt_no?: number;
+          booking_id?: string;
+          created_at?: string;
+          file_path?: string;
+          id?: string;
+          mime_type?: string;
+          payment_id?: string;
+          sha256?: string;
+          size_bytes?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "payment_receipts_booking_id_fkey";
+            columns: ["booking_id"];
+            isOneToOne: false;
+            referencedRelation: "bookings";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "payment_receipts_payment_id_fkey";
             columns: ["payment_id"];
             isOneToOne: false;
             referencedRelation: "payments";
@@ -734,6 +1190,7 @@ export type Database = {
       };
       properties: {
         Row: {
+          affiliate_nightly_price_minor: number | null;
           base_price_minor: number;
           bathrooms: number;
           bedrooms: number;
@@ -743,19 +1200,24 @@ export type Database = {
           created_at: string;
           currency: string;
           description: string | null;
+          duration_pricing_enabled: boolean;
           featured: boolean;
           id: string;
+          location_reference: string | null;
           max_guests: number;
           minimum_nights: number;
           name: string;
           property_type: string | null;
+          rules: string | null;
           short_description: string | null;
           slug: string;
           status: Database["public"]["Enums"]["property_status"];
+          tower_id: string | null;
           updated_at: string;
           zone: string | null;
         };
         Insert: {
+          affiliate_nightly_price_minor?: number | null;
           base_price_minor: number;
           bathrooms?: number;
           bedrooms?: number;
@@ -765,19 +1227,24 @@ export type Database = {
           created_at?: string;
           currency?: string;
           description?: string | null;
+          duration_pricing_enabled?: boolean;
           featured?: boolean;
           id?: string;
+          location_reference?: string | null;
           max_guests?: number;
           minimum_nights?: number;
           name: string;
           property_type?: string | null;
+          rules?: string | null;
           short_description?: string | null;
           slug: string;
           status?: Database["public"]["Enums"]["property_status"];
+          tower_id?: string | null;
           updated_at?: string;
           zone?: string | null;
         };
         Update: {
+          affiliate_nightly_price_minor?: number | null;
           base_price_minor?: number;
           bathrooms?: number;
           bedrooms?: number;
@@ -787,19 +1254,31 @@ export type Database = {
           created_at?: string;
           currency?: string;
           description?: string | null;
+          duration_pricing_enabled?: boolean;
           featured?: boolean;
           id?: string;
+          location_reference?: string | null;
           max_guests?: number;
           minimum_nights?: number;
           name?: string;
           property_type?: string | null;
+          rules?: string | null;
           short_description?: string | null;
           slug?: string;
           status?: Database["public"]["Enums"]["property_status"];
+          tower_id?: string | null;
           updated_at?: string;
           zone?: string | null;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "properties_tower_id_fkey";
+            columns: ["tower_id"];
+            isOneToOne: false;
+            referencedRelation: "towers";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       property_amenities: {
         Row: {
@@ -913,11 +1392,94 @@ export type Database = {
           },
         ];
       };
+      property_stay_prices: {
+        Row: {
+          created_at: string;
+          id: string;
+          nights: number;
+          property_id: string;
+          total_price_minor: number;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          nights: number;
+          property_id: string;
+          total_price_minor: number;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          nights?: number;
+          property_id?: string;
+          total_price_minor?: number;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "property_stay_prices_property_id_fkey";
+            columns: ["property_id"];
+            isOneToOne: false;
+            referencedRelation: "properties";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      towers: {
+        Row: {
+          created_at: string;
+          description: string | null;
+          id: string;
+          is_active: boolean;
+          name: string;
+          sort_order: number;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          is_active?: boolean;
+          name: string;
+          sort_order?: number;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          is_active?: boolean;
+          name?: string;
+          sort_order?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
+      admin_confirm_ai_payment: {
+        Args: { p_actor_id: string; p_payment_id: string };
+        Returns: Json;
+      };
+      admin_reject_payment: {
+        Args: { p_actor_id: string; p_payment_id: string; p_reason: string };
+        Returns: Json;
+      };
+      apply_receipt_result: {
+        Args: {
+          p_mode: string;
+          p_payment_id: string;
+          // Ajuste manual: `p_receipt_id uuid` acepta NULL (fallback de dedupe/insert).
+          p_receipt_id: string | null;
+          p_result: number;
+        };
+        Returns: Json;
+      };
       attach_payment_provider_data: {
         Args: {
           p_external_id: string;
@@ -929,6 +1491,15 @@ export type Database = {
           p_raw: Json;
         };
         Returns: undefined;
+      };
+      calculate_affiliate_booking_price: {
+        Args: {
+          p_check_in: string;
+          p_check_out: string;
+          p_guest_count: number;
+          p_property_id: string;
+        };
+        Returns: Json;
       };
       calculate_booking_price: {
         Args: {
@@ -976,6 +1547,41 @@ export type Database = {
         Returns: Json;
       };
       confirm_booking_payment: { Args: { p_payment_id: string }; Returns: Json };
+      create_admin_booking: {
+        Args: {
+          // Ajuste manual: args opcionales/nullable del RPC que el generador tipa sin null.
+          p_access_token_hash: string | null;
+          p_actor_id: string;
+          p_check_in: string;
+          p_check_out: string;
+          p_guest_count: number;
+          p_guest_email: string;
+          p_guest_name: string;
+          p_guest_phone: string | null;
+          p_hold_expires_at: string | null;
+          p_kind: string;
+          p_property_id: string;
+          p_reason: string;
+          p_source: Database["public"]["Enums"]["booking_event_source"];
+        };
+        Returns: Json;
+      };
+      create_affiliate_booking_request: {
+        Args: {
+          p_affiliate_document_id: string;
+          // Ajuste manual: `p_affiliate_email text` acepta NULL.
+          p_affiliate_email: string | null;
+          p_affiliate_name: string;
+          p_affiliate_phone: string;
+          p_check_in: string;
+          p_check_out: string;
+          p_companions: Json;
+          p_guest_count: number;
+          p_max_pending?: number;
+          p_property_id: string;
+        };
+        Returns: Json;
+      };
       create_availability_block: {
         Args: {
           p_actor_id: string;
@@ -1065,12 +1671,88 @@ export type Database = {
         };
         Returns: undefined;
       };
+      register_cleaning: {
+        Args: {
+          p_entry_time: string;
+          p_exit_time: string;
+          p_property_id: string;
+          p_work_date: string;
+        };
+        Returns: Json;
+      };
+      register_co_owner_stay: {
+        Args: {
+          p_adults: number;
+          p_check_in_at: string;
+          p_check_out_at: string;
+          p_document_id: string;
+          p_full_name: string;
+          p_minors: number;
+          p_phone: string;
+        };
+        Returns: Json;
+      };
       release_availability_block: {
         Args: { p_actor_id: string; p_block_id: string; p_reason: string };
         Returns: Json;
       };
       remove_property_rate: {
         Args: { p_actor_id: string; p_rate_id: string; p_reason: string };
+        Returns: Json;
+      };
+      save_property_pricing: {
+        Args: {
+          p_actor_id: string;
+          p_base_price_minor: number;
+          p_duration_pricing_enabled: boolean;
+          p_prices: Json;
+          p_property_id: string;
+          p_reason: string;
+        };
+        Returns: Json;
+      };
+      set_booking_companions: {
+        Args: { p_actor_id: string; p_booking_id: string; p_companions: Json };
+        Returns: Json;
+      };
+      set_property_affiliate_pricing: {
+        Args: {
+          p_actor_id: string;
+          // Ajuste manual: `p_nightly_minor` acepta NULL (deshabilitar precio afiliado).
+          p_nightly_minor: number | null;
+          p_property_id: string;
+          p_reason: string;
+        };
+        Returns: Json;
+      };
+      update_admin_booking: {
+        Args: {
+          p_actor_id: string;
+          p_booking_id: string;
+          p_check_in: string;
+          p_check_out: string;
+          p_guest_count: number;
+          p_guest_email: string;
+          p_guest_name: string;
+          // Ajuste manual: args nullable del RPC que el generador tipa sin null.
+          p_guest_phone: string | null;
+          p_hold_expires_at: string | null;
+          p_property_id: string;
+          p_reason: string;
+          p_source: Database["public"]["Enums"]["booking_event_source"];
+        };
+        Returns: Json;
+      };
+      update_availability_block: {
+        Args: {
+          p_actor_id: string;
+          p_block_id: string;
+          p_from: string;
+          p_property_id: string;
+          p_reason: string;
+          p_to: string;
+          p_type: Database["public"]["Enums"]["availability_block_type"];
+        };
         Returns: Json;
       };
       update_property_rate: {
@@ -1091,6 +1773,7 @@ export type Database = {
       availability_block_status: "active" | "released" | "expired";
       availability_block_type:
         "maintenance" | "internal_use" | "owner_use" | "operational" | "manual" | "other";
+      booking_channel: "direct" | "admin" | "affiliate";
       booking_event_source: "system" | "guest" | "admin" | "operator" | "payment" | "expiration";
       booking_event_type:
         | "created"
@@ -1130,7 +1813,7 @@ export type Database = {
       payment_event_source:
         "create" | "browser_poll" | "manual_verify" | "cron" | "admin" | "reconciliation";
       payment_method: "qr";
-      payment_provider: "mock" | "bnb";
+      payment_provider: "mock" | "bnb" | "transfer";
       payment_status:
         | "created"
         | "pending"
@@ -1139,11 +1822,18 @@ export type Database = {
         | "error"
         | "cancelled"
         | "refunded"
-        | "manual_review";
-      price_change_type: "base_price" | "rate_create" | "rate_update" | "rate_remove";
+        | "manual_review"
+        | "ai_approved";
+      price_change_type:
+        | "base_price"
+        | "rate_create"
+        | "rate_update"
+        | "rate_remove"
+        | "duration_pricing_update"
+        | "affiliate_price";
       price_item_type: "nightly_rate" | "cleaning_fee" | "service_fee" | "discount";
       property_status: "draft" | "published" | "paused" | "archived";
-      user_role: "guest" | "admin" | "operator";
+      user_role: "guest" | "admin" | "operator" | "co_owner" | "cleaner";
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -1274,6 +1964,7 @@ export const Constants = {
         "manual",
         "other",
       ],
+      booking_channel: ["direct", "admin", "affiliate"],
       booking_event_source: ["system", "guest", "admin", "operator", "payment", "expiration"],
       booking_event_type: [
         "created",
@@ -1329,7 +2020,7 @@ export const Constants = {
         "reconciliation",
       ],
       payment_method: ["qr"],
-      payment_provider: ["mock", "bnb"],
+      payment_provider: ["mock", "bnb", "transfer"],
       payment_status: [
         "created",
         "pending",
@@ -1339,11 +2030,19 @@ export const Constants = {
         "cancelled",
         "refunded",
         "manual_review",
+        "ai_approved",
       ],
-      price_change_type: ["base_price", "rate_create", "rate_update", "rate_remove"],
+      price_change_type: [
+        "base_price",
+        "rate_create",
+        "rate_update",
+        "rate_remove",
+        "duration_pricing_update",
+        "affiliate_price",
+      ],
       price_item_type: ["nightly_rate", "cleaning_fee", "service_fee", "discount"],
       property_status: ["draft", "published", "paused", "archived"],
-      user_role: ["guest", "admin", "operator"],
+      user_role: ["guest", "admin", "operator", "co_owner", "cleaner"],
     },
   },
 } as const;

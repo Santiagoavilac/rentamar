@@ -4,6 +4,7 @@
 /build
 *.tsbuildinfo
 .playwright-cli
+/output/playwright
 public/media/output/playwright
 .DS_Store
 *.pem

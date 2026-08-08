@@ -3,14 +3,24 @@ import { createServerClient } from "@supabase/ssr";
 import type { Database } from "./types";
 import { SUPABASE_ANON_KEY, SUPABASE_URL, isSupabaseConfigured } from "./env";
 
-// Refresca la sesión de Supabase en cookies (patrón estándar @supabase/ssr) y
-// protege las rutas /admin: sin sesión de staff redirige a /admin/login.
-// La verificación de rol fina (admin vs operator) se hace en cada página/acción.
+// Cada área autenticada tiene su propio login y su propio destino. El middleware solo
+// exige "hay sesión"; el rol lo verifica cada página/acción (requireStaff, requireCoOwner),
+// así un copropietario no entra al panel ni un staff a la ruta de copropietarios.
+const AREAS = [
+  { prefix: "/copropietarios", login: "/copropietarios/login", home: "/copropietarios" },
+  { prefix: "/limpieza", login: "/limpieza/login", home: "/limpieza" },
+  { prefix: "/admin", login: "/admin/login", home: "/admin" },
+];
+
+// Refresca la sesión de Supabase en cookies (patrón estándar @supabase/ssr) y protege
+// las rutas autenticadas: sin sesión redirige al login del área correspondiente.
 export async function updateSession(request: NextRequest): Promise<NextResponse> {
   let response = NextResponse.next({ request });
 
   const path = request.nextUrl.pathname;
-  const isLogin = path === "/admin/login";
+  const area = AREAS.find((candidate) => path.startsWith(candidate.prefix));
+  if (!area) return response;
+  const isLogin = path === area.login;
 
   // Sin credenciales configuradas no podemos validar sesión; dejamos pasar para no
   // romper el build/preview. Las rutas admin igual fallarán al leer datos.
@@ -37,15 +47,15 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
 
   if (!user && !isLogin) {
     const url = request.nextUrl.clone();
-    url.pathname = "/admin/login";
+    url.pathname = area.login;
     url.searchParams.set("redirectTo", path);
     return NextResponse.redirect(url);
   }
 
-  // Ya autenticado y en el login: mandarlo al panel.
+  // Ya autenticado y en el login: mandarlo a su área.
   if (user && isLogin) {
     const url = request.nextUrl.clone();
-    url.pathname = "/admin";
+    url.pathname = area.home;
     url.search = "";
     return NextResponse.redirect(url);
   }

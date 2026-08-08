@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { AdminPageHeader, EmptyState } from "@/components/admin/ui";
-import { getMapForEditor, listLinkableProperties } from "@/lib/admin/maps";
+import { getMapForEditor, listLinkableProperties, listTowersForMap } from "@/lib/admin/maps";
 import { NotFoundError } from "@/lib/errors";
 import { MapEditor } from "@/components/admin/map/MapEditor";
 
@@ -29,7 +29,7 @@ export default async function AdminMapaPage() {
     );
   }
 
-  const properties = await listLinkableProperties();
+  const [properties, towers] = await Promise.all([listLinkableProperties(), listTowersForMap()]);
 
   return (
     <>
@@ -42,7 +42,7 @@ export default async function AdminMapaPage() {
           </Link>
         }
       />
-      <MapEditor map={data.map} initialItems={data.items} properties={properties} />
+      <MapEditor map={data.map} initialItems={data.items} properties={properties} towers={towers} />
     </>
   );
 }

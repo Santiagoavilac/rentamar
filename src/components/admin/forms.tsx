@@ -7,7 +7,7 @@ import type { ActionResult } from "@/lib/admin/actions";
 type FormAction = (state: ActionResult, formData: FormData) => Promise<ActionResult>;
 const initial: ActionResult = { ok: false, error: null };
 
-function Submit({ label = "Guardar" }: { label?: string }) {
+export function Submit({ label = "Guardar" }: { label?: string }) {
   const { pending } = useFormStatus();
   return (
     <button
@@ -94,6 +94,31 @@ export function ReasonActionForm({
   );
 }
 
+export function ReceiptModeForm({
+  action,
+  current,
+}: {
+  action: FormAction;
+  current: "admin" | "auto";
+}) {
+  const [state, formAction] = useActionState(action, initial);
+  return (
+    <form action={formAction} className="mt-3 grid gap-3">
+      <label className="block text-sm font-medium">
+        Modo de confirmación
+        <select name="mode" defaultValue={current} className="mt-1 w-full rounded border p-2">
+          <option value="admin">Modo B — la IA aprueba, un humano confirma</option>
+          <option value="auto">Modo A — la IA aprueba y confirma sola</option>
+        </select>
+      </label>
+      <div>
+        <Submit label="Guardar modo" />
+        <Feedback {...state} />
+      </div>
+    </form>
+  );
+}
+
 export function UserForm({ action }: { action: FormAction }) {
   const [state, formAction] = useActionState(action, initial);
   return (
@@ -139,9 +164,13 @@ type PropertyValues = Record<string, string | number | boolean | null | undefine
 export function PropertyForm({
   action,
   values = {},
+  towers = [],
+  canManageAffiliates = false,
 }: {
   action: FormAction;
   values?: PropertyValues;
+  towers?: { id: string; name: string; is_active: boolean }[];
+  canManageAffiliates?: boolean;
 }) {
   const [state, formAction] = useActionState(action, initial);
   const v = (key: string, fallback: string | number = "") => String(values[key] ?? fallback);
@@ -178,6 +207,22 @@ export function PropertyForm({
         />
       </label>
       <label className="text-sm">
+        Torre
+        <select
+          name="towerId"
+          defaultValue={v("tower_id")}
+          className="mt-1 w-full rounded border p-2"
+        >
+          <option value="">Sin torre</option>
+          {towers.map((tower) => (
+            <option key={tower.id} value={tower.id}>
+              {tower.name}
+              {tower.is_active ? "" : " (inactiva)"}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="text-sm">
         Estado
         <select
           name="status"
@@ -203,6 +248,24 @@ export function PropertyForm({
           className="mt-1 w-full rounded border p-2"
         />
       </label>
+      {canManageAffiliates ? (
+        <label className="text-sm">
+          Precio de la reserva para afiliados (BOB)
+          <input
+            name="affiliatePrice"
+            inputMode="decimal"
+            defaultValue={
+              values.affiliate_nightly_price_minor == null
+                ? ""
+                : (Number(values.affiliate_nightly_price_minor) / 100).toFixed(2)
+            }
+            className="mt-1 w-full rounded border p-2"
+          />
+          <span className="mt-1 block text-xs text-slate-500">
+            Dejalo vacío si esta propiedad todavía no tiene precio para afiliados.
+          </span>
+        </label>
+      ) : null}
       <label className="text-sm">
         Dormitorios
         <input
@@ -296,6 +359,22 @@ export function PropertyForm({
           name="description"
           defaultValue={v("description")}
           className="mt-1 min-h-28 w-full rounded border p-2"
+        />
+      </label>
+      <label className="text-sm md:col-span-2">
+        Reglas y condiciones
+        <textarea
+          name="rules"
+          defaultValue={v("rules")}
+          className="mt-1 min-h-24 w-full rounded border p-2"
+        />
+      </label>
+      <label className="text-sm md:col-span-2">
+        Referencia de ubicación en Mar Adentro
+        <textarea
+          name="locationReference"
+          defaultValue={v("location_reference")}
+          className="mt-1 min-h-20 w-full rounded border p-2"
         />
       </label>
       <div className="md:col-span-2">

@@ -12,6 +12,9 @@ export type AdminAction =
   | "property.manage"
   | "rate.manage"
   | "availability.manage"
+  | "availability.export"
+  | "booking.create"
+  | "booking.edit"
   | "booking.review"
   | "booking.cancel"
   | "booking.manual_review"
@@ -22,7 +25,14 @@ export type AdminAction =
   | "user.manage"
   | "role.change"
   | "map.manage"
-  | "map.publish";
+  | "map.publish"
+  | "affiliate.manage"
+  | "affiliate.review"
+  | "coowner.manage"
+  | "cleaning.manage"
+  // Fuera de ADMIN_ONLY a propósito: recepción necesita imprimir la declaración, y ya ve
+  // los mismos datos del huésped en la reserva.
+  | "declaration.read";
 
 // Acciones reservadas a admin. El operator puede hacer todo lo demás.
 const ADMIN_ONLY: ReadonlySet<AdminAction> = new Set<AdminAction>([
@@ -30,6 +40,9 @@ const ADMIN_ONLY: ReadonlySet<AdminAction> = new Set<AdminAction>([
   "audit.read",
   "user.manage",
   "role.change",
+  "affiliate.manage",
+  "coowner.manage",
+  "cleaning.manage",
 ]);
 
 // Matriz de permisos central. Devuelve true si el rol puede ejecutar la acción.

@@ -31,3 +31,8 @@ export function formatCurrency(minor: number, currency = "BOB", locale = "es-BO"
   });
   return `${symbol} ${amount}`;
 }
+
+export function calculateDiscountPercent(originalMinor: number, finalMinor: number): number {
+  if (originalMinor <= 0 || finalMinor >= originalMinor) return 0;
+  return Math.round(((originalMinor - finalMinor) * 10_000) / originalMinor) / 100;
+}

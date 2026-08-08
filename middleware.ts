@@ -5,7 +5,8 @@ export async function middleware(request: NextRequest) {
   return updateSession(request);
 }
 
-// Solo corre sobre /admin/** (excluye assets estáticos). El landing público queda intacto.
+// Solo corre sobre las áreas autenticadas (excluye assets estáticos). El landing público
+// y el catálogo quedan intactos.
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/admin/:path*", "/copropietarios/:path*", "/limpieza/:path*"],
 };

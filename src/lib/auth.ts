@@ -56,3 +56,79 @@ export async function requireAdmin(): Promise<StaffSession> {
   if (session.role !== "admin") throw new ForbiddenError();
   return session;
 }
+
+export type CoOwnerSession = {
+  userId: string;
+  username: string;
+};
+
+// Sesión de copropietario: rol co_owner en profiles + cuenta activa. Es una vía separada
+// de getStaffSession, que sigue exigiendo admin/operator, así que un copropietario nunca
+// obtiene acceso al panel ni un staff entra por la ruta de copropietarios.
+export async function getCoOwnerSession(): Promise<CoOwnerSession | null> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (profile?.role !== "co_owner") return null;
+
+  const { data: account } = await supabase
+    .from("co_owner_accounts")
+    .select("username, is_active")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (!account?.is_active) return null;
+
+  return { userId: user.id, username: account.username };
+}
+
+export async function requireCoOwner(): Promise<CoOwnerSession> {
+  const session = await getCoOwnerSession();
+  if (!session) redirect("/copropietarios/login");
+  return session;
+}
+
+export type CleanerSession = {
+  userId: string;
+  username: string;
+  fullName: string;
+};
+
+// Sesión del personal de limpieza: rol cleaner en profiles + cuenta activa. Vía separada de
+// getStaffSession y getCoOwnerSession, así cada área queda aislada de las otras.
+export async function getCleanerSession(): Promise<CleanerSession | null> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (profile?.role !== "cleaner") return null;
+
+  const { data: account } = await supabase
+    .from("cleaner_accounts")
+    .select("username, full_name, is_active")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (!account?.is_active) return null;
+
+  return { userId: user.id, username: account.username, fullName: account.full_name };
+}
+
+export async function requireCleaner(): Promise<CleanerSession> {
+  const session = await getCleanerSession();
+  if (!session) redirect("/limpieza/login");
+  return session;
+}

@@ -1,7 +1,12 @@
 "use client";
 
 import { useCallback, useMemo, useRef, useState, useTransition } from "react";
-import type { AdminMapRow, AdminMapItemRow, LinkablePropertyOption } from "@/lib/admin/maps";
+import type {
+  AdminMapRow,
+  AdminMapItemRow,
+  LinkablePropertyOption,
+  MapTowerOption,
+} from "@/lib/admin/maps";
 import {
   createItemAction,
   updateItemAction,
@@ -42,6 +47,7 @@ function toInput(item: EditorItem): MapItemInput {
     rotation: item.rotation,
     isVisible: item.is_visible,
     linkedPropertyId: item.linked_property_id,
+    linkedTowerId: item.linked_tower_id,
   };
 }
 
@@ -49,16 +55,19 @@ export function MapEditor({
   map,
   initialItems,
   properties,
+  towers,
 }: {
   map: AdminMapRow;
   initialItems: AdminMapItemRow[];
   properties: LinkablePropertyOption[];
+  towers: MapTowerOption[];
 }) {
   const [items, setItems] = useState<EditorItem[]>(initialItems);
   const [dirtyIds, setDirtyIds] = useState<Set<string>>(new Set());
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [addType, setAddType] = useState<MapItemType>("house");
   const [tool, setTool] = useState<"add" | "select">("select");
+  const [placingTowerId, setPlacingTowerId] = useState<string | null>(null);
   const [preview, setPreview] = useState(false);
 
   const [scale, setScale] = useState(1);
@@ -81,6 +90,15 @@ export function MapEditor({
     [items, selectedId],
   );
   const hasUnsaved = dirtyIds.size > 0;
+  const placedTowerIds = useMemo(
+    () => new Set(items.map((item) => item.linked_tower_id).filter(Boolean)),
+    [items],
+  );
+  const unplacedTowers = towers.filter((tower) => !placedTowerIds.has(tower.id));
+  const incompleteTowers = towers.filter(
+    (tower) =>
+      items.filter((item) => item.linked_tower_id === tower.id && item.is_visible).length !== 1,
+  );
 
   const markDirty = useCallback((id: string) => {
     setDirtyIds((prev) => {
@@ -119,10 +137,17 @@ export function MapEditor({
 
   const addMarkerAt = (clientX: number, clientY: number) => {
     const { x, y } = normalizedFromEvent(clientX, clientY);
+    const tower = placingTowerId
+      ? (towers.find((candidate) => candidate.id === placingTowerId) ?? null)
+      : null;
+    if (placingTowerId && !tower) {
+      setMessage({ kind: "error", text: "La torre seleccionada ya no está disponible." });
+      return;
+    }
     const input: MapItemInput = {
-      type: addType,
-      name: LABEL_BY_TYPE[addType],
-      description: "",
+      type: tower ? "tower" : addType,
+      name: tower?.name ?? LABEL_BY_TYPE[addType],
+      description: tower?.description ?? "",
       normalizedX: x,
       normalizedY: y,
       normalizedWidth: DEFAULT_SIZE,
@@ -130,6 +155,7 @@ export function MapEditor({
       rotation: 0,
       isVisible: true,
       linkedPropertyId: null,
+      linkedTowerId: tower?.id ?? null,
     };
     startTransition(async () => {
       const res = await createItemAction(map.id, input);
@@ -152,12 +178,17 @@ export function MapEditor({
         status: "draft",
         is_visible: input.isVisible,
         linked_property_id: input.linkedPropertyId,
+        linked_tower_id: input.linkedTowerId,
         metadata: {},
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
       setItems((prev) => [...prev, created]);
       setSelectedId(created.id);
+      if (tower) {
+        setPlacingTowerId(null);
+        setTool("select");
+      }
       setMessage(null);
     });
   };
@@ -285,7 +316,10 @@ export function MapEditor({
           <div className="flex items-center gap-1 rounded-lg bg-slate-100 p-1">
             <button
               type="button"
-              onClick={() => setTool("select")}
+              onClick={() => {
+                setTool("select");
+                setPlacingTowerId(null);
+              }}
               className={`rounded px-3 py-1.5 text-sm font-semibold ${tool === "select" ? "bg-white shadow" : "text-slate-600"}`}
               disabled={preview}
             >
@@ -293,7 +327,10 @@ export function MapEditor({
             </button>
             <button
               type="button"
-              onClick={() => setTool("add")}
+              onClick={() => {
+                setTool("add");
+                setPlacingTowerId(null);
+              }}
               className={`rounded px-3 py-1.5 text-sm font-semibold ${tool === "add" ? "bg-white shadow" : "text-slate-600"}`}
               disabled={preview}
             >
@@ -308,7 +345,7 @@ export function MapEditor({
               className="rounded-lg border border-slate-300 px-2 py-1.5 text-sm"
               aria-label="Tipo de elemento a agregar"
             >
-              {MAP_ITEM_TYPES.map((t) => (
+              {MAP_ITEM_TYPES.filter((type) => type !== "tower").map((t) => (
                 <option key={t} value={t}>
                   {LABEL_BY_TYPE[t]}
                 </option>
@@ -422,7 +459,13 @@ export function MapEditor({
 
         {tool === "add" && !preview ? (
           <p className="text-sm text-slate-600">
-            Hacé clic sobre el mapa para colocar un <strong>{LABEL_BY_TYPE[addType]}</strong>.
+            Hacé clic sobre el mapa para colocar{" "}
+            <strong>
+              {placingTowerId
+                ? towers.find((tower) => tower.id === placingTowerId)?.name
+                : LABEL_BY_TYPE[addType]}
+            </strong>
+            .
           </p>
         ) : null}
       </div>
@@ -453,7 +496,7 @@ export function MapEditor({
               <button
                 type="button"
                 onClick={() => setPublishStep(1)}
-                disabled={pending}
+                disabled={pending || incompleteTowers.length > 0}
                 className="rounded-lg bg-deep px-4 py-2 text-sm font-semibold text-cream disabled:opacity-40"
               >
                 Publicar cambios
@@ -467,7 +510,7 @@ export function MapEditor({
                   <button
                     type="button"
                     onClick={doPublish}
-                    disabled={pending}
+                    disabled={pending || incompleteTowers.length > 0}
                     className="rounded bg-deep px-3 py-1.5 text-xs font-semibold text-cream disabled:opacity-40"
                   >
                     Sí, publicar
@@ -483,6 +526,12 @@ export function MapEditor({
               </div>
             )}
           </div>
+          {incompleteTowers.length > 0 ? (
+            <p className="mt-2 text-xs font-medium text-amber-700">
+              Publicación bloqueada. Falta una ubicación visible para:{" "}
+              {incompleteTowers.map((tower) => tower.name).join(", ")}.
+            </p>
+          ) : null}
           {map.published_at ? (
             <p className="mt-2 text-xs text-slate-500">
               Última publicación: {new Date(map.published_at).toLocaleString("es-BO")}
@@ -503,6 +552,38 @@ export function MapEditor({
           ) : null}
         </div>
 
+        <div className="surface rounded-xl p-4">
+          <h2 className="font-bold">Torres sin ubicar ({unplacedTowers.length})</h2>
+          <p className="mt-1 text-xs text-slate-500">
+            Elegí Ubicar y luego hacé clic sobre el mapa.
+          </p>
+          {unplacedTowers.length ? (
+            <ul className="mt-3 grid gap-2">
+              {unplacedTowers.map((tower) => (
+                <li key={tower.id} className="flex items-center justify-between gap-3 text-sm">
+                  <span className="font-medium">{tower.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPlacingTowerId(tower.id);
+                      setTool("add");
+                      setPreview(false);
+                      setMessage(null);
+                    }}
+                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${
+                      placingTowerId === tower.id ? "bg-turquoise text-night" : "bg-deep text-cream"
+                    }`}
+                  >
+                    {placingTowerId === tower.id ? "Esperando clic" : "Ubicar"}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-3 text-sm text-emerald-700">Todas las torres están ubicadas.</p>
+          )}
+        </div>
+
         {/* Properties panel */}
         <div className="surface rounded-xl p-4">
           <h2 className="mb-3 font-bold">Propiedades del elemento</h2>
@@ -511,6 +592,7 @@ export function MapEditor({
               key={selected.id}
               item={selected}
               properties={properties}
+              towers={towers}
               onChange={(patch) => patchItem(selected.id, patch)}
               onDelete={() => setConfirmDeleteId(selected.id)}
             />
@@ -591,15 +673,19 @@ export function MapEditor({
 function ItemProperties({
   item,
   properties,
+  towers,
   onChange,
   onDelete,
 }: {
   item: AdminMapItemRow;
   properties: LinkablePropertyOption[];
+  towers: MapTowerOption[];
   onChange: (patch: Partial<AdminMapItemRow>) => void;
   onDelete: () => void;
 }) {
   const pct = (n: number) => Math.round(n * 100);
+  const linkedTower = towers.find((tower) => tower.id === item.linked_tower_id) ?? null;
+  const isTower = item.type === "tower";
   return (
     <div className="grid gap-3 text-sm">
       <label className="grid gap-1">
@@ -607,39 +693,54 @@ function ItemProperties({
         <input
           value={item.name}
           onChange={(e) => onChange({ name: e.target.value })}
+          disabled={isTower}
           maxLength={160}
           className="rounded-lg border border-slate-300 px-2 py-1.5"
         />
       </label>
 
-      <label className="grid gap-1">
-        <span className="font-semibold text-slate-600">Tipo</span>
-        <select
-          value={item.type}
-          onChange={(e) => {
-            const type = e.target.value as MapItemType;
-            onChange({ type, icon_key: iconKeyForType(type) });
-          }}
-          className="rounded-lg border border-slate-300 px-2 py-1.5"
-        >
-          {MAP_ITEM_TYPES.map((t) => (
-            <option key={t} value={t}>
-              {LABEL_BY_TYPE[t]}
-            </option>
-          ))}
-        </select>
-      </label>
+      {isTower ? (
+        <div className="rounded-lg bg-slate-50 p-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Torre vinculada
+          </p>
+          <p className="mt-1 font-semibold">{linkedTower?.name ?? "Torre no disponible"}</p>
+          <p className="mt-1 text-xs text-slate-500">
+            El nombre y la descripción se editan desde Catálogo → Torres.
+          </p>
+        </div>
+      ) : (
+        <label className="grid gap-1">
+          <span className="font-semibold text-slate-600">Tipo</span>
+          <select
+            value={item.type}
+            onChange={(e) => {
+              const type = e.target.value as MapItemType;
+              onChange({ type, icon_key: iconKeyForType(type) });
+            }}
+            className="rounded-lg border border-slate-300 px-2 py-1.5"
+          >
+            {MAP_ITEM_TYPES.filter((type) => type !== "tower").map((t) => (
+              <option key={t} value={t}>
+                {LABEL_BY_TYPE[t]}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
 
-      <label className="grid gap-1">
-        <span className="font-semibold text-slate-600">Descripción</span>
-        <textarea
-          value={item.description ?? ""}
-          onChange={(e) => onChange({ description: e.target.value })}
-          maxLength={2000}
-          rows={3}
-          className="rounded-lg border border-slate-300 px-2 py-1.5"
-        />
-      </label>
+      {!isTower ? (
+        <label className="grid gap-1">
+          <span className="font-semibold text-slate-600">Descripción</span>
+          <textarea
+            value={item.description ?? ""}
+            onChange={(e) => onChange({ description: e.target.value })}
+            maxLength={2000}
+            rows={3}
+            className="rounded-lg border border-slate-300 px-2 py-1.5"
+          />
+        </label>
+      ) : null}
 
       <div className="grid grid-cols-2 gap-2">
         <label className="grid gap-1">
@@ -668,32 +769,36 @@ function ItemProperties({
         </label>
       </div>
 
-      <label className="grid gap-1">
-        <span className="font-semibold text-slate-600">Rotación ({item.rotation}°)</span>
-        <input
-          type="range"
-          min={-180}
-          max={180}
-          value={item.rotation}
-          onChange={(e) => onChange({ rotation: Number(e.target.value) })}
-        />
-      </label>
+      {!isTower ? (
+        <label className="grid gap-1">
+          <span className="font-semibold text-slate-600">Rotación ({item.rotation}°)</span>
+          <input
+            type="range"
+            min={-180}
+            max={180}
+            value={item.rotation}
+            onChange={(e) => onChange({ rotation: Number(e.target.value) })}
+          />
+        </label>
+      ) : null}
 
-      <label className="grid gap-1">
-        <span className="font-semibold text-slate-600">Vincular a propiedad</span>
-        <select
-          value={item.linked_property_id ?? ""}
-          onChange={(e) => onChange({ linked_property_id: e.target.value || null })}
-          className="rounded-lg border border-slate-300 px-2 py-1.5"
-        >
-          <option value="">Sin vínculo</option>
-          {properties.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
-        </select>
-      </label>
+      {!isTower ? (
+        <label className="grid gap-1">
+          <span className="font-semibold text-slate-600">Vincular a propiedad</span>
+          <select
+            value={item.linked_property_id ?? ""}
+            onChange={(e) => onChange({ linked_property_id: e.target.value || null })}
+            className="rounded-lg border border-slate-300 px-2 py-1.5"
+          >
+            <option value="">Sin vínculo</option>
+            {properties.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
 
       <label className="flex items-center gap-2">
         <input
@@ -709,7 +814,7 @@ function ItemProperties({
         onClick={onDelete}
         className="mt-1 rounded-lg border border-rose-300 px-3 py-1.5 text-sm font-semibold text-rose-700 hover:bg-rose-50"
       >
-        Eliminar elemento
+        {isTower ? "Quitar ubicación" : "Eliminar elemento"}
       </button>
     </div>
   );
