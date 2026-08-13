@@ -12,3 +12,6 @@ public/media/output/playwright
 !.env.example
 next-env.d.ts
 .vercel
+
+# Estado local del CLI de Supabase (project-ref, versiones)
+supabase/.temp/
