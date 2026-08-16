@@ -13,7 +13,7 @@ import {
 import { AppError, mapPostgresError } from "@/lib/errors";
 import { writeAudit } from "@/lib/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { setReceiptConfirmMode } from "@/lib/settings";
+import { setReceiptConfirmMode, setWeekendPricing } from "@/lib/settings";
 import { buildAuditContext, assertSameOrigin } from "./context";
 import * as properties from "./properties";
 import * as rates from "./rates";
@@ -32,6 +32,7 @@ import {
   affiliateOpSchema,
   paymentOpSchema,
   receiptConfirmModeSchema,
+  weekendPricingSchema,
   entityIdSchema,
   changeRoleInputSchema,
   createUserInputSchema,
@@ -466,6 +467,37 @@ export async function savePropertyPricingAction(
   }
   revalidatePath("/admin/pricing");
   revalidatePath(`/admin/properties/${propertyId}`);
+  return OK;
+}
+
+// Recargo global de fin de semana: días marcados + %. Aplica a todas las propiedades
+// sobre el precio base; las tarifas estacionales (y los feriados cargados como tal)
+// siguen teniendo prioridad porque fijan el precio de la noche.
+export async function setWeekendPricingAction(
+  _prev: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  try {
+    const session = await requireStaff();
+    await assertSameOrigin();
+    assertAdminAction(session.role, "rate.manage");
+    const input = weekendPricingSchema.parse({
+      days: formData.getAll("days").map((day) => Number(str(day))),
+      surchargePercent: Number(str(formData.get("surchargePercent")) || "0"),
+    });
+    await setWeekendPricing(input);
+    const ctx = await buildAuditContext(session);
+    await writeAudit({
+      ...ctx,
+      action: "pricing.weekend",
+      entityType: "setting",
+      entityId: "weekend_pricing",
+      after: input,
+    });
+  } catch (error) {
+    return fail(error);
+  }
+  revalidatePath("/admin/pricing");
   return OK;
 }
 

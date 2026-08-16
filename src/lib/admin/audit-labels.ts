@@ -9,6 +9,7 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   "property.tower": "Torre de la propiedad actualizada",
   "property.base_price": "Precio base actualizado",
   "property.pricing": "Precios por duración actualizados",
+  "pricing.weekend": "Recargo de fin de semana actualizado",
   "property.amenities": "Comodidades actualizadas",
   "property.image.add": "Imagen agregada",
   "property.image.upload": "Imagen subida",
@@ -65,6 +66,7 @@ export const ENTITY_LABELS: Record<string, string> = {
   property_rate: "Tarifa",
   availability_block: "Bloqueo",
   user: "Usuario",
+  setting: "Ajuste",
   co_owner_account: "Cuenta de copropietario",
 };
 

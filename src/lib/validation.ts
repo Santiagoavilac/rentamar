@@ -182,6 +182,13 @@ export const rateInputSchema = z
     path: ["endDate"],
   });
 
+// Recargo global de fin de semana: días en ISO (1 = lunes … 7 = domingo) y el
+// porcentaje que se suma al precio base de esas noches. Lista vacía o 0% = apagado.
+export const weekendPricingSchema = z.object({
+  days: z.array(z.number().int().min(1).max(7)).max(7),
+  surchargePercent: z.number().min(0).max(300),
+});
+
 export const stayPriceInputSchema = z.object({
   nights: z.number().int().min(1).max(365),
   total: moneyDecimal,
@@ -523,6 +530,7 @@ export type CleaningReportInput = z.infer<typeof cleaningReportSchema>;
 export type PropertyInput = z.infer<typeof propertyInputSchema>;
 export type TowerInput = z.infer<typeof towerInputSchema>;
 export type RateInput = z.infer<typeof rateInputSchema>;
+export type WeekendPricing = z.infer<typeof weekendPricingSchema>;
 export type AvailabilityBlockInput = z.infer<typeof availabilityBlockInputSchema>;
 export type AvailabilityBlockUpdateInput = z.infer<typeof availabilityBlockUpdateSchema>;
 export type AdminBookingInput = z.infer<typeof adminBookingInputSchema>;

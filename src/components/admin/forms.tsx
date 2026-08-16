@@ -1,8 +1,9 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import type { ActionResult } from "@/lib/admin/actions";
+import { formatCurrency } from "@/lib/money";
 
 type FormAction = (state: ActionResult, formData: FormData) => Promise<ActionResult>;
 const initial: ActionResult = { ok: false, error: null };
@@ -59,6 +60,115 @@ export function BlockForm({ action, propertyId }: { action: FormAction; property
       </label>
       <div className="md:col-span-2">
         <Submit label="Bloquear fechas" />
+        <Feedback {...state} />
+      </div>
+    </form>
+  );
+}
+
+// Días en ISO (1 = lunes … 7 = domingo), igual que `extract(isodow)` en la RPC.
+const WEEK_DAYS = [
+  { value: 1, label: "Lunes" },
+  { value: 2, label: "Martes" },
+  { value: 3, label: "Miércoles" },
+  { value: 4, label: "Jueves" },
+  { value: 5, label: "Viernes" },
+  { value: 6, label: "Sábado" },
+  { value: 7, label: "Domingo" },
+];
+
+export function WeekendPricingForm({
+  action,
+  days,
+  surchargePercent,
+  basePriceMinor,
+}: {
+  action: FormAction;
+  days: number[];
+  surchargePercent: number;
+  basePriceMinor: number;
+}) {
+  const [state, formAction] = useActionState(action, initial);
+  const [selected, setSelected] = useState<number[]>(days);
+  const [percent, setPercent] = useState(String(surchargePercent));
+  const parsedPercent = Math.max(0, Number(percent) || 0);
+  const weekendMinor = Math.round(basePriceMinor * (1 + parsedPercent / 100));
+  const active = parsedPercent > 0 && selected.length > 0;
+
+  return (
+    <form action={formAction} className="mt-3 grid gap-4">
+      <fieldset>
+        <legend className="text-sm font-semibold text-slate-700">
+          Días que se cobran como fin de semana
+        </legend>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {WEEK_DAYS.map((day) => {
+            const checked = selected.includes(day.value);
+            return (
+              <label
+                key={day.value}
+                className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold ${
+                  checked ? "border-cyan-600 bg-cyan-50 text-cyan-800" : "border-slate-300"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  name="days"
+                  value={day.value}
+                  checked={checked}
+                  onChange={(event) =>
+                    setSelected((current) =>
+                      event.target.checked
+                        ? [...current, day.value]
+                        : current.filter((value) => value !== day.value),
+                    )
+                  }
+                />
+                {day.label}
+              </label>
+            );
+          })}
+        </div>
+        <p className="mt-2 text-xs text-slate-500">
+          Se cobra por noche: si alguien entra el viernes y sale el domingo, las noches son viernes y
+          sábado.
+        </p>
+      </fieldset>
+
+      <label className="max-w-56 text-sm font-semibold text-slate-700">
+        Recargo sobre el precio base (%)
+        <input
+          required
+          name="surchargePercent"
+          inputMode="decimal"
+          value={percent}
+          onChange={(event) => setPercent(event.target.value)}
+          className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+        />
+        <span className="mt-1 block text-xs font-normal text-slate-500">
+          0 % desactiva el recargo.
+        </span>
+      </label>
+
+      <p className="rounded-lg bg-slate-50 p-3 text-sm text-slate-700">
+        {active ? (
+          <>
+            Entre semana {formatCurrency(basePriceMinor)} por noche · Fin de semana{" "}
+            <strong>{formatCurrency(weekendMinor)}</strong> por noche (
+            {selected
+              .slice()
+              .sort((a, b) => a - b)
+              .map((value) => WEEK_DAYS.find((day) => day.value === value)?.label)
+              .join(", ")}
+            ).
+          </>
+        ) : (
+          <>Sin recargo: todas las noches se cobran {formatCurrency(basePriceMinor)}.</>
+        )}
+      </p>
+
+      <div>
+        <Submit label="Guardar recargo" />
         <Feedback {...state} />
       </div>
     </form>
