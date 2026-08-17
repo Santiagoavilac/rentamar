@@ -1,12 +1,10 @@
 import Link from "next/link";
 import { AdminPageHeader, EmptyState, Panel } from "@/components/admin/ui";
 import { PricingEditor } from "@/components/admin/pricing-editor";
-import { WeekendPricingForm } from "@/components/admin/forms";
-import { savePropertyPricingAction, setWeekendPricingAction } from "@/lib/admin/actions";
+import { savePropertyPricingAction } from "@/lib/admin/actions";
 import { getProperty, listProperties } from "@/lib/admin/properties";
 import { listRates, listStayPrices } from "@/lib/admin/rates";
 import { requireStaff } from "@/lib/auth";
-import { getWeekendPricing } from "@/lib/settings";
 
 type SearchParams = { propertyId?: string | string[] };
 
@@ -38,11 +36,10 @@ export default async function PricingPage({
   const selectedId = properties.rows.some((property) => property.id === requested)
     ? (requested as string)
     : properties.rows[0].id;
-  const [property, prices, rates, weekend] = await Promise.all([
+  const [property, prices, rates] = await Promise.all([
     getProperty(selectedId),
     listStayPrices(selectedId),
     listRates(selectedId),
-    getWeekendPricing(),
   ]);
   const saveAction = savePropertyPricingAction.bind(null, selectedId);
 
@@ -91,20 +88,6 @@ export default async function PricingPage({
           initialPrices={prices}
         />
       </div>
-      <Panel className="mt-5">
-        <h2 className="font-bold">Fin de semana y feriados</h2>
-        <p className="mt-1 text-sm text-slate-600">
-          El recargo de fin de semana es global: los días marcados y el porcentaje valen para todas
-          las propiedades, sobre el precio base de cada una. Para un feriado, cargá una tarifa
-          estacional de ese día en la propiedad: tiene prioridad sobre todo lo demás.
-        </p>
-        <WeekendPricingForm
-          action={setWeekendPricingAction}
-          days={weekend.days}
-          surchargePercent={weekend.surchargePercent}
-          basePriceMinor={property.base_price_minor}
-        />
-      </Panel>
       <Panel className="mt-5">
         <h2 className="font-bold">Tarifas estacionales</h2>
         <p className="mt-1 text-sm text-slate-600">

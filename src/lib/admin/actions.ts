@@ -497,6 +497,8 @@ export async function setWeekendPricingAction(
   } catch (error) {
     return fail(error);
   }
+  // El ajuste es global: se refresca el detalle de cualquier propiedad, no solo la abierta.
+  revalidatePath("/admin/properties/[propertyId]", "page");
   revalidatePath("/admin/pricing");
   return OK;
 }

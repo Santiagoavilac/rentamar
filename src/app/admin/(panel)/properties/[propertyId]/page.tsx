@@ -10,11 +10,18 @@ import {
   createRateAction,
   updatePropertyAction,
   uploadPropertyImageAction,
+  setWeekendPricingAction,
 } from "@/lib/admin/actions";
 import { AdminPageHeader, KeyValue, Money, Panel, StatusBadge } from "@/components/admin/ui";
-import { ImageUploadForm, PropertyForm, RateForm } from "@/components/admin/forms";
+import {
+  ImageUploadForm,
+  PropertyForm,
+  RateForm,
+  WeekendPricingForm,
+} from "@/components/admin/forms";
 import { requireStaff, canPerformAdminAction } from "@/lib/auth";
 import { listTowerOptions } from "@/lib/admin/towers";
+import { getWeekendPricing } from "@/lib/settings";
 
 export default async function PropertyDetailPage({
   params,
@@ -23,15 +30,17 @@ export default async function PropertyDetailPage({
 }) {
   const { propertyId } = await params;
   const session = await requireStaff();
-  const [property, images, amenityIds, amenities, rates, history, towers] = await Promise.all([
-    getProperty(propertyId),
-    getPropertyImages(propertyId),
-    getPropertyAmenities(propertyId),
-    listAmenities(),
-    listRates(propertyId),
-    listPriceHistory(propertyId),
-    listTowerOptions(),
-  ]);
+  const [property, images, amenityIds, amenities, rates, history, towers, weekend] =
+    await Promise.all([
+      getProperty(propertyId),
+      getPropertyImages(propertyId),
+      getPropertyAmenities(propertyId),
+      listAmenities(),
+      listRates(propertyId),
+      listPriceHistory(propertyId),
+      listTowerOptions(),
+      getWeekendPricing(),
+    ]);
   const action = updatePropertyAction.bind(null, propertyId);
   const uploadAction = uploadPropertyImageAction.bind(null, propertyId);
   const rateAction = createRateAction.bind(null, propertyId);
@@ -85,6 +94,20 @@ export default async function PropertyDetailPage({
                 ))}
               </ul>
             ) : null}
+          </Panel>
+          <Panel>
+            <h2 className="font-bold">Precio de fin de semana</h2>
+            <p className="mt-1 text-sm text-slate-600">
+              Recargo sobre el precio base en los días marcados. Es un ajuste general: los mismos
+              días y porcentaje valen para todas las propiedades. Para un feriado, cargá abajo una
+              tarifa estacional de ese día: tiene prioridad sobre el recargo.
+            </p>
+            <WeekendPricingForm
+              action={setWeekendPricingAction}
+              days={weekend.days}
+              surchargePercent={weekend.surchargePercent}
+              basePriceMinor={property.base_price_minor}
+            />
           </Panel>
           <Panel>
             <h2 className="mb-3 font-bold">Nueva tarifa estacional</h2>
