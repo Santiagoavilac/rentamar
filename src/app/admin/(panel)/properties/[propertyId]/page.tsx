@@ -7,13 +7,9 @@ import {
   listAmenities,
 } from "@/lib/admin/properties";
 import { listRates, listPriceHistory } from "@/lib/admin/rates";
-import {
-  createRateAction,
-  updatePropertyAction,
-  setWeekendPricingAction,
-} from "@/lib/admin/actions";
+import { savePropertyAction } from "@/lib/admin/actions";
 import { AdminPageHeader, KeyValue, Money, Panel, StatusBadge } from "@/components/admin/ui";
-import { PropertyForm, RateForm, WeekendPricingForm } from "@/components/admin/forms";
+import { PropertyEditor } from "@/components/admin/property-editor";
 import { requireStaff, canPerformAdminAction } from "@/lib/auth";
 import { listTowerOptions } from "@/lib/admin/towers";
 import { getWeekendPricing } from "@/lib/settings";
@@ -36,8 +32,6 @@ export default async function PropertyDetailPage({
       listTowerOptions(),
       getWeekendPricing(),
     ]);
-  const action = updatePropertyAction.bind(null, propertyId);
-  const rateAction = createRateAction.bind(null, propertyId);
   return (
     <>
       <AdminPageHeader
@@ -51,12 +45,13 @@ export default async function PropertyDetailPage({
       />
       <div className="grid gap-5 xl:grid-cols-[1.4fr_.6fr]">
         <Panel>
-          <h2 className="mb-4 font-bold">Datos de la propiedad</h2>
-          <PropertyForm
-            action={action}
+          <PropertyEditor
+            action={savePropertyAction.bind(null, propertyId)}
             values={property}
             towers={towers}
             canManageAffiliates={canPerformAdminAction(session.role, "affiliate.manage")}
+            weekend={weekend}
+            rates={rates}
           />
         </Panel>
         <div className="grid gap-5">
@@ -104,36 +99,6 @@ export default async function PropertyDetailPage({
               </ul>
             ) : (
               <p className="mt-3 text-sm text-slate-600">Todavía no hay imágenes cargadas.</p>
-            )}
-          </Panel>
-          <Panel>
-            <h2 className="font-bold">Precio de fin de semana</h2>
-            <p className="mt-1 text-sm text-slate-600">
-              Recargo sobre el precio base en los días marcados. Es un ajuste general: los mismos
-              días y porcentaje valen para todas las propiedades. Para un feriado, cargá abajo una
-              tarifa estacional de ese día: tiene prioridad sobre el recargo.
-            </p>
-            <WeekendPricingForm
-              action={setWeekendPricingAction}
-              days={weekend.days}
-              surchargePercent={weekend.surchargePercent}
-              basePriceMinor={property.base_price_minor}
-            />
-          </Panel>
-          <Panel>
-            <h2 className="mb-3 font-bold">Nueva tarifa estacional</h2>
-            <RateForm action={rateAction} />
-            <h3 className="mt-5 font-bold">Tarifas activas</h3>
-            {rates.length ? (
-              <ul className="mt-3 grid gap-2 text-sm">
-                {rates.map((r) => (
-                  <li key={r.id}>
-                    {r.start_date} a {r.end_date} · <Money amount={r.nightly_price_minor} />
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="mt-2 text-sm text-slate-600">Sin tarifas estacionales.</p>
             )}
           </Panel>
           <Panel>

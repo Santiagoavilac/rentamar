@@ -77,18 +77,15 @@ const WEEK_DAYS = [
   { value: 7, label: "Domingo" },
 ];
 
-export function WeekendPricingForm({
-  action,
+export function WeekendPricingFields({
   days,
   surchargePercent,
   basePriceMinor,
 }: {
-  action: FormAction;
   days: number[];
   surchargePercent: number;
   basePriceMinor: number;
 }) {
-  const [state, formAction] = useActionState(action, initial);
   const [selected, setSelected] = useState<number[]>(days);
   const [percent, setPercent] = useState(String(surchargePercent));
   const parsedPercent = Math.max(0, Number(percent) || 0);
@@ -96,7 +93,7 @@ export function WeekendPricingForm({
   const active = parsedPercent > 0 && selected.length > 0;
 
   return (
-    <form action={formAction} className="mt-3 grid gap-4">
+    <div className="grid gap-4">
       <fieldset>
         <legend className="text-sm font-semibold text-slate-700">
           Días que se cobran como fin de semana
@@ -166,12 +163,7 @@ export function WeekendPricingForm({
           <>Sin recargo: todas las noches se cobran {formatCurrency(basePriceMinor)}.</>
         )}
       </p>
-
-      <div>
-        <Submit label="Guardar recargo" />
-        <Feedback {...state} />
-      </div>
-    </form>
+    </div>
   );
 }
 
@@ -270,22 +262,22 @@ export function UserForm({ action }: { action: FormAction }) {
   );
 }
 
-type PropertyValues = Record<string, string | number | boolean | null | undefined>;
-export function PropertyForm({
-  action,
+export type PropertyValues = Record<string, string | number | boolean | null | undefined>;
+
+// Solo los campos: se usan sueltos en el alta (PropertyForm) y dentro del editor
+// completo de la propiedad, que guarda todo junto con un unico boton.
+export function PropertyFields({
   values = {},
   towers = [],
   canManageAffiliates = false,
 }: {
-  action: FormAction;
   values?: PropertyValues;
   towers?: { id: string; name: string; is_active: boolean }[];
   canManageAffiliates?: boolean;
 }) {
-  const [state, formAction] = useActionState(action, initial);
   const v = (key: string, fallback: string | number = "") => String(values[key] ?? fallback);
   return (
-    <form action={formAction} className="grid gap-3 md:grid-cols-2">
+    <div className="grid gap-3 md:grid-cols-2">
       <label className="text-sm">
         Nombre
         <input
@@ -487,7 +479,26 @@ export function PropertyForm({
           className="mt-1 min-h-20 w-full rounded border p-2"
         />
       </label>
-      <div className="md:col-span-2">
+    </div>
+  );
+}
+
+export function PropertyForm({
+  action,
+  values = {},
+  towers = [],
+  canManageAffiliates = false,
+}: {
+  action: FormAction;
+  values?: PropertyValues;
+  towers?: { id: string; name: string; is_active: boolean }[];
+  canManageAffiliates?: boolean;
+}) {
+  const [state, formAction] = useActionState(action, initial);
+  return (
+    <form action={formAction} className="grid gap-3">
+      <PropertyFields values={values} towers={towers} canManageAffiliates={canManageAffiliates} />
+      <div>
         <Submit />
         <Feedback {...state} />
       </div>
@@ -515,48 +526,6 @@ export function ImageUploadForm({ action }: { action: FormAction }) {
       </label>
       <div>
         <Submit label="Subir imagen" />
-        <Feedback {...state} />
-      </div>
-    </form>
-  );
-}
-
-export function RateForm({ action }: { action: FormAction }) {
-  const [state, formAction] = useActionState(action, initial);
-  return (
-    <form action={formAction} className="grid gap-3 sm:grid-cols-2">
-      <label className="text-sm">
-        Desde
-        <input required type="date" name="startDate" className="mt-1 w-full rounded border p-2" />
-      </label>
-      <label className="text-sm">
-        Hasta
-        <input required type="date" name="endDate" className="mt-1 w-full rounded border p-2" />
-      </label>
-      <label className="text-sm">
-        Precio por noche (BOB)
-        <input
-          required
-          name="price"
-          inputMode="decimal"
-          className="mt-1 w-full rounded border p-2"
-        />
-      </label>
-      <label className="text-sm">
-        Mínimo noches
-        <input
-          name="minimumNights"
-          type="number"
-          min="1"
-          className="mt-1 w-full rounded border p-2"
-        />
-      </label>
-      <label className="text-sm sm:col-span-2">
-        Etiqueta
-        <input name="label" className="mt-1 w-full rounded border p-2" />
-      </label>
-      <div className="sm:col-span-2">
-        <Submit label="Crear tarifa" />
         <Feedback {...state} />
       </div>
     </form>

@@ -9,9 +9,43 @@ import {
   propertyInputSchema,
   propertyPricingInputSchema,
   rateInputSchema,
+  propertyRatesSchema,
+  weekendPricingSchema,
 } from "./validation";
 
 describe("validación administrativa", () => {
+  it("acepta la lista de tarifas del editor completo y rechaza rangos al revés", () => {
+    const fila = {
+      id: null,
+      startDate: "2026-12-24",
+      endDate: "2026-12-26",
+      price: "850.00",
+      minimumNights: null,
+      label: "Navidad",
+    };
+    expect(propertyRatesSchema.safeParse([fila]).success).toBe(true);
+    expect(
+      propertyRatesSchema.safeParse([
+        { ...fila, id: "a1111111-1111-4111-8111-111111111111", minimumNights: 2 },
+      ]).success,
+    ).toBe(true);
+    // minimumNights tiene que llegar numérico, no como el string del input.
+    expect(propertyRatesSchema.safeParse([{ ...fila, minimumNights: "" }]).success).toBe(false);
+    expect(
+      propertyRatesSchema.safeParse([{ ...fila, startDate: "2026-12-26", endDate: "2026-12-24" }])
+        .success,
+    ).toBe(false);
+  });
+
+  it("valida los días y el recargo de fin de semana", () => {
+    expect(weekendPricingSchema.safeParse({ days: [5, 6], surchargePercent: 30 }).success).toBe(
+      true,
+    );
+    expect(weekendPricingSchema.safeParse({ days: [], surchargePercent: 0 }).success).toBe(true);
+    expect(weekendPricingSchema.safeParse({ days: [8], surchargePercent: 10 }).success).toBe(false);
+    expect(weekendPricingSchema.safeParse({ days: [5], surchargePercent: -5 }).success).toBe(false);
+  });
+
   it("exige vencimiento en pre-reserva y motivo en alquiler", () => {
     const base = {
       propertyId: "a1111111-1111-4111-8111-111111111111",

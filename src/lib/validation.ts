@@ -169,18 +169,33 @@ export const propertyInputSchema = z.object({
   checkOutTime: timeString,
 });
 
-export const rateInputSchema = z
-  .object({
-    startDate: isoDate,
-    endDate: isoDate,
-    price: moneyDecimal,
-    minimumNights: z.number().int().min(1).max(365).nullable(),
-    label: z.string().trim().max(120).optional().or(z.literal("")),
-  })
-  .refine((d) => d.startDate < d.endDate, {
-    message: "La fecha final debe ser posterior a la inicial",
-    path: ["endDate"],
-  });
+const rateFieldsSchema = z.object({
+  startDate: isoDate,
+  endDate: isoDate,
+  price: moneyDecimal,
+  minimumNights: z.number().int().min(1).max(365).nullable(),
+  label: z.string().trim().max(120).optional().or(z.literal("")),
+});
+
+const endAfterStart = {
+  check: (d: { startDate: string; endDate: string }) => d.startDate < d.endDate,
+  message: "La fecha final debe ser posterior a la inicial",
+} as const;
+
+export const rateInputSchema = rateFieldsSchema.refine(endAfterStart.check, {
+  message: endAfterStart.message,
+  path: ["endDate"],
+});
+
+// Fila de tarifa dentro del editor completo: `id` null es una tarifa nueva.
+export const propertyRatesSchema = z
+  .array(
+    rateFieldsSchema.extend({ id: z.uuid().nullable() }).refine(endAfterStart.check, {
+      message: endAfterStart.message,
+      path: ["endDate"],
+    }),
+  )
+  .max(120);
 
 // Galería completa de una propiedad en el orden nuevo (drag & drop del panel).
 export const imageIdsSchema = z.array(z.uuid()).min(1).max(200);
@@ -533,6 +548,7 @@ export type CleaningReportInput = z.infer<typeof cleaningReportSchema>;
 export type PropertyInput = z.infer<typeof propertyInputSchema>;
 export type TowerInput = z.infer<typeof towerInputSchema>;
 export type RateInput = z.infer<typeof rateInputSchema>;
+export type PropertyRatesInput = z.infer<typeof propertyRatesSchema>;
 export type WeekendPricing = z.infer<typeof weekendPricingSchema>;
 export type AvailabilityBlockInput = z.infer<typeof availabilityBlockInputSchema>;
 export type AvailabilityBlockUpdateInput = z.infer<typeof availabilityBlockUpdateSchema>;

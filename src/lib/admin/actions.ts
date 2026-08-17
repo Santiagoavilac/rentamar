@@ -24,6 +24,7 @@ import {
   propertyInputSchema,
   rateInputSchema,
   propertyPricingInputSchema,
+  propertyRatesSchema,
   availabilityBlockInputSchema,
   availabilityBlockUpdateSchema,
   adminBookingInputSchema,
@@ -138,7 +139,7 @@ export async function createPropertyAction(
   redirect(`/admin/properties/${newId}`);
 }
 
-export async function updatePropertyAction(
+export async function savePropertyAction(
   propertyId: string,
   _prev: ActionResult,
   formData: FormData,
@@ -147,14 +148,24 @@ export async function updatePropertyAction(
     const session = await requireStaff();
     await assertSameOrigin();
     assertAdminAction(session.role, "property.manage");
+    assertAdminAction(session.role, "rate.manage");
+
     const input = parsePropertyForm(
       formData,
       canPerformAdminAction(session.role, "affiliate.manage"),
     );
+    const weekend = weekendPricingSchema.parse({
+      days: formData.getAll("days").map((day) => Number(str(day))),
+      surchargePercent: Number(str(formData.get("surchargePercent")) || "0"),
+    });
+    const rateRows = propertyRatesSchema.parse(
+      JSON.parse(str(formData.get("ratesJson")) || "[]") as unknown,
+    );
+    const ctx = await buildAuditContext(session);
+
     const { before, after } = await properties.updateProperty(propertyId, input, session.userId);
     const previousPrice = (before as { base_price_minor?: number }).base_price_minor;
-    const nextPriceMinor = Math.round(Number(input.basePrice) * 100);
-    if (previousPrice !== nextPriceMinor) {
+    if (previousPrice !== Math.round(Number(input.basePrice) * 100)) {
       await rates.changeBasePrice(
         propertyId,
         input.basePrice,
@@ -162,7 +173,6 @@ export async function updatePropertyAction(
         session.userId,
       );
     }
-    const ctx = await buildAuditContext(session);
     await writeAudit({
       ...ctx,
       action: "property.update",
@@ -171,10 +181,58 @@ export async function updatePropertyAction(
       before,
       after,
     });
+
+    await setWeekendPricing(weekend);
+    await writeAudit({
+      ...ctx,
+      action: "pricing.weekend",
+      entityType: "setting",
+      entityId: "weekend_pricing",
+      after: weekend,
+    });
+
+    // Las tarifas llegan completas: las que traen id se actualizan, las que no,
+    // se crean, y las que ya no están en la lista se eliminan.
+    const existing = await rates.listRates(propertyId);
+    const keptIds = new Set(rateRows.map((row) => row.id).filter(Boolean));
+    for (const rate of existing) {
+      if (!keptIds.has(rate.id)) {
+        await rates.removeRate(rate.id, session.userId);
+        await writeAudit({
+          ...ctx,
+          action: "rate.remove",
+          entityType: "property_rate",
+          entityId: rate.id,
+          before: rate,
+        });
+      }
+    }
+    for (const { id, ...row } of rateRows) {
+      if (id) {
+        await rates.updateRate(id, row, session.userId);
+        await writeAudit({
+          ...ctx,
+          action: "rate.update",
+          entityType: "property_rate",
+          entityId: id,
+          after: row,
+        });
+      } else {
+        const created = await rates.createRate(propertyId, row, session.userId);
+        await writeAudit({
+          ...ctx,
+          action: "rate.create",
+          entityType: "property_rate",
+          entityId: created.rateId,
+          after: row,
+        });
+      }
+    }
   } catch (error) {
     return fail(error);
   }
   revalidatePath(`/admin/properties/${propertyId}`);
+  revalidatePath("/admin/pricing");
   revalidatePath("/afiliados");
   return OK;
 }
@@ -361,33 +419,6 @@ function parseRateForm(formData: FormData) {
   });
 }
 
-export async function createRateAction(
-  propertyId: string,
-  _prev: ActionResult,
-  formData: FormData,
-): Promise<ActionResult> {
-  try {
-    const session = await requireStaff();
-    await assertSameOrigin();
-    assertAdminAction(session.role, "rate.manage");
-    const input = parseRateForm(formData);
-    const res = await rates.createRate(propertyId, input, session.userId);
-    const ctx = await buildAuditContext(session);
-    await writeAudit({
-      ...ctx,
-      action: "rate.create",
-      entityType: "property_rate",
-      entityId: res.rateId,
-      after: input,
-    });
-  } catch (error) {
-    return fail(error);
-  }
-  revalidatePath(`/admin/properties/${propertyId}`);
-  revalidatePath("/admin/pricing");
-  return OK;
-}
-
 export async function updateRateAction(
   propertyId: string,
   rateId: string,
@@ -504,38 +535,6 @@ export async function savePropertyPricingAction(
 // Recargo global de fin de semana: días marcados + %. Aplica a todas las propiedades
 // sobre el precio base; las tarifas estacionales (y los feriados cargados como tal)
 // siguen teniendo prioridad porque fijan el precio de la noche.
-export async function setWeekendPricingAction(
-  _prev: ActionResult,
-  formData: FormData,
-): Promise<ActionResult> {
-  try {
-    const session = await requireStaff();
-    await assertSameOrigin();
-    assertAdminAction(session.role, "rate.manage");
-    const input = weekendPricingSchema.parse({
-      days: formData.getAll("days").map((day) => Number(str(day))),
-      surchargePercent: Number(str(formData.get("surchargePercent")) || "0"),
-    });
-    await setWeekendPricing(input);
-    const ctx = await buildAuditContext(session);
-    await writeAudit({
-      ...ctx,
-      action: "pricing.weekend",
-      entityType: "setting",
-      entityId: "weekend_pricing",
-      after: input,
-    });
-  } catch (error) {
-    return fail(error);
-  }
-  // El ajuste es global: se refresca el detalle de cualquier propiedad, no solo la abierta.
-  revalidatePath("/admin/properties/[propertyId]", "page");
-  revalidatePath("/admin/pricing");
-  return OK;
-}
-
-// ---------- Disponibilidad ----------
-
 export async function createBlockAction(
   _prev: ActionResult,
   formData: FormData,
