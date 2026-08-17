@@ -127,6 +127,7 @@ export default async function UsersPage({
     <>
       <AdminPageHeader
         title="Usuarios"
+        helpKey="users.page"
         description="No hay auto-registro: cada cuenta se crea acá por un administrador."
       />
       <Tabs active={tab} />

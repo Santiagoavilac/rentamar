@@ -6,6 +6,7 @@ import {
   uploadPropertyImageAction,
 } from "@/lib/admin/actions";
 import { AdminPageHeader, Panel } from "@/components/admin/ui";
+import { PanelHeading } from "@/components/admin/help";
 import { ImageUploadForm } from "@/components/admin/forms";
 import { PropertyImagesManager } from "@/components/admin/property-images";
 import { requireStaff } from "@/lib/auth";
@@ -27,6 +28,7 @@ export default async function PropertyImagesPage({
       <AdminPageHeader
         title={`Imágenes · ${property.name}`}
         description="Orden de la galería pública y alta o baja de fotos."
+        helpKey="properties.images.page"
         action={
           <Link
             href={`/admin/properties/${propertyId}`}
@@ -37,11 +39,15 @@ export default async function PropertyImagesPage({
         }
       />
       <Panel>
-        <h2 className="mb-3 font-bold">Subir imagen</h2>
+        <PanelHeading helpKey="properties.images.upload" className="mb-3 font-bold">
+          Subir imagen
+        </PanelHeading>
         <ImageUploadForm action={uploadPropertyImageAction.bind(null, propertyId)} />
       </Panel>
       <Panel className="mt-5">
-        <h2 className="mb-3 font-bold">Galería ({images.length})</h2>
+        <PanelHeading helpKey="properties.images.gallery" className="mb-3 font-bold">
+          Galería ({images.length})
+        </PanelHeading>
         <PropertyImagesManager
           images={images}
           reorderAction={reorderPropertyImagesAction.bind(null, propertyId)}

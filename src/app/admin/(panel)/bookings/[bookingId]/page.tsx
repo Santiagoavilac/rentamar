@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getBookingDetail, listBookingEvents } from "@/lib/admin/bookings";
 import { bookingAction } from "@/lib/admin/actions";
 import { AdminPageHeader, KeyValue, Money, Panel, StatusBadge } from "@/components/admin/ui";
+import { PanelHeading } from "@/components/admin/help";
 import { ReasonActionForm } from "@/components/admin/forms";
 export default async function BookingDetailPage({
   params,
@@ -51,7 +52,9 @@ export default async function BookingDetailPage({
             </KeyValue>
             <KeyValue label="Hold vence">{booking.hold_expires_at || "—"}</KeyValue>
           </dl>
-          <h2 className="mt-7 font-bold">Detalle de cobro</h2>
+          <PanelHeading helpKey="bookings.detail.charges" className="mt-7 font-bold">
+            Detalle de cobro
+          </PanelHeading>
           <ul className="mt-2 text-sm">
             {items.map((i, index) => (
               <li key={index} className="border-b py-2">
@@ -65,7 +68,7 @@ export default async function BookingDetailPage({
         </Panel>
         <div className="grid gap-5">
           <Panel>
-            <h2 className="font-bold">Operaciones</h2>
+            <PanelHeading helpKey="bookings.detail.operations">Operaciones</PanelHeading>
             <p className="mt-2 text-sm text-slate-600">
               Toda operación exige motivo y se registra en auditoría. Las reservas pagadas quedan en
               revisión de reembolso, sin devolución automática.
@@ -84,7 +87,7 @@ export default async function BookingDetailPage({
             ))}
           </Panel>
           <Panel>
-            <h2 className="font-bold">Historial</h2>
+            <PanelHeading helpKey="bookings.detail.history">Historial</PanelHeading>
             <ul className="mt-3 grid gap-3 text-sm">
               {events.map((e) => (
                 <li key={e.id}>

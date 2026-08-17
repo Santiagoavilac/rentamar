@@ -6,6 +6,7 @@ import { Plus, Trash2 } from "lucide-react";
 import type { ActionResult } from "@/lib/admin/actions";
 import { formatCurrency } from "@/lib/money";
 import type { Quote } from "@/lib/bookings";
+import { PanelHeading } from "@/components/admin/help";
 
 type PriceRow = { nights: number; total: string };
 type PricingAction = (state: ActionResult, formData: FormData) => Promise<ActionResult>;
@@ -129,7 +130,7 @@ export function PricingEditor({
 
         <div className="mt-6 flex items-center justify-between gap-3">
           <div>
-            <h2 className="font-bold">Precios por estadía</h2>
+            <PanelHeading helpKey="pricing.stayPrices">Precios por estadía</PanelHeading>
             <p className="text-sm text-slate-600">
               Las temporadas tienen prioridad. Cada total debe ser menor o igual al precio normal.
             </p>
@@ -231,7 +232,7 @@ export function PricingEditor({
       </form>
 
       <aside className="h-fit rounded-xl border border-slate-200 bg-white p-5 shadow-sm xl:sticky xl:top-6">
-        <h2 className="font-bold">Simulación oficial</h2>
+        <PanelHeading helpKey="pricing.simulation">Simulación oficial</PanelHeading>
         <p className="mt-1 text-sm text-slate-600">
           Usa la misma RPC que la reserva pública. Guardá primero para simular los cambios nuevos.
         </p>

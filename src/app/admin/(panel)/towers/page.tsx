@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AdminPageHeader, Panel, StatusBadge } from "@/components/admin/ui";
+import { PanelHeading } from "@/components/admin/help";
 import { PropertyTowerForm, TowerActiveForm, TowerForm } from "@/components/admin/tower-forms";
 import {
   assignPropertyTowerAction,
@@ -18,6 +19,7 @@ export default async function TowersPage() {
     <>
       <AdminPageHeader
         title="Torres"
+        helpKey="towers.page"
         description="Gestioná las torres del complejo y asigná cada departamento a una torre o a ninguna. La ubicación se define por separado en el editor del mapa."
         action={
           <Link href="/admin/mapa" className="text-sm font-semibold text-cyan-700">
@@ -27,7 +29,9 @@ export default async function TowersPage() {
       />
 
       <Panel>
-        <h2 className="mb-4 font-bold">Nueva torre</h2>
+        <PanelHeading helpKey="towers.new" className="mb-4 font-bold">
+          Nueva torre
+        </PanelHeading>
         <TowerForm action={createTowerAction} />
       </Panel>
 
@@ -62,7 +66,9 @@ export default async function TowersPage() {
               </details>
 
               <div className="mt-5 border-t border-slate-200 pt-4">
-                <h3 className="font-semibold">Departamentos asignados</h3>
+                <PanelHeading helpKey="towers.assigned" as="h3" className="font-semibold">
+                  Departamentos asignados
+                </PanelHeading>
                 {assigned.length ? (
                   <ul className="mt-3 grid gap-3">
                     {assigned.map((property) => (
@@ -97,7 +103,9 @@ export default async function TowersPage() {
       </div>
 
       <Panel className="mt-5">
-        <h2 className="font-bold">Propiedades sin torre ({unassigned.length})</h2>
+        <PanelHeading helpKey="towers.unassigned">
+          Propiedades sin torre ({unassigned.length})
+        </PanelHeading>
         {unassigned.length ? (
           <ul className="mt-3 grid gap-3">
             {unassigned.map((property) => (

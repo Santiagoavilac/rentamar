@@ -3,12 +3,21 @@ import { assertAdminAction } from "@/lib/permissions";
 import { listCleaningReports, listDayTurnover, type TurnoverRow } from "@/lib/admin/cleaning";
 import { todayInLaPaz } from "@/lib/admin/planner-query";
 import { AdminPageHeader, EmptyState, Panel } from "@/components/admin/ui";
+import { PanelHeading } from "@/components/admin/help";
 
 export const dynamic = "force-dynamic";
 
 const field = "mt-1 block rounded-lg border border-slate-300 bg-white px-3 py-2 font-normal";
 
-function TurnoverList({ title, rows, empty }: { title: string; rows: TurnoverRow[]; empty: string }) {
+function TurnoverList({
+  title,
+  rows,
+  empty,
+}: {
+  title: string;
+  rows: TurnoverRow[];
+  empty: string;
+}) {
   return (
     <div>
       <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">{title}</h3>
@@ -46,6 +55,7 @@ export default async function CleaningPage({
     <>
       <AdminPageHeader
         title="Limpieza"
+        helpKey="cleaning.page"
         description="Lo que el personal reportó ese día, junto con los departamentos que se desocupan y se ocupan."
       />
 
@@ -63,7 +73,9 @@ export default async function CleaningPage({
 
       <div className="mt-5 grid gap-5">
         <Panel>
-          <h2 className="mb-4 text-lg font-semibold">Entradas y salidas del día</h2>
+          <PanelHeading helpKey="cleaning.today" className="mb-4 text-lg font-semibold">
+            Entradas y salidas del día
+          </PanelHeading>
           <div className="grid gap-6 sm:grid-cols-2">
             <TurnoverList
               title="Se desocupan (check-out)"
@@ -79,7 +91,9 @@ export default async function CleaningPage({
         </Panel>
 
         <Panel>
-          <h2 className="mb-4 text-lg font-semibold">Limpiezas reportadas</h2>
+          <PanelHeading helpKey="cleaning.reports" className="mb-4 text-lg font-semibold">
+            Limpiezas reportadas
+          </PanelHeading>
           {reports.length === 0 ? (
             <EmptyState
               title="Sin reportes este día"

@@ -5,6 +5,7 @@ import { assertAdminAction } from "@/lib/permissions";
 import { getCoOwnerStay } from "@/lib/admin/co-owners";
 import { AppError } from "@/lib/errors";
 import { AdminPageHeader, KeyValue, Panel, formatDateTime } from "@/components/admin/ui";
+import { PanelHeading } from "@/components/admin/help";
 
 export const dynamic = "force-dynamic";
 
@@ -57,7 +58,9 @@ export default async function CoOwnerStayDetailPage({
       </Panel>
 
       <Panel>
-        <h2 className="mb-4 text-sm font-bold">Huéspedes adicionales</h2>
+        <PanelHeading helpKey="coowners.detail.guests" className="mb-4 text-sm font-bold">
+          Huéspedes adicionales
+        </PanelHeading>
         {stay.guests.length ? (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[520px] text-left text-sm">
@@ -82,9 +85,7 @@ export default async function CoOwnerStayDetailPage({
             </table>
           </div>
         ) : (
-          <p className="text-sm text-slate-500">
-            La estadía se declaró con un solo huésped.
-          </p>
+          <p className="text-sm text-slate-500">La estadía se declaró con un solo huésped.</p>
         )}
       </Panel>
     </>

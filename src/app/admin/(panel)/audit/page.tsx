@@ -34,6 +34,7 @@ export default async function AuditPage({
     <>
       <AdminPageHeader
         title="Actividad del panel"
+        helpKey="audit.page"
         description="Quién hizo cada cambio y qué modificó. El registro no se puede editar ni borrar."
       />
       <Panel>

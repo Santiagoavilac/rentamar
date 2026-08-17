@@ -19,6 +19,7 @@ export default async function AdminMapaPage() {
       <>
         <AdminPageHeader
           title="Mapa de Mar Adentro"
+          helpKey="map.page"
           description="Editor visual del masterplan interactivo."
         />
         <EmptyState
@@ -35,6 +36,7 @@ export default async function AdminMapaPage() {
     <>
       <AdminPageHeader
         title={data.map.name}
+        helpKey="map.page"
         description="Colocá, editá y publicá los puntos de interés del masterplan."
         action={
           <Link href="/mapa" target="_blank" className="text-sm font-semibold text-cyan-700">

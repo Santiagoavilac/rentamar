@@ -20,6 +20,7 @@ export default async function PropertiesPage({
     <>
       <AdminPageHeader
         title="Propiedades"
+        helpKey="properties.page"
         description="Catálogo, visibilidad y precios base."
         action={
           <Link

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AdminPageHeader, KeyValue, Money, Panel, StatusBadge } from "@/components/admin/ui";
+import { PanelHeading } from "@/components/admin/help";
 import { ReasonActionForm } from "@/components/admin/forms";
 import { DeclarationButton } from "@/components/declaration-button";
 import { affiliateRequestAction } from "@/lib/admin/actions";
@@ -67,7 +68,7 @@ export default async function AffiliateRequestPage({
             </dl>
           </Panel>
           <Panel>
-            <h2 className="font-bold">Carnet de identidad</h2>
+            <PanelHeading helpKey="affiliates.detail.id">Carnet de identidad</PanelHeading>
             {idFront || idBack ? (
               <div className="mt-3 grid gap-4 sm:grid-cols-2">
                 {(["front", "back"] as const).map((side) => {
@@ -113,7 +114,7 @@ export default async function AffiliateRequestPage({
             )}
           </Panel>
           <Panel>
-            <h2 className="font-bold">Acompañantes</h2>
+            <PanelHeading helpKey="affiliates.detail.companions">Acompañantes</PanelHeading>
             {companions.length ? (
               <ul className="mt-3 grid gap-2 text-sm">
                 {companions.map((companion) => (
@@ -133,11 +134,12 @@ export default async function AffiliateRequestPage({
         </div>
         <div className="grid gap-5">
           <Panel>
-            <h2 className="font-bold">Operaciones</h2>
+            <PanelHeading helpKey="affiliates.detail.operations">Operaciones</PanelHeading>
             {open ? (
               <>
                 <p className="mt-2 text-sm text-slate-600">
-                  Confirmar mantiene el pago como pendiente. Cancelar libera las fechas de inmediato.
+                  Confirmar mantiene el pago como pendiente. Cancelar libera las fechas de
+                  inmediato.
                 </p>
                 <ReasonActionForm
                   action={affiliateRequestAction.bind(null, bookingId, "confirm")}
@@ -168,7 +170,7 @@ export default async function AffiliateRequestPage({
             </Link>
           </Panel>
           <Panel>
-            <h2 className="font-bold">Historial</h2>
+            <PanelHeading helpKey="affiliates.detail.history">Historial</PanelHeading>
             <ul className="mt-3 grid gap-3 text-sm">
               {events.map((event) => (
                 <li key={event.id}>

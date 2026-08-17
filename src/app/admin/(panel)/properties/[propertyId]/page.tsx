@@ -9,6 +9,7 @@ import {
 import { listRates, listPriceHistory } from "@/lib/admin/rates";
 import { savePropertyAction } from "@/lib/admin/actions";
 import { AdminPageHeader, KeyValue, Money, Panel, StatusBadge } from "@/components/admin/ui";
+import { PanelHeading } from "@/components/admin/help";
 import { PropertyEditor } from "@/components/admin/property-editor";
 import { requireStaff, canPerformAdminAction } from "@/lib/auth";
 import { listTowerOptions } from "@/lib/admin/towers";
@@ -37,6 +38,7 @@ export default async function PropertyDetailPage({
       <AdminPageHeader
         title={property.name}
         description={`/${property.slug}`}
+        helpKey="properties.detail.page"
         action={
           <Link href="/admin/properties" className="text-sm font-semibold text-cyan-700">
             Volver al catálogo
@@ -56,7 +58,9 @@ export default async function PropertyDetailPage({
         </Panel>
         <div className="grid gap-5">
           <Panel>
-            <h2 className="mb-3 font-bold">Estado actual</h2>
+            <PanelHeading helpKey="properties.detail.status" className="mb-3 font-bold">
+              Estado actual
+            </PanelHeading>
             <dl className="grid grid-cols-2 gap-4">
               <KeyValue label="Estado">
                 <StatusBadge value={property.status} />
@@ -72,7 +76,9 @@ export default async function PropertyDetailPage({
           </Panel>
           <Panel>
             <div className="flex items-center justify-between gap-3">
-              <h2 className="font-bold">Imágenes ({images.length})</h2>
+              <PanelHeading helpKey="properties.detail.images">
+                Imágenes ({images.length})
+              </PanelHeading>
               <Link
                 href={`/admin/properties/${propertyId}/images`}
                 className="rounded-lg bg-deep px-3 py-2 text-sm font-semibold text-cream"
@@ -102,7 +108,7 @@ export default async function PropertyDetailPage({
             )}
           </Panel>
           <Panel>
-            <h2 className="font-bold">Cambios de precio</h2>
+            <PanelHeading helpKey="properties.detail.priceHistory">Cambios de precio</PanelHeading>
             {history.length ? (
               <ul className="mt-3 grid gap-2 text-sm">
                 {history.slice(0, 5).map((h) => (

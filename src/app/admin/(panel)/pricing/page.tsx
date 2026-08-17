@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AdminPageHeader, EmptyState, Panel } from "@/components/admin/ui";
+import { PanelHeading } from "@/components/admin/help";
 import { PricingEditor } from "@/components/admin/pricing-editor";
 import { savePropertyPricingAction } from "@/lib/admin/actions";
 import { getProperty, listProperties } from "@/lib/admin/properties";
@@ -47,6 +48,7 @@ export default async function PricingPage({
     <>
       <AdminPageHeader
         title="Tarifas y precios"
+        helpKey="pricing.page"
         description="Define el precio base, paquetes por cantidad de noches y tarifas estacionales."
         action={
           <Link
@@ -89,7 +91,7 @@ export default async function PricingPage({
         />
       </div>
       <Panel className="mt-5">
-        <h2 className="font-bold">Tarifas estacionales</h2>
+        <PanelHeading helpKey="pricing.seasonal">Tarifas estacionales</PanelHeading>
         <p className="mt-1 text-sm text-slate-600">
           Tienen prioridad sobre los descuentos por duración.
         </p>

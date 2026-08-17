@@ -9,6 +9,7 @@ import {
   WeekendPricingFields,
   type PropertyValues,
 } from "@/components/admin/forms";
+import { PanelHeading } from "@/components/admin/help";
 
 type RateRow = {
   id: string | null;
@@ -106,7 +107,9 @@ export function PropertyEditor({
     <form action={formAction}>
       <input type="hidden" name="ratesJson" value={JSON.stringify(ratesPayload)} />
 
-      <h2 className="mb-4 font-bold">Datos de la propiedad</h2>
+      <PanelHeading helpKey="properties.editor.data" className="mb-4 font-bold">
+        Datos de la propiedad
+      </PanelHeading>
       {/* El precio base se escucha acá para que el bloque de fin de semana calcule sobre
           lo que se está tipeando, sin tener que guardar primero. */}
       <div
@@ -121,7 +124,7 @@ export function PropertyEditor({
       </div>
 
       <section className="mt-8 border-t border-slate-200 pt-6">
-        <h2 className="font-bold">Precio de fin de semana</h2>
+        <PanelHeading helpKey="properties.editor.weekend">Precio de fin de semana</PanelHeading>
         <p className="mb-3 mt-1 text-sm text-slate-600">
           Recargo sobre el precio base en los días marcados. Es un ajuste general: los mismos días y
           porcentaje valen para todas las propiedades.
@@ -136,7 +139,9 @@ export function PropertyEditor({
       <section className="mt-8 border-t border-slate-200 pt-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="font-bold">Tarifas estacionales y feriados</h2>
+            <PanelHeading helpKey="properties.editor.rates">
+              Tarifas estacionales y feriados
+            </PanelHeading>
             <p className="mt-1 text-sm text-slate-600">
               Fijan el precio de esas noches: tienen prioridad sobre el fin de semana y el precio
               base. Para un feriado suelto, poné el mismo día en Desde y el siguiente en Hasta.

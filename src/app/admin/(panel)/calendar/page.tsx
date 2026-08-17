@@ -25,6 +25,7 @@ export default async function CalendarPage({
     <>
       <AdminPageHeader
         title="Disponibilidad y reservas"
+        helpKey="calendar.page"
         description="Planificador operativo por propiedad. Los rangos incluyen la entrada y excluyen la salida."
       />
       {!allProperties.length ? (

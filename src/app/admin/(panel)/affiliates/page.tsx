@@ -44,6 +44,7 @@ export default async function AffiliatesPage({
     <>
       <AdminPageHeader
         title="Solicitudes de afiliados"
+        helpKey="affiliates.page"
         description="Reservas creadas desde /afiliados. Bloquean las fechas hasta que se confirmen o se cancelen."
       />
       <Panel>

@@ -11,6 +11,7 @@ export default async function NewPropertyPage() {
     <>
       <AdminPageHeader
         title="Nueva propiedad"
+        helpKey="properties.new"
         description="Los campos se validan en servidor y el precio se guarda en centavos."
       />
       <Panel>

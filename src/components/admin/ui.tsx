@@ -1,20 +1,27 @@
 import Link from "next/link";
 import { formatCurrency } from "@/lib/money";
+import { HelpButton } from "./help";
+import type { HelpKey } from "@/lib/admin/help";
 
 export function AdminPageHeader({
   title,
   description,
   action,
+  helpKey,
 }: {
   title: string;
   description?: string;
   action?: React.ReactNode;
+  helpKey?: HelpKey;
 }) {
   return (
     <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
       <div>
         <p className="eyebrow text-turquoise">Operaciones</p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight text-night">{title}</h1>
+        <h1 className="mt-2 flex items-center gap-2 text-3xl font-bold tracking-tight text-night">
+          {title}
+          {helpKey ? <HelpButton helpKey={helpKey} /> : null}
+        </h1>
         {description ? (
           <p className="mt-2 max-w-2xl text-sm text-slate-600">{description}</p>
         ) : null}

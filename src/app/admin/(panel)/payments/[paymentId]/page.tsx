@@ -1,12 +1,9 @@
 import Link from "next/link";
-import {
-  getPaymentDetail,
-  listPaymentEvents,
-  listPaymentReceipts,
-} from "@/lib/admin/payments";
+import { getPaymentDetail, listPaymentEvents, listPaymentReceipts } from "@/lib/admin/payments";
 import { getReceiptConfirmMode } from "@/lib/settings";
 import { paymentAction, setReceiptModeAction } from "@/lib/admin/actions";
 import { AdminPageHeader, KeyValue, Money, Panel, StatusBadge } from "@/components/admin/ui";
+import { PanelHeading } from "@/components/admin/help";
 import { ReasonActionForm, ReceiptModeForm } from "@/components/admin/forms";
 
 // Etiqueta legible del resultado IA. Nunca se muestra el modelo ni el prompt.
@@ -60,7 +57,7 @@ export default async function PaymentDetail({
         </Panel>
 
         <Panel>
-          <h2 className="font-bold">Comprobantes subidos</h2>
+          <PanelHeading helpKey="payments.detail.receipts">Comprobantes subidos</PanelHeading>
           {receipts.length === 0 ? (
             <p className="mt-3 text-sm text-slate-500">Sin comprobantes.</p>
           ) : (
@@ -99,7 +96,7 @@ export default async function PaymentDetail({
 
       <div className="mt-5 grid gap-5 lg:grid-cols-2">
         <Panel>
-          <h2 className="font-bold">Operaciones</h2>
+          <PanelHeading helpKey="payments.detail.operations">Operaciones</PanelHeading>
           <p className="mt-2 text-sm text-slate-600">
             Toda operación exige motivo y queda en auditoría.
           </p>
@@ -120,12 +117,14 @@ export default async function PaymentDetail({
             action={paymentAction.bind(null, paymentId, "annotate")}
             label="Registrar observación"
           />
-          <h2 className="mt-6 font-bold">Modo de confirmación (A/B)</h2>
+          <PanelHeading helpKey="payments.detail.mode" className="mt-6 font-bold">
+            Modo de confirmación (A/B)
+          </PanelHeading>
           <ReceiptModeForm action={setReceiptModeAction} current={mode} />
         </Panel>
 
         <Panel>
-          <h2 className="font-bold">Eventos del pago</h2>
+          <PanelHeading helpKey="payments.detail.events">Eventos del pago</PanelHeading>
           <ul className="mt-3 grid gap-3 text-sm">
             {events.map((e) => (
               <li key={e.id}>

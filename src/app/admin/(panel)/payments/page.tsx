@@ -23,6 +23,7 @@ export default async function PaymentsPage({
     <>
       <AdminPageHeader
         title="Pagos"
+        helpKey="payments.page"
         description="Revisión de pagos mock sin QR, idempotency key ni respuestas de proveedor."
       />
       <Panel>

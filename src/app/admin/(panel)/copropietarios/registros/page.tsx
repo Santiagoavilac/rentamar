@@ -52,6 +52,7 @@ export default async function CoOwnerStaysPage({
     <>
       <AdminPageHeader
         title="Estadías declaradas"
+        helpKey="coowners.page"
         description="Lo que cada copropietario registró, del más reciente al más antiguo. Los datos quedan congelados: renombrar una propiedad no altera los registros viejos."
       />
 
