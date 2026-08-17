@@ -130,8 +130,8 @@ export function WeekendPricingForm({
           })}
         </div>
         <p className="mt-2 text-xs text-slate-500">
-          Se cobra por noche: si alguien entra el viernes y sale el domingo, las noches son viernes y
-          sábado.
+          Se cobra por noche: si alguien entra el viernes y sale el domingo, las noches son viernes
+          y sábado.
         </p>
       </fieldset>
 
@@ -512,9 +512,6 @@ export function ImageUploadForm({ action }: { action: FormAction }) {
       <label className="text-sm">
         Texto alternativo
         <input name="altText" className="mt-1 w-full rounded border p-2" />
-      </label>
-      <label className="flex gap-2 text-sm">
-        <input name="isCover" type="checkbox" /> Usar como portada
       </label>
       <div>
         <Submit label="Subir imagen" />

@@ -63,6 +63,12 @@ export default async function PropertiesPage({
                       <td className="py-3 text-right">
                         <Link
                           className="font-semibold text-cyan-700"
+                          href={`/admin/properties/${p.id}/images`}
+                        >
+                          Imágenes
+                        </Link>
+                        <Link
+                          className="ml-4 font-semibold text-cyan-700"
                           href={`/admin/properties/${p.id}`}
                         >
                           Abrir

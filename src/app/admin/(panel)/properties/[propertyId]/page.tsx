@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import {
   getProperty,
   getPropertyImages,
@@ -9,16 +10,10 @@ import { listRates, listPriceHistory } from "@/lib/admin/rates";
 import {
   createRateAction,
   updatePropertyAction,
-  uploadPropertyImageAction,
   setWeekendPricingAction,
 } from "@/lib/admin/actions";
 import { AdminPageHeader, KeyValue, Money, Panel, StatusBadge } from "@/components/admin/ui";
-import {
-  ImageUploadForm,
-  PropertyForm,
-  RateForm,
-  WeekendPricingForm,
-} from "@/components/admin/forms";
+import { PropertyForm, RateForm, WeekendPricingForm } from "@/components/admin/forms";
 import { requireStaff, canPerformAdminAction } from "@/lib/auth";
 import { listTowerOptions } from "@/lib/admin/towers";
 import { getWeekendPricing } from "@/lib/settings";
@@ -42,7 +37,6 @@ export default async function PropertyDetailPage({
       getWeekendPricing(),
     ]);
   const action = updatePropertyAction.bind(null, propertyId);
-  const uploadAction = uploadPropertyImageAction.bind(null, propertyId);
   const rateAction = createRateAction.bind(null, propertyId);
   return (
     <>
@@ -82,18 +76,35 @@ export default async function PropertyDetailPage({
             </dl>
           </Panel>
           <Panel>
-            <h2 className="mb-3 font-bold">Imágenes</h2>
-            <ImageUploadForm action={uploadAction} />
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="font-bold">Imágenes ({images.length})</h2>
+              <Link
+                href={`/admin/properties/${propertyId}/images`}
+                className="rounded-lg bg-deep px-3 py-2 text-sm font-semibold text-cream"
+              >
+                Administrar imágenes
+              </Link>
+            </div>
             {images.length ? (
-              <ul className="mt-4 grid gap-2 text-sm">
-                {images.map((image) => (
-                  <li key={image.id}>
-                    {image.is_cover ? "Portada · " : ""}
-                    {image.alt_text || "Sin texto alternativo"}
+              <ul className="mt-3 flex gap-2 overflow-x-auto">
+                {images.slice(0, 4).map((image, index) => (
+                  <li
+                    key={image.id}
+                    className="relative h-16 w-24 shrink-0 overflow-hidden rounded-lg bg-slate-100"
+                  >
+                    <Image
+                      src={image.url}
+                      alt={image.alt_text || `Imagen ${index + 1}`}
+                      fill
+                      sizes="96px"
+                      className="object-cover"
+                    />
                   </li>
                 ))}
               </ul>
-            ) : null}
+            ) : (
+              <p className="mt-3 text-sm text-slate-600">Todavía no hay imágenes cargadas.</p>
+            )}
           </Panel>
           <Panel>
             <h2 className="font-bold">Precio de fin de semana</h2>

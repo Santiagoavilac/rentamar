@@ -38,6 +38,7 @@ import {
   createUserInputSchema,
   reasonSchema,
   imageMetaSchema,
+  imageIdsSchema,
 } from "@/lib/validation";
 
 export type ActionResult = {
@@ -265,6 +266,7 @@ export async function uploadPropertyImageAction(
   } catch (error) {
     return fail(error);
   }
+  revalidatePath(`/admin/properties/${propertyId}/images`);
   revalidatePath(`/admin/properties/${propertyId}`);
   return OK;
 }
@@ -289,6 +291,34 @@ export async function setCoverImageAction(
   } catch (error) {
     return fail(error);
   }
+  revalidatePath(`/admin/properties/${propertyId}/images`);
+  revalidatePath(`/admin/properties/${propertyId}`);
+  return OK;
+}
+
+// Recibe la galería completa en el orden nuevo. La primera imagen queda de portada.
+export async function reorderPropertyImagesAction(
+  propertyId: string,
+  imageIds: string[],
+): Promise<ActionResult> {
+  try {
+    const session = await requireStaff();
+    await assertSameOrigin();
+    assertAdminAction(session.role, "property.manage");
+    const ids = imageIdsSchema.parse(imageIds);
+    await properties.reorderPropertyImages(propertyId, ids);
+    const ctx = await buildAuditContext(session);
+    await writeAudit({
+      ...ctx,
+      action: "property.image.reorder",
+      entityType: "property",
+      entityId: propertyId,
+      after: { imageIds: ids },
+    });
+  } catch (error) {
+    return fail(error);
+  }
+  revalidatePath(`/admin/properties/${propertyId}/images`);
   revalidatePath(`/admin/properties/${propertyId}`);
   return OK;
 }
@@ -313,6 +343,7 @@ export async function deletePropertyImageAction(
   } catch (error) {
     return fail(error);
   }
+  revalidatePath(`/admin/properties/${propertyId}/images`);
   revalidatePath(`/admin/properties/${propertyId}`);
   return OK;
 }

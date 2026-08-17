@@ -196,6 +196,8 @@ export async function addPropertyImage(params: {
       .update({ is_cover: false })
       .eq("property_id", params.propertyId);
   }
+  // La imagen nueva va al final de la galería; si es la primera de la propiedad queda
+  // de portada porque la portada es siempre la que está en la posición 1.
   const { data: max } = await supabase
     .from("property_images")
     .select("sort_order")
@@ -211,7 +213,7 @@ export async function addPropertyImage(params: {
       property_id: params.propertyId,
       url: params.url,
       alt_text: params.altText,
-      is_cover: params.isCover,
+      is_cover: params.isCover || nextOrder === 0,
       sort_order: nextOrder,
     })
     .select("id")
@@ -270,6 +272,45 @@ export async function setCoverImage(propertyId: string, imageId: string) {
   if (error) throw new AppError("INTERNAL_ERROR", "Error interno", 500);
 }
 
+// El orden de la galería es el que se ve en la web: sort_order 0, 1, 2… y la primera
+// es la portada. Se reescribe entero para que no queden huecos ni empates.
+// El índice único de portada obliga a apagarla en todas antes de encenderla en una.
+async function resequenceImages(propertyId: string, orderedIds: string[]) {
+  const supabase = createAdminClient();
+  await supabase.from("property_images").update({ is_cover: false }).eq("property_id", propertyId);
+  for (const [index, id] of orderedIds.entries()) {
+    const { error } = await supabase
+      .from("property_images")
+      .update({ sort_order: index, is_cover: index === 0 })
+      .eq("id", id)
+      .eq("property_id", propertyId);
+    if (error) throw new AppError("INTERNAL_ERROR", "Error interno", 500);
+  }
+}
+
+export async function reorderPropertyImages(propertyId: string, orderedIds: string[]) {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("property_images")
+    .select("id")
+    .eq("property_id", propertyId);
+  if (error) throw new AppError("INTERNAL_ERROR", "Error interno", 500);
+
+  // El cliente manda la lista completa de la propiedad y nada más: si no coincide,
+  // llegó desactualizada (o manipulada) y se rechaza antes de tocar nada.
+  const current = new Set((data ?? []).map((row) => row.id));
+  const received = new Set(orderedIds);
+  if (received.size !== orderedIds.length || received.size !== current.size) {
+    throw new AppError("VALIDATION_ERROR", "La lista de imágenes cambió, recargá la página", 422);
+  }
+  for (const id of orderedIds) {
+    if (!current.has(id)) {
+      throw new AppError("VALIDATION_ERROR", "La lista de imágenes cambió, recargá la página", 422);
+    }
+  }
+  await resequenceImages(propertyId, orderedIds);
+}
+
 export async function deletePropertyImage(propertyId: string, imageId: string) {
   const supabase = createAdminClient();
   const { data: img } = await supabase
@@ -285,6 +326,20 @@ export async function deletePropertyImage(propertyId: string, imageId: string) {
     .eq("id", imageId)
     .eq("property_id", propertyId);
   if (error) throw new AppError("INTERNAL_ERROR", "Error interno", 500);
+
+  // Sin la imagen borrada el orden queda con huecos y la propiedad puede quedarse sin
+  // portada: se renumera lo que sobrevive respetando el orden actual.
+  const { data: rest } = await supabase
+    .from("property_images")
+    .select("id")
+    .eq("property_id", propertyId)
+    .order("sort_order", { ascending: true });
+  if (rest?.length) {
+    await resequenceImages(
+      propertyId,
+      rest.map((row) => row.id),
+    );
+  }
 
   // Best-effort: quitar el objeto del bucket si la URL apunta a él.
   if (img?.url) {

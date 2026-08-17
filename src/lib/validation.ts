@@ -182,6 +182,9 @@ export const rateInputSchema = z
     path: ["endDate"],
   });
 
+// Galería completa de una propiedad en el orden nuevo (drag & drop del panel).
+export const imageIdsSchema = z.array(z.uuid()).min(1).max(200);
+
 // Recargo global de fin de semana: días en ISO (1 = lunes … 7 = domingo) y el
 // porcentaje que se suma al precio base de esas noches. Lista vacía o 0% = apagado.
 export const weekendPricingSchema = z.object({

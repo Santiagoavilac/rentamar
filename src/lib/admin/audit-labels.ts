@@ -14,6 +14,7 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   "property.image.add": "Imagen agregada",
   "property.image.upload": "Imagen subida",
   "property.image.cover": "Portada cambiada",
+  "property.image.reorder": "Orden de las imágenes cambiado",
   "property.image.delete": "Imagen eliminada",
   "rate.create": "Tarifa de temporada creada",
   "rate.update": "Tarifa de temporada actualizada",
