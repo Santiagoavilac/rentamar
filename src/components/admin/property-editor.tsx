@@ -74,6 +74,7 @@ export function PropertyEditor({
   rates: EditorRate[];
 }) {
   const [state, formAction] = useActionState(action, { ok: false, error: null });
+  const [baseMinor, setBaseMinor] = useState(Number(values.base_price_minor ?? 0));
   const [rows, setRows] = useState<RateRow[]>(
     rates.map((rate) => ({
       id: rate.id,
@@ -106,7 +107,18 @@ export function PropertyEditor({
       <input type="hidden" name="ratesJson" value={JSON.stringify(ratesPayload)} />
 
       <h2 className="mb-4 font-bold">Datos de la propiedad</h2>
-      <PropertyFields values={values} towers={towers} canManageAffiliates={canManageAffiliates} />
+      {/* El precio base se escucha acá para que el bloque de fin de semana calcule sobre
+          lo que se está tipeando, sin tener que guardar primero. */}
+      <div
+        onInput={(event) => {
+          const target = event.target as HTMLInputElement;
+          if (target.name === "basePrice") {
+            setBaseMinor(Math.round((Number(target.value) || 0) * 100));
+          }
+        }}
+      >
+        <PropertyFields values={values} towers={towers} canManageAffiliates={canManageAffiliates} />
+      </div>
 
       <section className="mt-8 border-t border-slate-200 pt-6">
         <h2 className="font-bold">Precio de fin de semana</h2>
@@ -117,7 +129,7 @@ export function PropertyEditor({
         <WeekendPricingFields
           days={weekend.days}
           surchargePercent={weekend.surchargePercent}
-          basePriceMinor={Number(values.base_price_minor ?? 0)}
+          basePriceMinor={baseMinor}
         />
       </section>
 
