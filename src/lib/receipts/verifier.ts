@@ -11,6 +11,28 @@ const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const DEFAULT_MODEL = "qwen/qwen3-vl-8b-instruct";
 const DEFAULT_FALLBACK_MODEL = "qwen/qwen3-vl-32b-instruct";
 const TIMEOUT_MS = 30_000;
+// Un solo reintento ante fallos transitorios del proveedor (429 / 5xx / timeout): sin
+// esto, un hipo de OpenRouter manda un pago bueno a revisión manual sin vuelta atrás.
+const RETRY_DELAY_MS = 1_500;
+
+// Bolivia tiene zona única (-04:00). El comprobante muestra hora local, así que la
+// ventana de pago se le pasa a la IA en hora local y no en UTC: comparar 13:05 del
+// comprobante contra un ISO en UTC daba falsos "fuera de plazo".
+const BOLIVIA_TIME_ZONE = "America/La_Paz";
+
+function formatLocal(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+  return new Intl.DateTimeFormat("es-BO", {
+    timeZone: BOLIVIA_TIME_ZONE,
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(date);
+}
 
 // Lista de modelos [primario, fallback] leída de env. Si el fallback coincide con el
 // primario o está vacío, se envía un solo modelo.
@@ -55,7 +77,7 @@ function buildPrompt(expected: ExpectedReceipt): string {
     `- Destinatario: ${expected.recipientName}`,
     `- Cuenta receptora: ${expected.recipientAccount}`,
     `- Banco: ${expected.bankName}`,
-    `- Ventana de pago válida: desde ${expected.createdAt} hasta ${expected.deadlineAt}`,
+    `- Ventana de pago válida (hora de Bolivia): desde ${formatLocal(expected.createdAt)} hasta ${formatLocal(expected.deadlineAt)}`,
     "",
     "Respondé con UN SOLO dígito, sin texto adicional:",
     "1 = no se puede confirmar el pago (monto o destinatario no coinciden, o el documento es ilegible).",
@@ -81,7 +103,7 @@ function buildRequestBody(bytes: Uint8Array, mimeType: string, prompt: string) {
     return {
       models,
       temperature: 0,
-      max_tokens: 1,
+      max_tokens: 8,
       plugins: [{ id: "file-parser", pdf: { engine: "mistral-ocr" } }],
       messages: [
         {
@@ -98,7 +120,7 @@ function buildRequestBody(bytes: Uint8Array, mimeType: string, prompt: string) {
   return {
     models,
     temperature: 0,
-    max_tokens: 1,
+    max_tokens: 8,
     messages: [
       {
         role: "user",
@@ -112,16 +134,18 @@ function buildRequestBody(bytes: Uint8Array, mimeType: string, prompt: string) {
 }
 
 function parseScore(raw: string | undefined | null): ReceiptScore {
-  const trimmed = (raw ?? "").trim();
-  // Salida inválida o inesperada del modelo → se trata como 4 (revisión manual).
-  if (trimmed === "1") return 1;
-  if (trimmed === "2") return 2;
-  if (trimmed === "3") return 3;
+  // Se toma el primer dígito 1-4 de la respuesta: algunos modelos anteponen un espacio
+  // o devuelven "2." Salida sin dígito válido → 4 (revisión manual).
+  const digit = (raw ?? "").match(/[1-4]/)?.[0];
+  if (digit === "1") return 1;
+  if (digit === "2") return 2;
+  if (digit === "3") return 3;
   return 4;
 }
 
 // Nunca lanza: ante cualquier fallo (timeout, 429, 5xx, sin key, red) devuelve
 // 'unavailable' para que el caller mande a revisión manual (nunca aprueba/rechaza).
+// Los fallos transitorios se reintentan una vez antes de rendirse.
 export async function verifyReceipt(params: {
   bytes: Uint8Array;
   mimeType: string;
@@ -133,6 +157,19 @@ export async function verifyReceipt(params: {
   const prompt = buildPrompt(params.expected);
   const body = buildRequestBody(params.bytes, params.mimeType, prompt);
 
+  const first = await callOpenRouter(apiKey, body);
+  if (first.kind !== "transient") return first;
+
+  await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+  const second = await callOpenRouter(apiKey, body);
+  return second.kind === "transient" ? { kind: "unavailable" } : second;
+}
+
+// 'transient' distingue un problema del proveedor (vale reintentar) de una respuesta
+// que sí llegó pero no se pudo interpretar.
+type CallResult = VerifyResult | { kind: "transient" };
+
+async function callOpenRouter(apiKey: string, body: unknown): Promise<CallResult> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
@@ -146,7 +183,11 @@ export async function verifyReceipt(params: {
       signal: controller.signal,
     });
 
-    if (!response.ok) return { kind: "unavailable" };
+    // 408/429/5xx son hipos del proveedor: se reintentan. El resto no.
+    if (!response.ok) {
+      const retryable = response.status === 408 || response.status === 429 || response.status >= 500;
+      return retryable ? { kind: "transient" } : { kind: "unavailable" };
+    }
 
     const json = (await response.json()) as {
       choices?: { message?: { content?: string } }[];
@@ -156,8 +197,8 @@ export async function verifyReceipt(params: {
 
     return { kind: "score", value: parseScore(content) };
   } catch {
-    // Timeout / red / JSON inválido: nunca decide, manda a revisión.
-    return { kind: "unavailable" };
+    // Timeout / red / JSON inválido: nunca decide, pero vale un reintento.
+    return { kind: "transient" };
   } finally {
     clearTimeout(timeout);
   }

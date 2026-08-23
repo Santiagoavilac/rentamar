@@ -79,11 +79,19 @@ export default async function PaymentDetail({
                   <p className="mt-1 break-all text-xs text-slate-500">SHA-256: {r.sha256}</p>
                   {r.url ? (
                     <a
-                      className="mt-2 inline-block font-semibold text-cyan-700"
+                      className="mt-2 inline-flex items-center gap-3 font-semibold text-cyan-700"
                       href={r.url}
                       target="_blank"
                       rel="noreferrer"
                     >
+                      {r.mimeType.startsWith("image/") ? (
+                        /* eslint-disable-next-line @next/next/no-img-element -- URL firmada temporal de Storage */
+                        <img
+                          src={r.url}
+                          alt={`Comprobante intento ${r.attemptNo}`}
+                          className="h-24 w-24 rounded border border-slate-200 object-cover"
+                        />
+                      ) : null}
                       Ver comprobante
                     </a>
                   ) : null}

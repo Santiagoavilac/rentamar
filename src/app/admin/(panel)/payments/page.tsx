@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { listPayments } from "@/lib/admin/payments";
+import { listLatestReceipts, listPayments, type ReceiptSummary } from "@/lib/admin/payments";
 import {
   AdminPageHeader,
   EmptyState,
@@ -8,6 +8,14 @@ import {
   Panel,
   StatusBadge,
 } from "@/components/admin/ui";
+// Misma etiqueta que el detalle del pago. Nunca se expone el modelo ni el prompt.
+const AI_RESULT_LABEL: Record<number, string> = {
+  1: "Sin confirmar",
+  2: "Aprobado por IA",
+  3: "Fuera de plazo",
+  4: "Requiere revisión",
+};
+
 export default async function PaymentsPage({
   searchParams,
 }: {
@@ -19,6 +27,7 @@ export default async function PaymentsPage({
     pageSize: 20,
     status: p.status,
   });
+  const receipts = await listLatestReceipts(result.rows.map((x) => x.id));
   return (
     <>
       <AdminPageHeader
@@ -37,6 +46,7 @@ export default async function PaymentsPage({
                   <th>Proveedor</th>
                   <th>Estado</th>
                   <th>Monto</th>
+                  <th>Comprobante</th>
                 </tr>
               </thead>
               <tbody>
@@ -58,6 +68,9 @@ export default async function PaymentsPage({
                     <td>
                       <Money amount={x.amount_minor} currency={x.currency} />
                     </td>
+                    <td className="py-2">
+                      <ReceiptCell receipt={receipts.get(x.id)} />
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -72,5 +85,34 @@ export default async function PaymentsPage({
         )}
       </Panel>
     </>
+  );
+}
+
+// Miniatura del último comprobante: se ve desde el listado, sin aprobar nada. La URL
+// es firmada y de corta duración (el bucket es privado).
+function ReceiptCell({ receipt }: { receipt?: ReceiptSummary }) {
+  if (!receipt?.url) return <span className="text-slate-400">—</span>;
+
+  const label = receipt.aiStatus === "unavailable" ? "IA no disponible" : AI_RESULT_LABEL[receipt.aiResult ?? 4];
+
+  return (
+    <a
+      href={receipt.url}
+      target="_blank"
+      rel="noreferrer"
+      className="inline-flex items-center gap-2 font-semibold text-cyan-700"
+    >
+      {receipt.mimeType.startsWith("image/") ? (
+        /* eslint-disable-next-line @next/next/no-img-element -- URL firmada temporal de Storage */
+        <img
+          src={receipt.url}
+          alt="Comprobante"
+          className="h-10 w-10 rounded border border-slate-200 object-cover"
+        />
+      ) : (
+        <span className="rounded border border-slate-200 px-2 py-1 text-xs text-slate-600">PDF</span>
+      )}
+      <span className="text-xs font-normal text-slate-600">{label}</span>
+    </a>
   );
 }

@@ -46,6 +46,53 @@ export async function listPayments(params: { page: number; pageSize: number; sta
   };
 }
 
+// Último comprobante de cada pago del listado, con URL firmada para verlo sin entrar
+// al detalle ni aprobar nada. Una sola consulta + un solo lote de URLs firmadas.
+export type ReceiptSummary = {
+  url: string | null;
+  mimeType: string;
+  aiResult: number | null;
+  aiStatus: string;
+};
+
+export async function listLatestReceipts(
+  paymentIds: string[],
+): Promise<Map<string, ReceiptSummary>> {
+  const out = new Map<string, ReceiptSummary>();
+  if (paymentIds.length === 0) return out;
+
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("payment_receipts")
+    .select("payment_id, file_path, mime_type, ai_result, ai_status, attempt_no")
+    .in("payment_id", paymentIds)
+    .order("attempt_no", { ascending: false });
+  if (error) throw new AppError("INTERNAL_ERROR", "Error interno", 500);
+
+  // Como vienen ordenados por intento descendente, el primero de cada pago es el último.
+  const latest = new Map<string, (typeof data)[number]>();
+  for (const row of data ?? []) {
+    if (!latest.has(row.payment_id)) latest.set(row.payment_id, row);
+  }
+  if (latest.size === 0) return out;
+
+  const paths = [...latest.values()].map((row) => row.file_path);
+  const { data: signed } = await supabase.storage
+    .from(RECEIPTS_BUCKET)
+    .createSignedUrls(paths, 60 * 10);
+  const urlByPath = new Map((signed ?? []).map((s) => [s.path ?? "", s.signedUrl]));
+
+  for (const [paymentId, row] of latest) {
+    out.set(paymentId, {
+      url: urlByPath.get(row.file_path) ?? null,
+      mimeType: row.mime_type,
+      aiResult: row.ai_result,
+      aiStatus: row.ai_status,
+    });
+  }
+  return out;
+}
+
 export async function getPaymentDetail(id: string) {
   const supabase = await createClient();
   const { data, error } = await supabase
