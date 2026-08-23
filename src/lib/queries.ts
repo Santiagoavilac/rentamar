@@ -33,7 +33,51 @@ export type PropertyDetail = {
 type ListFilters = {
   featured?: boolean;
   guests?: number;
+  propertyType?: string;
+  checkIn?: string;
+  checkOut?: string;
 };
+
+type ServerClient = Awaited<ReturnType<typeof createClient>>;
+
+// La RPC pública de disponibilidad es por propiedad, así que se consulta una vez por
+// propiedad y se queda con las que no tengan reserva ni bloqueo dentro del rango pedido.
+async function getAvailableIds(
+  supabase: ServerClient,
+  ids: string[],
+  from: string,
+  to: string,
+): Promise<Set<string>> {
+  const checked = await Promise.all(
+    ids.map(async (id) => {
+      const { data, error } = await supabase.rpc("get_property_availability", {
+        p_property_id: id,
+        p_from: from,
+        p_to: to,
+      });
+      if (error) throw error;
+      return (data ?? []).length === 0 ? id : null;
+    }),
+  );
+  return new Set(checked.filter((id) => id !== null));
+}
+
+// Tipos de propiedad realmente cargados: el buscador solo ofrece opciones con resultados.
+export async function getPropertyTypes(): Promise<string[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("properties")
+    .select("property_type")
+    .eq("status", "published");
+  if (error) throw error;
+
+  const types = new Set<string>();
+  for (const row of data ?? []) {
+    const type = row.property_type?.trim();
+    if (type) types.add(type);
+  }
+  return [...types].sort((a, b) => a.localeCompare(b, "es"));
+}
 
 // Cards del landing. Mapea al shape Property que consume PropertyCard.
 export async function getPublishedProperties(filters: ListFilters = {}): Promise<Property[]> {
@@ -49,11 +93,23 @@ export async function getPublishedProperties(filters: ListFilters = {}): Promise
 
   if (filters.featured !== undefined) query = query.eq("featured", filters.featured);
   if (filters.guests !== undefined) query = query.gte("max_guests", filters.guests);
+  if (filters.propertyType) query = query.ilike("property_type", filters.propertyType);
 
   const { data, error } = await query;
   if (error) throw error;
 
-  return (data ?? []).map((p) => {
+  let rows = data ?? [];
+  if (filters.checkIn && filters.checkOut) {
+    const available = await getAvailableIds(
+      supabase,
+      rows.map((p) => p.id),
+      filters.checkIn,
+      filters.checkOut,
+    );
+    rows = rows.filter((p) => available.has(p.id));
+  }
+
+  return rows.map((p) => {
     const images = (p.property_images ?? []) as {
       url: string;
       alt_text: string | null;

@@ -89,6 +89,7 @@ export const propertiesQuerySchema = z.object({
     .optional()
     .transform((v) => (v === undefined ? undefined : v === "true")),
   guests: z.coerce.number().int().min(1).max(50).optional(),
+  type: z.string().trim().max(60).optional(),
   checkIn: isoDate.optional(),
   checkOut: isoDate.optional(),
 });

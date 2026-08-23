@@ -1,9 +1,9 @@
 import { ArrowRight, ChevronDown } from "lucide-react";
 import ResponsiveHeroVideo from "./ResponsiveHeroVideo";
-import SearchBar from "./SearchBar";
+import PropertySearch from "./PropertySearch";
 import Reveal from "./Reveal";
 
-export default function Hero() {
+export default async function Hero() {
   return (
     <section id="inicio" className="relative">
       {/* Full-screen video, pinned while the first screen scrolls */}
@@ -64,7 +64,7 @@ export default function Hero() {
               </div>
 
               <div className="mt-6">
-                <SearchBar />
+                <PropertySearch />
               </div>
             </div>
           </Reveal>

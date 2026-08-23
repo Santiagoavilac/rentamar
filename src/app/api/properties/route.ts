@@ -13,6 +13,9 @@ export async function GET(request: Request) {
     const properties = await getPublishedProperties({
       featured: parsed.data.featured,
       guests: parsed.data.guests,
+      propertyType: parsed.data.type,
+      checkIn: parsed.data.checkIn,
+      checkOut: parsed.data.checkOut,
     });
 
     return jsonResponse({ properties });
