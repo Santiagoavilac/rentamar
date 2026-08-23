@@ -518,6 +518,8 @@ export type Database = {
           created_at: string;
           id: string;
           is_active: boolean;
+          max_guests: number;
+          phone: string | null;
           property_name: string;
           room_count: number;
           updated_at: string;
@@ -527,6 +529,8 @@ export type Database = {
           created_at?: string;
           id: string;
           is_active?: boolean;
+          max_guests?: number;
+          phone?: string | null;
           property_name: string;
           room_count: number;
           updated_at?: string;
@@ -536,6 +540,8 @@ export type Database = {
           created_at?: string;
           id?: string;
           is_active?: boolean;
+          max_guests?: number;
+          phone?: string | null;
           property_name?: string;
           room_count?: number;
           updated_at?: string;

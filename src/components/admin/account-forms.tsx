@@ -83,6 +83,26 @@ export function CreateCoOwnerForm({ action }: { action: FormAction }) {
           className={input}
         />
       </label>
+      <label className="text-sm">
+        Teléfono
+        <input required name="phone" inputMode="tel" placeholder="70012345" className={input} />
+      </label>
+      <label className="text-sm">
+        Límite de huéspedes
+        <input
+          required
+          type="number"
+          name="maxGuests"
+          min={1}
+          max={50}
+          defaultValue={5}
+          aria-describedby="co-owner-max-guests-help"
+          className={input}
+        />
+        <span id="co-owner-max-guests-help" className="mt-1 block text-xs text-slate-500">
+          Acompañantes que puede declarar. El titular firma la declaración y no ocupa cupo.
+        </span>
+      </label>
       <p className="text-xs text-slate-500">
         La contraseña queda definitiva desde ahora. Entregala al copropietario por un canal seguro.
       </p>
@@ -138,6 +158,77 @@ export function CreateCleanerForm({ action }: { action: FormAction }) {
         <Submit label="Crear cuenta" />
       </div>
       <Feedback state={state} okLabel="Cuenta creada." />
+    </form>
+  );
+}
+
+// Edición de los datos de la cuenta (no del usuario ni de la contraseña). Sirve además
+// para completar el teléfono de las cuentas creadas antes de que el campo existiera.
+export function EditCoOwnerForm({
+  action,
+  account,
+}: {
+  action: FormAction;
+  account: {
+    id: string;
+    propertyName: string;
+    roomCount: number;
+    phone: string | null;
+    maxGuests: number;
+  };
+}) {
+  const [state, formAction] = useActionState(action, initial);
+  const field = "w-full rounded border p-1.5 text-sm";
+  return (
+    <form action={formAction} className="grid gap-2 sm:grid-cols-4 sm:items-end">
+      <input type="hidden" name="accountId" value={account.id} />
+      <label className="text-xs text-slate-600">
+        Propiedad
+        <input
+          required
+          name="propertyName"
+          defaultValue={account.propertyName}
+          className={field}
+        />
+      </label>
+      <label className="text-xs text-slate-600">
+        Habitaciones
+        <input
+          required
+          type="number"
+          name="roomCount"
+          min={1}
+          max={200}
+          defaultValue={account.roomCount}
+          className={field}
+        />
+      </label>
+      <label className="text-xs text-slate-600">
+        Teléfono
+        <input
+          required
+          name="phone"
+          inputMode="tel"
+          defaultValue={account.phone ?? ""}
+          className={field}
+        />
+      </label>
+      <label className="text-xs text-slate-600">
+        Límite de huéspedes
+        <input
+          required
+          type="number"
+          name="maxGuests"
+          min={1}
+          max={50}
+          defaultValue={account.maxGuests}
+          className={field}
+        />
+      </label>
+      <div className="sm:col-span-4">
+        <Submit label="Guardar datos" />
+        <Feedback state={state} okLabel="Datos actualizados." />
+      </div>
     </form>
   );
 }

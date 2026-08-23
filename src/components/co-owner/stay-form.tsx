@@ -9,11 +9,9 @@ import { DeclarationButton } from "@/components/declaration-button";
 const inputClass = "mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-night";
 const labelClass = "text-sm font-medium text-slate-700";
 
-const MAX_GUESTS = 20;
+type Guest = { fullName: string; documentId: string; birthDate: string };
 
-type Guest = { fullName: string; documentId: string; phone: string; birthDate: string };
-
-const emptyGuest: Guest = { fullName: "", documentId: "", phone: "", birthDate: "" };
+const emptyGuest: Guest = { fullName: "", documentId: "", birthDate: "" };
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -31,9 +29,12 @@ function SubmitButton() {
 export default function StayForm({
   propertyName,
   roomCount,
+  maxGuests,
 }: {
   propertyName: string;
   roomCount: number;
+  // Acompañantes que permite la cuenta. El titular no ocupa cupo.
+  maxGuests: number;
 }) {
   const [state, formAction] = useActionState<StayFormState, FormData>(registerStayAction, {
     ok: false,
@@ -69,7 +70,7 @@ export default function StayForm({
           <h2 className="text-sm font-bold">Huéspedes</h2>
           <button
             type="button"
-            disabled={guests.length + 1 >= MAX_GUESTS}
+            disabled={guests.length >= maxGuests}
             onClick={() => setGuests((current) => [...current, { ...emptyGuest }])}
             className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-3 py-1.5 text-xs font-semibold disabled:opacity-40"
           >
@@ -78,7 +79,7 @@ export default function StayForm({
         </div>
 
         <div className="grid gap-4 rounded-2xl border border-slate-200 p-4">
-          <span className="text-xs font-semibold text-slate-500">Huésped 1 (vos)</span>
+          <span className="text-xs font-semibold text-slate-500">Titular</span>
           <div className="grid gap-4 sm:grid-cols-2">
             <label className={labelClass}>
               Nombre completo
@@ -110,6 +111,11 @@ export default function StayForm({
           </p>
         </div>
 
+        <p className="text-xs text-slate-500">
+          Podés declarar hasta {maxGuests} {maxGuests === 1 ? "huésped" : "huéspedes"} además del
+          titular. Llevás {guests.length}.
+        </p>
+
         {guests.map((guest, index) => (
           <div key={index} className="grid gap-4 rounded-2xl border border-slate-200 p-4">
             <div className="flex items-center justify-between">
@@ -139,16 +145,6 @@ export default function StayForm({
                   required
                   value={guest.documentId}
                   onChange={(e) => updateGuest(index, { documentId: e.target.value })}
-                  className={inputClass}
-                />
-              </label>
-              <label className={labelClass}>
-                Teléfono
-                <input
-                  required
-                  inputMode="tel"
-                  value={guest.phone}
-                  onChange={(e) => updateGuest(index, { phone: e.target.value })}
                   className={inputClass}
                 />
               </label>

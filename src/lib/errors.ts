@@ -311,6 +311,8 @@ export function mapPostgresError(message: string | undefined): AppError {
       return new ValidationError("Debe haber al menos un adulto y ningún menor negativo");
     case "MISSING_GUEST_DATA":
       return new ValidationError("Completá nombre, CI y teléfono");
+    case "GUEST_LIMIT_EXCEEDED":
+      return new ValidationError("Superaste el límite de huéspedes de tu cuenta");
     case "VALIDATION_ERROR":
       return new ValidationError();
     default:

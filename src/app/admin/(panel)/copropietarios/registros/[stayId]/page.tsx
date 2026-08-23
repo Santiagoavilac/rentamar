@@ -68,7 +68,6 @@ export default async function CoOwnerStayDetailPage({
                 <tr>
                   <th className="px-4 py-3">Nombre completo</th>
                   <th className="px-4 py-3">CI</th>
-                  <th className="px-4 py-3">Teléfono</th>
                   <th className="px-4 py-3">Nacimiento</th>
                 </tr>
               </thead>
@@ -77,7 +76,6 @@ export default async function CoOwnerStayDetailPage({
                   <tr key={index} className="border-t border-slate-100">
                     <td className="px-4 py-3 font-semibold">{guest.full_name}</td>
                     <td className="px-4 py-3">{guest.document_id}</td>
-                    <td className="px-4 py-3">{guest.phone ?? "-"}</td>
                     <td className="px-4 py-3 whitespace-nowrap">{guest.birth_date}</td>
                   </tr>
                 ))}

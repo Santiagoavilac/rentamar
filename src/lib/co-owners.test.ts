@@ -35,17 +35,22 @@ describe("coOwnerAccountSchema", () => {
     password: "clave-larga-1",
     propertyName: "Edificio Coral",
     roomCount: "3",
+    phone: "70011223",
+    maxGuests: "4",
   };
 
-  it("normaliza el usuario y convierte las habitaciones a número", () => {
+  it("normaliza el usuario y convierte los números", () => {
     const parsed = coOwnerAccountSchema.parse({ ...valid, username: " Juan.Perez " });
     expect(parsed.username).toBe("juan.perez");
     expect(parsed.roomCount).toBe(3);
+    expect(parsed.maxGuests).toBe(4);
   });
 
-  it("exige propiedad y al menos una habitación", () => {
+  it("exige propiedad, habitación, teléfono y límite de huéspedes", () => {
     expect(coOwnerAccountSchema.safeParse({ ...valid, propertyName: "  " }).success).toBe(false);
     expect(coOwnerAccountSchema.safeParse({ ...valid, roomCount: "0" }).success).toBe(false);
+    expect(coOwnerAccountSchema.safeParse({ ...valid, phone: "123" }).success).toBe(false);
+    expect(coOwnerAccountSchema.safeParse({ ...valid, maxGuests: "0" }).success).toBe(false);
   });
 });
 
@@ -61,7 +66,7 @@ const validStay = {
   checkOutDate: "2026-08-03",
   checkOutTime: "10:00",
   guests: [
-    { fullName: "Luis Gómez", documentId: "7654321", phone: "70099887", birthDate: "1992-01-02" },
+    { fullName: "Luis Gómez", documentId: "7654321", birthDate: "1992-01-02" },
   ],
   minors: "1",
 };
@@ -107,5 +112,11 @@ describe("coOwnerStaySchema", () => {
   it("rechaza un huésped sin CI", () => {
     const badGuest = [{ ...validStay.guests[0], documentId: "" }];
     expect(coOwnerStaySchema.safeParse({ ...validStay, guests: badGuest }).success).toBe(false);
+  });
+
+  // El teléfono del titular sigue siendo obligatorio; el de los acompañantes ya no existe.
+  it("no pide teléfono a los acompañantes y sí al titular", () => {
+    expect(coOwnerStaySchema.parse(validStay).guests[0]).not.toHaveProperty("phone");
+    expect(coOwnerStaySchema.safeParse({ ...validStay, phone: "" }).success).toBe(false);
   });
 });

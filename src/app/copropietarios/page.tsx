@@ -32,7 +32,11 @@ export default async function CoOwnerPage() {
         </header>
 
         <section className="surface rounded-2xl p-5">
-          <StayForm propertyName={account.propertyName} roomCount={account.roomCount} />
+          <StayForm
+            propertyName={account.propertyName}
+            roomCount={account.roomCount}
+            maxGuests={account.maxGuests}
+          />
         </section>
       </div>
     </main>

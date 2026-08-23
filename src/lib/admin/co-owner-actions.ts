@@ -7,7 +7,12 @@ import { AppError } from "@/lib/errors";
 import { writeAudit } from "@/lib/audit";
 import { buildAuditContext, assertSameOrigin } from "./context";
 import * as coOwners from "./co-owners";
-import { coOwnerAccountSchema, coOwnerActiveSchema, coOwnerPasswordSchema } from "@/lib/validation";
+import {
+  coOwnerAccountSchema,
+  coOwnerAccountUpdateSchema,
+  coOwnerActiveSchema,
+  coOwnerPasswordSchema,
+} from "@/lib/validation";
 import type { ActionResult } from "./actions";
 
 // Acciones del panel para el módulo de copropietarios. Todas siguen la cadena
@@ -47,6 +52,8 @@ export async function createCoOwnerAccountAction(
       password: formData.get("password"),
       propertyName: formData.get("propertyName"),
       roomCount: formData.get("roomCount"),
+      phone: formData.get("phone"),
+      maxGuests: formData.get("maxGuests"),
     });
     const { accountId } = await coOwners.createCoOwnerAccount(parsed, session.userId);
     await writeAudit({
@@ -58,6 +65,41 @@ export async function createCoOwnerAccountAction(
         username: parsed.username,
         property_name: parsed.propertyName,
         room_count: parsed.roomCount,
+        phone: parsed.phone,
+        max_guests: parsed.maxGuests,
+      },
+    });
+  } catch (error) {
+    return fail(error);
+  }
+  revalidatePath(PANEL_PATH);
+  return OK;
+}
+
+export async function updateCoOwnerAccountAction(
+  _state: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  try {
+    const session = await authorize();
+    const parsed = coOwnerAccountUpdateSchema.parse({
+      accountId: formData.get("accountId"),
+      propertyName: formData.get("propertyName"),
+      roomCount: formData.get("roomCount"),
+      phone: formData.get("phone"),
+      maxGuests: formData.get("maxGuests"),
+    });
+    await coOwners.updateCoOwnerAccount(parsed);
+    await writeAudit({
+      ...(await buildAuditContext(session)),
+      action: "coowner.account.update",
+      entityType: "co_owner_account",
+      entityId: parsed.accountId,
+      after: {
+        property_name: parsed.propertyName,
+        room_count: parsed.roomCount,
+        phone: parsed.phone,
+        max_guests: parsed.maxGuests,
       },
     });
   } catch (error) {

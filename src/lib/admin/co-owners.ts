@@ -9,7 +9,7 @@ import {
   mapPostgresError,
 } from "@/lib/errors";
 import { coOwnerEmail } from "@/lib/co-owners";
-import type { CoOwnerAccountInput } from "@/lib/validation";
+import type { CoOwnerAccountInput, CoOwnerAccountUpdateInput } from "@/lib/validation";
 
 // Capa de datos del módulo de copropietarios. Las lecturas usan el cliente de sesión
 // (RLS: is_staff() ve todo); las escrituras del panel usan service_role, igual que el alta
@@ -63,6 +63,8 @@ export async function createCoOwnerAccount(
       username: input.username,
       property_name: input.propertyName,
       room_count: input.roomCount,
+      phone: input.phone,
+      max_guests: input.maxGuests,
     });
   if (insertErr) {
     // La cuenta de Auth quedaría huérfana sin profile de copropietario utilizable.
@@ -71,6 +73,23 @@ export async function createCoOwnerAccount(
   }
 
   return { accountId: userId };
+}
+
+// Edición de los datos de la cuenta. El usuario no se cambia: es la identidad con la que
+// el copropietario entra y quedó congelada en las estadías ya declaradas.
+export async function updateCoOwnerAccount(input: CoOwnerAccountUpdateInput): Promise<void> {
+  const supabase = createAdminClient();
+  await assertAccountExists(input.accountId);
+  const { error } = await supabase
+    .from("co_owner_accounts")
+    .update({
+      property_name: input.propertyName,
+      room_count: input.roomCount,
+      phone: input.phone,
+      max_guests: input.maxGuests,
+    })
+    .eq("id", input.accountId);
+  if (error) throw internal();
 }
 
 export async function setCoOwnerPassword(accountId: string, password: string): Promise<void> {
@@ -123,6 +142,8 @@ export type CoOwnerAccountRow = {
   isActive: boolean;
   propertyName: string;
   roomCount: number;
+  phone: string | null;
+  maxGuests: number;
   createdAt: string;
 };
 
@@ -130,7 +151,7 @@ export async function listCoOwnerAccounts(): Promise<CoOwnerAccountRow[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("co_owner_accounts")
-    .select("id, username, is_active, property_name, room_count, created_at")
+    .select("id, username, is_active, property_name, room_count, phone, max_guests, created_at")
     .order("username", { ascending: true });
   if (error) throw internal();
 
@@ -140,6 +161,8 @@ export async function listCoOwnerAccounts(): Promise<CoOwnerAccountRow[]> {
     isActive: account.is_active,
     propertyName: account.property_name,
     roomCount: account.room_count,
+    phone: account.phone,
+    maxGuests: account.max_guests,
     createdAt: account.created_at,
   }));
 }
@@ -149,7 +172,7 @@ export async function getCoOwnerAccount(accountId: string): Promise<CoOwnerAccou
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("co_owner_accounts")
-    .select("id, username, is_active, property_name, room_count, created_at")
+    .select("id, username, is_active, property_name, room_count, phone, max_guests, created_at")
     .eq("id", accountId)
     .maybeSingle();
   if (error) throw internal();
@@ -160,6 +183,8 @@ export async function getCoOwnerAccount(accountId: string): Promise<CoOwnerAccou
     isActive: data.is_active,
     propertyName: data.property_name,
     roomCount: data.room_count,
+    phone: data.phone,
+    maxGuests: data.max_guests,
     createdAt: data.created_at,
   };
 }
@@ -202,7 +227,6 @@ export type CoOwnerStayRow = {
 export type CoOwnerStayGuestRow = {
   full_name: string;
   document_id: string;
-  phone: string | null;
   birth_date: string;
 };
 
@@ -227,8 +251,10 @@ export async function listCoOwnerStays(params: {
 
   if (params.propertyName) query = query.eq("property_name", params.propertyName);
   if (params.accountId) query = query.eq("account_id", params.accountId);
-  if (params.from) query = query.gte("created_at", `${params.from}T00:00:00`);
-  if (params.to) query = query.lte("created_at", `${params.to}T23:59:59`);
+  // Con el offset de Bolivia: sin él el rango se interpreta en UTC y el filtro queda
+  // corrido 4 horas respecto del día que el admin tiene en mente.
+  if (params.from) query = query.gte("created_at", `${params.from}T00:00:00-04:00`);
+  if (params.to) query = query.lte("created_at", `${params.to}T23:59:59-04:00`);
 
   const { data, error, count } = await query;
   if (error) throw internal();
@@ -254,7 +280,7 @@ export async function getCoOwnerStay(
 
   const { data: guests, error: guestsError } = await supabase
     .from("co_owner_stay_guests")
-    .select("full_name, document_id, phone, birth_date")
+    .select("full_name, document_id, birth_date")
     .eq("stay_id", id)
     .order("sort_order");
   if (guestsError) throw internal();

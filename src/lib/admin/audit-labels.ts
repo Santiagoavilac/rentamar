@@ -42,6 +42,7 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   "user.create": "Usuario creado",
   "user.role_change": "Rol de usuario cambiado",
   "coowner.account.create": "Cuenta de copropietario creada",
+  "coowner.account.update": "Cuenta de copropietario editada",
   "coowner.account.password": "Contraseña de copropietario cambiada",
   "coowner.account.active": "Cuenta de copropietario activada o desactivada",
   "coowner.account.delete": "Cuenta de copropietario eliminada",

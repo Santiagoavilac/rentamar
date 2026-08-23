@@ -9,6 +9,7 @@ import {
   deleteCoOwnerAccountAction,
   setCoOwnerActiveAction,
   setCoOwnerPasswordAction,
+  updateCoOwnerAccountAction,
 } from "@/lib/admin/co-owner-actions";
 import {
   createCleanerAccountAction,
@@ -23,6 +24,7 @@ import {
   CreateCleanerForm,
   CreateCoOwnerForm,
   DeleteAccountForm,
+  EditCoOwnerForm,
   ToggleActiveForm,
 } from "@/components/admin/account-forms";
 
@@ -177,8 +179,9 @@ async function CoOwnersTab() {
     <div className="grid gap-5">
       <CreatePanel label="Crear copropietario">
         <p className="mb-4 text-sm text-slate-600">
-          Usuario, contraseña, propiedad y habitaciones en un solo paso. El copropietario entra en
-          /copropietarios y solo registra estadías: no es staff ni ve el panel.
+          Usuario, contraseña, propiedad, habitaciones, teléfono y límite de huéspedes en un solo
+          paso. El copropietario entra en /copropietarios y solo registra estadías: no es staff ni
+          ve el panel.
         </p>
         <CreateCoOwnerForm action={createCoOwnerAccountAction} />
       </CreatePanel>
@@ -191,12 +194,14 @@ async function CoOwnersTab() {
           />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] text-sm">
+            <table className="w-full min-w-[980px] text-sm">
               <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
                 <tr>
                   <th className={th}>Usuario</th>
                   <th className={th}>Propiedad</th>
                   <th className={th}>Habitaciones</th>
+                  <th className={th}>Teléfono</th>
+                  <th className={th}>Límite</th>
                   <th className={th}>Estado</th>
                   <th className={th}>Acciones</th>
                 </tr>
@@ -207,17 +212,31 @@ async function CoOwnersTab() {
                     <td className="py-3 font-medium">{account.username}</td>
                     <td className="py-3">{account.propertyName}</td>
                     <td className="py-3">{account.roomCount}</td>
+                    <td className="py-3">{account.phone ?? "—"}</td>
+                    <td className="py-3">{account.maxGuests}</td>
                     <td className="py-3">
                       <StatusBadge value={account.isActive ? "active" : "cancelada"} />
                     </td>
                     <td className="py-3">
-                      <AccountActions
-                        accountId={account.id}
-                        isActive={account.isActive}
-                        passwordAction={setCoOwnerPasswordAction}
-                        activeAction={setCoOwnerActiveAction}
-                        deleteAction={deleteCoOwnerAccountAction}
-                      />
+                      <div className="grid gap-3">
+                        <EditCoOwnerForm
+                          action={updateCoOwnerAccountAction}
+                          account={{
+                            id: account.id,
+                            propertyName: account.propertyName,
+                            roomCount: account.roomCount,
+                            phone: account.phone,
+                            maxGuests: account.maxGuests,
+                          }}
+                        />
+                        <AccountActions
+                          accountId={account.id}
+                          isActive={account.isActive}
+                          passwordAction={setCoOwnerPasswordAction}
+                          activeAction={setCoOwnerActiveAction}
+                          deleteAction={deleteCoOwnerAccountAction}
+                        />
+                      </div>
                     </td>
                   </tr>
                 ))}

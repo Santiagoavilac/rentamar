@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireCoOwner } from "@/lib/auth";
+import { getCoOwnerAccount } from "@/lib/admin/co-owners";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { assertSameOrigin } from "@/lib/admin/context";
@@ -19,7 +20,7 @@ export async function registerStayAction(
 ): Promise<StayFormState> {
   let stayId: string;
   try {
-    await requireCoOwner();
+    const session = await requireCoOwner();
     await assertSameOrigin();
 
     let guests: unknown = [];
@@ -51,6 +52,19 @@ export async function registerStayAction(
       };
     }
     const parsed = result.data;
+
+    // El límite de acompañantes es de la cuenta. La RPC lo revalida (GUEST_LIMIT_EXCEEDED),
+    // pero acá se corta antes para devolver un mensaje entendible.
+    const account = await getCoOwnerAccount(session.userId);
+    if (parsed.guests.length > account.maxGuests) {
+      return {
+        ok: false,
+        error: `Podés declarar hasta ${account.maxGuests} ${
+          account.maxGuests === 1 ? "huésped" : "huéspedes"
+        } además del titular.`,
+        stayId: null,
+      };
+    }
 
     const supabase = await createClient();
     const { data, error } = await supabase.rpc("register_co_owner_stay", {
@@ -88,7 +102,6 @@ export async function registerStayAction(
           stay_id: stayId,
           full_name: guest.fullName,
           document_id: guest.documentId,
-          phone: guest.phone,
           birth_date: guest.birthDate,
           sort_order: index,
         })),

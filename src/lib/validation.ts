@@ -442,13 +442,27 @@ const accountUsername = z
 
 const accountPassword = z.string().min(10, "Mínimo 10 caracteres").max(200);
 
-// Alta en un solo paso: la propiedad y la cantidad de habitaciones son atributos de la
-// cuenta, así que el mismo formulario que crea el usuario los define.
+// Datos de la cuenta que administración define y puede editar después. El límite de
+// huéspedes cuenta ACOMPAÑANTES: el titular firma la declaración y no ocupa cupo.
+const coOwnerAccountFields = {
+  propertyName: z.string().trim().min(2, "Ingresá la propiedad").max(160),
+  roomCount: z.coerce.number().int().min(1, "Debe haber al menos una habitación").max(200),
+  phone: z.string().trim().min(6, "Ingresá el teléfono").max(30),
+  maxGuests: z.coerce.number().int().min(1, "Debe permitir al menos un huésped").max(50),
+};
+
+// Alta en un solo paso: la propiedad, las habitaciones, el teléfono y el límite de
+// huéspedes son atributos de la cuenta, así que el mismo formulario que crea el usuario
+// los define.
 export const coOwnerAccountSchema = z.object({
   username: accountUsername,
   password: accountPassword,
-  propertyName: z.string().trim().min(2, "Ingresá la propiedad").max(160),
-  roomCount: z.coerce.number().int().min(1, "Debe haber al menos una habitación").max(200),
+  ...coOwnerAccountFields,
+});
+
+export const coOwnerAccountUpdateSchema = z.object({
+  accountId: z.uuid(),
+  ...coOwnerAccountFields,
 });
 
 export const coOwnerPasswordSchema = z.object({
@@ -478,7 +492,6 @@ const birthDateField = dateField.refine((v) => v < new Date().toISOString().slic
 export const coOwnerGuestSchema = z.object({
   fullName: z.string().trim().min(2, "Ingresá el nombre del huésped").max(160),
   documentId: z.string().trim().min(3, "Ingresá el CI del huésped").max(40),
-  phone: z.string().trim().min(6, "Ingresá el teléfono del huésped").max(30),
   birthDate: birthDateField,
 });
 
@@ -495,7 +508,9 @@ export const coOwnerStaySchema = z
     checkOutDate: dateField,
     checkOutTime: timeField,
     // Del huésped 2 en adelante. El 1 es quien llena el formulario y firma la declaración.
-    guests: z.array(coOwnerGuestSchema).max(19, "Máximo 20 huéspedes").default([]),
+    // Tope duro de seguridad. El límite real es max_guests de la cuenta y se valida en
+    // registerStayAction, que es donde se conoce quién está declarando.
+    guests: z.array(coOwnerGuestSchema).max(50, "Demasiados huéspedes").default([]),
     minors: z.coerce.number().int().min(0).max(50).default(0),
   })
   .transform((value) => ({
@@ -509,6 +524,7 @@ export const coOwnerStaySchema = z
   });
 
 export type CoOwnerAccountInput = z.infer<typeof coOwnerAccountSchema>;
+export type CoOwnerAccountUpdateInput = z.infer<typeof coOwnerAccountUpdateSchema>;
 export type CoOwnerStayInput = z.infer<typeof coOwnerStaySchema>;
 
 // ---------- Módulo de personal de limpieza ----------
