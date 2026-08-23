@@ -1,12 +1,20 @@
 import Link from "next/link";
-import { AdminPageHeader, KeyValue, Money, Panel, StatusBadge } from "@/components/admin/ui";
+import {
+  AdminPageHeader,
+  KeyValue,
+  Money,
+  Panel,
+  StatusBadge,
+  formatDateTime,
+} from "@/components/admin/ui";
 import { PanelHeading } from "@/components/admin/help";
 import { ReasonActionForm } from "@/components/admin/forms";
-import { DeclarationButton } from "@/components/declaration-button";
+import { DeclarationPanel } from "@/components/admin/declaration-cell";
 import { affiliateRequestAction } from "@/lib/admin/actions";
 import { getAffiliateRequestDetail } from "@/lib/admin/affiliates";
 import { listBookingEvents } from "@/lib/admin/bookings";
 import { listBookingIdDocuments } from "@/lib/id-documents";
+import { getDeclarationForBooking } from "@/lib/admin/declarations";
 import { assertAdminAction, requireStaff } from "@/lib/auth";
 
 export default async function AffiliateRequestPage({
@@ -17,10 +25,11 @@ export default async function AffiliateRequestPage({
   const session = await requireStaff();
   assertAdminAction(session.role, "affiliate.review");
   const { bookingId } = await params;
-  const [{ booking, companions, property }, events, idDocuments] = await Promise.all([
+  const [{ booking, companions, property }, events, idDocuments, declaration] = await Promise.all([
     getAffiliateRequestDetail(bookingId),
     listBookingEvents(bookingId),
     listBookingIdDocuments(bookingId),
+    getDeclarationForBooking(bookingId),
   ]);
   const idFront = idDocuments.find((doc) => doc.side === "front");
   const idBack = idDocuments.find((doc) => doc.side === "back");
@@ -157,10 +166,7 @@ export default async function AffiliateRequestPage({
               </p>
             )}
             <div className="mt-4">
-              <DeclarationButton target={{ kind: "booking", bookingId }} compact />
-              <p className="mt-2 text-xs text-slate-500">
-                Se descarga sin firma para imprimir y firmar en oficina.
-              </p>
+              <DeclarationPanel declaration={declaration} target={{ kind: "booking", bookingId }} />
             </div>
             <Link
               className="mt-4 inline-block text-sm font-semibold text-cyan-700"
@@ -176,8 +182,7 @@ export default async function AffiliateRequestPage({
                 <li key={event.id}>
                   <strong>{event.event_type}</strong>
                   <span className="block text-slate-500">
-                    {event.reason || "Sin motivo"} ·{" "}
-                    {new Date(event.created_at).toLocaleString("es-BO")}
+                    {event.reason || "Sin motivo"} · {formatDateTime(event.created_at)}
                   </span>
                 </li>
               ))}

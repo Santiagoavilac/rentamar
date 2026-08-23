@@ -20,7 +20,9 @@ export type DeclarationPerson = {
 export type DeclarationCompanion = {
   fullName: string;
   documentId: string;
-  phone: string;
+  // Las estadías de copropietarios no piden teléfono a los acompañantes; las reservas de
+  // afiliados sí. La columna del anexo aparece solo si alguno lo trae.
+  phone?: string;
   // Solo las estadías de copropietarios la capturan; en las reservas la columna va vacía.
   birthDate?: string;
 };
@@ -30,6 +32,10 @@ export type DeclarationReference = {
   propertyName: string;
   checkIn: string;
   checkOut: string;
+  // Solo las estadías de copropietarios declaran hora (HH:MM, hora de Bolivia); las
+  // reservas trabajan con fechas puras y no las traen.
+  checkInTime?: string;
+  checkOutTime?: string;
   adults: number;
   minors: number;
   // Las estadías cuentan solo menores de 2 años; las reservas, menores en general.
@@ -134,9 +140,28 @@ function writeOver(
   });
 }
 
+// Bolivia tiene zona única (-04:00). Todo lo que se imprime se calcula en esa zona.
+export const BOLIVIA_TIME_ZONE = "America/La_Paz";
+
+function localParts(date: Date): { day: number; monthIndex: number; year: number } {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: BOLIVIA_TIME_ZONE,
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).formatToParts(date);
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    Number(parts.find((part) => part.type === type)?.value ?? "0");
+  return { day: get("day"), monthIndex: get("month") - 1, year: get("year") };
+}
+
 function formatDate(iso: string): string {
   const [year, month, day] = iso.split("-");
   return `${day}/${month}/${year}`;
+}
+
+function withTime(date: string, time?: string): string {
+  return time ? `${date} ${time}` : date;
 }
 
 // ---------- Página 2: anexo ----------
@@ -169,8 +194,14 @@ function drawAnnex(
   const rows: Array<[string, string]> = [
     ["N° de reserva:", reference.code],
     ["Inmueble:", reference.propertyName],
-    ["Fecha de ingreso:", formatDate(reference.checkIn)],
-    ["Fecha de salida:", formatDate(reference.checkOut)],
+    [
+      "Fecha de ingreso:",
+      withTime(formatDate(reference.checkIn), reference.checkInTime),
+    ],
+    [
+      "Fecha de salida:",
+      withTime(formatDate(reference.checkOut), reference.checkOutTime),
+    ],
     ["Adultos:", String(reference.adults)],
     [`${reference.minorsLabel}:`, String(reference.minors)],
   ];
@@ -187,10 +218,15 @@ function drawAnnex(
   if (reference.companions.length === 0) {
     line("Sin acompañantes declarados.", fonts.regular, 11);
   } else {
+    const showPhone = reference.companions.some((c) => Boolean(c.phone));
+    const birthX = showPhone ? left + 325 : left + 255;
+
     page.drawText(toWinAnsi("Nombre completo"), { x: left, y, size: 10, font: fonts.bold });
     page.drawText(toWinAnsi("Documento"), { x: left + 165, y, size: 10, font: fonts.bold });
-    page.drawText(toWinAnsi("Teléfono"), { x: left + 255, y, size: 10, font: fonts.bold });
-    page.drawText(toWinAnsi("Nacimiento"), { x: left + 325, y, size: 10, font: fonts.bold });
+    if (showPhone) {
+      page.drawText(toWinAnsi("Teléfono"), { x: left + 255, y, size: 10, font: fonts.bold });
+    }
+    page.drawText(toWinAnsi("Nacimiento"), { x: birthX, y, size: 10, font: fonts.bold });
     y -= 6;
     page.drawLine({
       start: { x: left, y },
@@ -214,14 +250,16 @@ function drawAnnex(
         size: 10,
         font: fonts.regular,
       });
-      page.drawText(toWinAnsi(companion.phone), {
-        x: left + 255,
-        y,
-        size: 10,
-        font: fonts.regular,
-      });
+      if (showPhone) {
+        page.drawText(toWinAnsi(companion.phone ?? ""), {
+          x: left + 255,
+          y,
+          size: 10,
+          font: fonts.regular,
+        });
+      }
       page.drawText(companion.birthDate ? formatDate(companion.birthDate) : "", {
-        x: left + 325,
+        x: birthX,
         y,
         size: 10,
         font: fonts.regular,
@@ -235,7 +273,9 @@ function drawAnnex(
 // Deja constancia de que el documento todavía no está firmado. Sin esto el PDF podría
 // pasar por una declaración ya suscrita, que es justo lo que no es.
 function drawFooter(page: PDFPage, font: PDFFont, issuedAt: Date) {
-  const text = `Documento generado el ${issuedAt.toLocaleDateString("es-BO")} - pendiente de firma`;
+  const text = `Documento generado el ${issuedAt.toLocaleDateString("es-BO", {
+    timeZone: BOLIVIA_TIME_ZONE,
+  })} - pendiente de firma`;
   page.drawText(toWinAnsi(text), {
     x: 90,
     y: 46,
@@ -266,9 +306,12 @@ export async function buildDeclarationPdf(params: {
   writeOver(page, regular, person.documentId, FIELDS.documentBottom);
   writeOver(page, regular, person.phone, FIELDS.phone);
 
-  writeOver(page, regular, String(issuedAt.getDate()), FIELDS.day);
-  writeOver(page, regular, MONTHS[issuedAt.getMonth()], FIELDS.month);
-  writeOver(page, regular, `del ${issuedAt.getFullYear()}`, FIELDS.year);
+  // getDate()/getMonth()/getFullYear() son hora local del proceso (UTC en producción):
+  // entre las 20:00 y medianoche la fecha de emisión saltaba al día siguiente.
+  const issued = localParts(issuedAt);
+  writeOver(page, regular, String(issued.day), FIELDS.day);
+  writeOver(page, regular, MONTHS[issued.monthIndex], FIELDS.month);
+  writeOver(page, regular, `del ${issued.year}`, FIELDS.year);
 
   // La línea de "Firma:" (y ≈ 133.9) se deja intacta a propósito: se firma a mano.
 

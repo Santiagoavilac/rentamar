@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { requireStaff } from "@/lib/auth";
 import { assertAdminAction } from "@/lib/permissions";
 import { getCoOwnerStay } from "@/lib/admin/co-owners";
+import { getDeclarationForStay } from "@/lib/admin/declarations";
+import { DeclarationPanel } from "@/components/admin/declaration-cell";
 import { AppError } from "@/lib/errors";
 import { AdminPageHeader, KeyValue, Panel, formatDateTime } from "@/components/admin/ui";
 import { PanelHeading } from "@/components/admin/help";
@@ -25,6 +27,8 @@ export default async function CoOwnerStayDetailPage({
     if (error instanceof AppError && error.code === "NOT_FOUND") notFound();
     throw error;
   }
+
+  const declaration = await getDeclarationForStay(stayId);
 
   return (
     <>
@@ -55,6 +59,13 @@ export default async function CoOwnerStayDetailPage({
           <KeyValue label="Menores de 2 años">{String(stay.minors)}</KeyValue>
           <KeyValue label="Registrado">{formatDateTime(stay.created_at)}</KeyValue>
         </dl>
+      </Panel>
+
+      <Panel>
+        <PanelHeading helpKey="declaration.panel" className="mb-4 text-sm font-bold">
+          Declaración jurada
+        </PanelHeading>
+        <DeclarationPanel declaration={declaration} target={{ kind: "stay", stayId }} />
       </Panel>
 
       <Panel>

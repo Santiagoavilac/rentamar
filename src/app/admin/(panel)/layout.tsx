@@ -30,11 +30,13 @@ const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
     ],
   },
   {
-    title: "Copropietarios",
+    title: "Registros",
     items: [
+      { href: "/admin/registros/huespedes", label: "Huéspedes", requires: "declaration.read" },
+      { href: "/admin/registros/afiliados", label: "Afiliados", requires: "declaration.read" },
       {
         href: "/admin/copropietarios/registros",
-        label: "Registros",
+        label: "Copropietarios",
         requires: "coowner.manage",
       },
     ],

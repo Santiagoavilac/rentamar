@@ -26,6 +26,8 @@ export async function listBookings(params: {
   status?: string;
   propertyId?: string;
   search?: string;
+  // "direct" deja fuera las reservas de afiliados, que tienen su propio listado.
+  excludeAffiliates?: boolean;
 }) {
   const supabase = await createClient();
   const from = (params.page - 1) * params.pageSize;
@@ -43,6 +45,7 @@ export async function listBookings(params: {
   if (params.status) query = query.eq("status", params.status as never);
   if (params.propertyId) query = query.eq("property_id", params.propertyId);
   if (params.search) query = query.ilike("booking_code", `%${params.search}%`);
+  if (params.excludeAffiliates) query = query.neq("channel", "affiliate");
 
   const { data, error, count } = await query;
   if (error) throw new AppError("INTERNAL_ERROR", "Error interno", 500);

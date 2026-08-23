@@ -1,7 +1,16 @@
 import Link from "next/link";
 import { getBookingDetail, listBookingEvents } from "@/lib/admin/bookings";
+import { getDeclarationForBooking } from "@/lib/admin/declarations";
+import { DeclarationPanel } from "@/components/admin/declaration-cell";
 import { bookingAction } from "@/lib/admin/actions";
-import { AdminPageHeader, KeyValue, Money, Panel, StatusBadge } from "@/components/admin/ui";
+import {
+  AdminPageHeader,
+  KeyValue,
+  Money,
+  Panel,
+  StatusBadge,
+  formatDateTime,
+} from "@/components/admin/ui";
 import { PanelHeading } from "@/components/admin/help";
 import { ReasonActionForm } from "@/components/admin/forms";
 export default async function BookingDetailPage({
@@ -10,9 +19,10 @@ export default async function BookingDetailPage({
   params: Promise<{ bookingId: string }>;
 }) {
   const { bookingId } = await params;
-  const [{ booking, items, property }, events] = await Promise.all([
+  const [{ booking, items, property }, events, declaration] = await Promise.all([
     getBookingDetail(bookingId),
     listBookingEvents(bookingId),
+    getDeclarationForBooking(bookingId),
   ]);
   const controls: Array<["cancel" | "expire" | "manual_review" | "confirm_manual", string]> = [
     ["manual_review", "Enviar a revisión"],
@@ -87,13 +97,19 @@ export default async function BookingDetailPage({
             ))}
           </Panel>
           <Panel>
+            <PanelHeading helpKey="declaration.panel">Declaración jurada</PanelHeading>
+            <div className="mt-3">
+              <DeclarationPanel declaration={declaration} target={{ kind: "booking", bookingId }} />
+            </div>
+          </Panel>
+          <Panel>
             <PanelHeading helpKey="bookings.detail.history">Historial</PanelHeading>
             <ul className="mt-3 grid gap-3 text-sm">
               {events.map((e) => (
                 <li key={e.id}>
                   <strong>{e.event_type}</strong>
                   <span className="block text-slate-500">
-                    {e.reason || "Sin motivo"} · {new Date(e.created_at).toLocaleString("es-BO")}
+                    {e.reason || "Sin motivo"} · {formatDateTime(e.created_at)}
                   </span>
                 </li>
               ))}

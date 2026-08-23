@@ -972,6 +972,43 @@ export const HELP = {
       { tipo: "parrafo", texto: "Usá los filtros para ubicar una estadía por propiedad o fecha." },
     ],
   },
+  "declaration.panel": {
+    title: "Declaración jurada",
+    short: "El PDF que firma el huésped, generado con los datos ya cargados.",
+    long: [
+      {
+        tipo: "parrafo",
+        texto:
+          "Si ya se emitió, el enlace abre el PDF guardado tal como se generó la primera vez. Si todavía no, el botón lo genera en el momento y lo descarga.",
+      },
+      {
+        tipo: "aviso",
+        texto: "El documento se descarga sin firma: hay que imprimirlo y firmarlo en oficina.",
+      },
+    ],
+  },
+  "registros.guests.page": {
+    title: "Registros de huéspedes",
+    short: "Las reservas del canal directo, con su declaración jurada.",
+    long: [
+      {
+        tipo: "parrafo",
+        texto:
+          "Es el mismo listado de reservas, pensado para recepción: ubicar una reserva y sacar su declaración jurada sin entrar al detalle.",
+      },
+    ],
+  },
+  "registros.affiliates.page": {
+    title: "Registros de afiliados",
+    short: "Las reservas que entraron por el canal de afiliados, con su declaración jurada.",
+    long: [
+      {
+        tipo: "parrafo",
+        texto:
+          "Mismo listado que Afiliados, con la declaración a mano. Para gestionar la solicitud (confirmar o cancelar) entrá al detalle.",
+      },
+    ],
+  },
   "coowners.detail.guests": {
     title: "Huéspedes adicionales",
     short: "Las personas que el copropietario declaró que se alojan con él.",

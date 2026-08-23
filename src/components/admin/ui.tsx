@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { formatCurrency } from "@/lib/money";
+import { ADMIN_TIME_ZONE } from "@/lib/admin/planner-query";
 import { HelpButton } from "./help";
 import type { HelpKey } from "@/lib/admin/help";
 
@@ -45,13 +46,17 @@ export function StatusBadge({ value }: { value: string | null | undefined }) {
   );
 }
 
+// Siempre en hora de Bolivia: el proceso corre en UTC en producción, así que sin fijar la
+// zona el panel mostraba 18:00 donde el copropietario había escrito 14:00.
 export function formatDateTime(value: string): string {
   return new Date(value).toLocaleString("es-BO", {
+    timeZone: ADMIN_TIME_ZONE,
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    hour12: false,
   });
 }
 

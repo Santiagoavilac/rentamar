@@ -7,6 +7,8 @@ import {
   listCoOwnerStays,
 } from "@/lib/admin/co-owners";
 import { AdminPageHeader, EmptyState, Pager, Panel, formatDateTime } from "@/components/admin/ui";
+import { DeclarationCell } from "@/components/admin/declaration-cell";
+import { listDeclarationsByStay } from "@/lib/admin/declarations";
 
 export const dynamic = "force-dynamic";
 
@@ -41,6 +43,7 @@ export default async function CoOwnerStaysPage({
     listCoOwnerPropertyNames(),
     listCoOwnerAccounts(),
   ]);
+  const declarations = await listDeclarationsByStay(result.rows.map((row) => row.id));
 
   const basePath = `/admin/copropietarios/registros?propertyName=${encodeURIComponent(
     p.propertyName ?? "",
@@ -98,7 +101,7 @@ export default async function CoOwnerStaysPage({
         {result.rows.length ? (
           <>
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[900px] text-left text-sm">
+              <table className="w-full min-w-[1040px] text-left text-sm">
                 <thead className="border-b text-slate-500">
                   <tr>
                     <th className="pb-3">Registrado</th>
@@ -109,6 +112,7 @@ export default async function CoOwnerStaysPage({
                     <th>Entrada</th>
                     <th>Salida</th>
                     <th>Personas</th>
+                    <th>Declaración</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -138,6 +142,12 @@ export default async function CoOwnerStaysPage({
                         <span className="block text-xs text-slate-500">
                           {row.minors} menores de 2 años
                         </span>
+                      </td>
+                      <td>
+                        <DeclarationCell
+                          declaration={declarations.get(row.id)}
+                          target={{ kind: "stay", stayId: row.id }}
+                        />
                       </td>
                     </tr>
                   ))}

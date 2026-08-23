@@ -5,6 +5,7 @@ import { AppError, NotFoundError } from "@/lib/errors";
 import { writeAudit } from "@/lib/audit";
 import type { Database } from "@/lib/supabase/types";
 import {
+  BOLIVIA_TIME_ZONE,
   DECLARATION_VERSION,
   buildDeclarationPdf,
   type DeclarationPerson,
@@ -12,6 +13,29 @@ import {
 } from "./pdf";
 
 const BUCKET = "declarations";
+
+// Las estadías guardan timestamptz; el papel tiene que decir la fecha y la hora que
+// declaró el copropietario, no su equivalente en UTC.
+function boliviaDate(iso: string): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: BOLIVIA_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date(iso));
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? "";
+  return `${get("year")}-${get("month")}-${get("day")}`;
+}
+
+function boliviaTime(iso: string): string {
+  return new Intl.DateTimeFormat("es-BO", {
+    timeZone: BOLIVIA_TIME_ZONE,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(new Date(iso));
+}
 
 type UserRole = Database["public"]["Enums"]["user_role"];
 
@@ -79,7 +103,7 @@ async function gather(target: DeclarationTarget): Promise<Gathered> {
   // Del huésped 2 en adelante: el 1 es quien firma y ya sale en la página 1.
   const { data: stayGuests } = await supabase
     .from("co_owner_stay_guests")
-    .select("full_name, document_id, phone, birth_date")
+    .select("full_name, document_id, birth_date")
     .eq("stay_id", target.id)
     .order("sort_order");
 
@@ -96,15 +120,18 @@ async function gather(target: DeclarationTarget): Promise<Gathered> {
       // papel impreso se pueda rastrear hasta la fila.
       code: `CO-${target.id.slice(0, 8).toUpperCase()}`,
       propertyName: stay.property_name,
-      checkIn: stay.check_in_at.slice(0, 10),
-      checkOut: stay.check_out_at.slice(0, 10),
+      // check_in_at es timestamptz y llega en UTC: cortar el string daba el día siguiente
+      // en toda entrada declarada después de las 20:00 hora de Bolivia.
+      checkIn: boliviaDate(stay.check_in_at),
+      checkOut: boliviaDate(stay.check_out_at),
+      checkInTime: boliviaTime(stay.check_in_at),
+      checkOutTime: boliviaTime(stay.check_out_at),
       adults: stay.adults,
       minors: stay.minors,
       minorsLabel: "Menores de 2 años",
       companions: (stayGuests ?? []).map((g) => ({
         fullName: g.full_name,
         documentId: g.document_id,
-        phone: g.phone ?? "",
         birthDate: g.birth_date,
       })),
     },
