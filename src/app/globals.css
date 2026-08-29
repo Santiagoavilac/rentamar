@@ -118,3 +118,152 @@ body {
   font-size: 0.72rem;
   font-weight: 600;
 }
+
+/* Admin responsive primitives. Scoped so public pages keep their current layout. */
+.admin-touch-target {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.admin-shell {
+  color-scheme: light;
+}
+
+.admin-mobile-header {
+  padding-top: max(0.5rem, env(safe-area-inset-top));
+}
+
+.admin-mobile-drawer {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
+}
+
+.admin-side-panel {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+.admin-save-bar {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+.admin-shell input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+.admin-shell select,
+.admin-shell textarea,
+.admin-shell summary {
+  max-width: 100%;
+}
+
+.admin-table-wrap {
+  width: 100%;
+}
+
+@media (max-width: 767px) {
+  .admin-shell form button,
+  .admin-shell input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  .admin-shell select,
+  .admin-shell summary {
+    min-height: 44px;
+  }
+
+  .admin-header-action > * {
+    width: 100%;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .admin-filter-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+    gap: 0.875rem;
+  }
+
+  .admin-filter-form > label,
+  .admin-filter-form input,
+  .admin-filter-form select,
+  .admin-filter-form > button {
+    width: 100%;
+  }
+
+  .admin-filter-form > button {
+    min-height: 44px;
+  }
+
+  .admin-table-wrap {
+    overflow: visible;
+  }
+
+  .admin-responsive-table,
+  .admin-responsive-table tbody,
+  .admin-responsive-table tr,
+  .admin-responsive-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .admin-responsive-table {
+    min-width: 0 !important;
+  }
+
+  .admin-responsive-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .admin-responsive-table tbody {
+    display: grid;
+    gap: 0.875rem;
+  }
+
+  .admin-responsive-table tbody tr {
+    border: 1px solid rgb(226 232 240);
+    border-radius: 0.875rem;
+    padding: 0.875rem;
+    background: rgb(248 250 252 / 0.7);
+  }
+
+  .admin-responsive-table tbody td {
+    display: grid;
+    grid-template-columns: minmax(6.75rem, 38%) minmax(0, 1fr);
+    gap: 0.75rem;
+    align-items: start;
+    padding: 0.4rem 0 !important;
+    text-align: left !important;
+    overflow-wrap: anywhere;
+  }
+
+  .admin-responsive-table tbody td::before {
+    content: attr(data-label);
+    color: rgb(100 116 139);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    line-height: 1.25rem;
+    text-transform: uppercase;
+  }
+
+  .admin-responsive-table tbody td[data-mobile-full="true"] {
+    display: block;
+    padding-top: 0.75rem !important;
+  }
+
+  .admin-responsive-table tbody td[data-mobile-full="true"]::before {
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .admin-table-wrap {
+    overflow-x: auto;
+  }
+}

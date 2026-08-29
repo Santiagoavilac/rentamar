@@ -84,7 +84,7 @@ export default async function AdminHome() {
           {m.attentionBookings.length ? (
             <ul className="mt-3 grid gap-2">
               {m.attentionBookings.map((b) => (
-                <li key={b.id} className="flex justify-between">
+                <li key={b.id} className="flex flex-wrap items-center justify-between gap-2">
                   <Link
                     className="text-sm font-medium text-cyan-700"
                     href={`/admin/bookings/${b.id}`}

@@ -184,12 +184,7 @@ export function EditCoOwnerForm({
       <input type="hidden" name="accountId" value={account.id} />
       <label className="text-xs text-slate-600">
         Propiedad
-        <input
-          required
-          name="propertyName"
-          defaultValue={account.propertyName}
-          className={field}
-        />
+        <input required name="propertyName" defaultValue={account.propertyName} className={field} />
       </label>
       <label className="text-xs text-slate-600">
         Habitaciones
@@ -251,7 +246,7 @@ export function ChangePasswordForm({
         minLength={10}
         autoComplete="new-password"
         placeholder="Nueva contraseña"
-        className="w-44 rounded border p-1.5 text-sm"
+        className="w-full rounded border p-1.5 text-sm sm:w-44"
       />
       <Submit label="Cambiar" />
       <Feedback state={state} okLabel="Contraseña actualizada." />

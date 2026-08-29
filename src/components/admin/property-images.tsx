@@ -85,7 +85,7 @@ export function PropertyImagesManager({
 
   return (
     <div>
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
         <p className="text-sm text-slate-600">
           Arrastrá las imágenes para cambiar el orden en que se ven en la web. La número 1 es la
           portada.
@@ -133,7 +133,7 @@ export function PropertyImagesManager({
                   aria-label="Mover antes"
                   disabled={index === 0}
                   onClick={() => move(index, index - 1)}
-                  className="rounded-lg border border-slate-300 px-2 py-1 text-sm font-semibold disabled:opacity-40"
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-slate-300 text-sm font-semibold disabled:opacity-40"
                 >
                   ←
                 </button>
@@ -142,7 +142,7 @@ export function PropertyImagesManager({
                   aria-label="Mover después"
                   disabled={index === items.length - 1}
                   onClick={() => move(index, index + 1)}
-                  className="rounded-lg border border-slate-300 px-2 py-1 text-sm font-semibold disabled:opacity-40"
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-slate-300 text-sm font-semibold disabled:opacity-40"
                 >
                   →
                 </button>
@@ -150,7 +150,7 @@ export function PropertyImagesManager({
                   type="button"
                   aria-label="Eliminar imagen"
                   onClick={() => handleDelete(image)}
-                  className="rounded-lg p-1.5 text-rose-700 hover:bg-rose-50"
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-rose-700 hover:bg-rose-50"
                 >
                   <Trash2 size={18} />
                 </button>

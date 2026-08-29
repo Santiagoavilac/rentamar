@@ -50,6 +50,7 @@ export function HelpProvider({ children }: { children: React.ReactNode }) {
   const [activeKey, setActiveKey] = useState<HelpKey | null>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLElement>(null);
 
   const open = useCallback((key: HelpKey, trigger: HTMLElement | null) => {
     triggerRef.current = trigger;
@@ -65,12 +66,36 @@ export function HelpProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!activeKey) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     closeRef.current?.focus();
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") close();
+      if (event.key === "Escape") {
+        close();
+        return;
+      }
+      if (event.key !== "Tab" || !panelRef.current) return;
+      const focusable = Array.from(
+        panelRef.current.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      );
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
   }, [activeKey, close]);
 
   const entry = activeKey ? HELP[activeKey] : null;
@@ -87,10 +112,11 @@ export function HelpProvider({ children }: { children: React.ReactNode }) {
           }}
         >
           <aside
+            ref={panelRef}
             role="dialog"
             aria-modal="true"
             aria-labelledby="ayuda-titulo"
-            className="absolute inset-y-0 right-0 w-full max-w-md overflow-y-auto bg-white p-5 text-night shadow-2xl sm:p-7"
+            className="admin-side-panel absolute inset-y-0 right-0 w-full max-w-md overflow-y-auto bg-white p-4 text-night shadow-2xl sm:p-7"
           >
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -104,7 +130,7 @@ export function HelpProvider({ children }: { children: React.ReactNode }) {
                 type="button"
                 onClick={close}
                 aria-label="Cerrar la ayuda"
-                className="rounded-lg border border-slate-300 p-1.5 text-slate-600 hover:text-night"
+                className="admin-touch-target inline-flex items-center justify-center rounded-lg border border-slate-300 p-1.5 text-slate-600 hover:text-night"
               >
                 <X size={18} aria-hidden />
               </button>
@@ -171,7 +197,7 @@ export function HelpButton({ helpKey }: { helpKey: HelpKey }) {
           hideTip();
           open(helpKey, buttonRef.current);
         }}
-        className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-slate-300 text-slate-500 transition hover:border-turquoise hover:text-turquoise"
+        className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-300 text-slate-500 transition hover:border-turquoise hover:text-turquoise sm:h-5 sm:w-5"
       >
         <HelpCircle size={14} aria-hidden />
       </button>

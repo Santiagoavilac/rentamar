@@ -16,18 +16,18 @@ export function AdminPageHeader({
   helpKey?: HelpKey;
 }) {
   return (
-    <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
-      <div>
+    <div className="mb-5 flex flex-col items-stretch justify-between gap-4 sm:mb-7 sm:flex-row sm:flex-wrap sm:items-end">
+      <div className="min-w-0">
         <p className="eyebrow text-turquoise">Operaciones</p>
-        <h1 className="mt-2 flex items-center gap-2 text-3xl font-bold tracking-tight text-night">
-          {title}
+        <h1 className="mt-2 flex min-w-0 items-start gap-2 text-2xl font-bold tracking-tight text-night sm:text-3xl">
+          <span className="min-w-0">{title}</span>
           {helpKey ? <HelpButton helpKey={helpKey} /> : null}
         </h1>
         {description ? (
           <p className="mt-2 max-w-2xl text-sm text-slate-600">{description}</p>
         ) : null}
       </div>
-      {action}
+      {action ? <div className="admin-header-action sm:shrink-0">{action}</div> : null}
     </div>
   );
 }
@@ -71,7 +71,7 @@ export function Panel({
   children: React.ReactNode;
   className?: string;
 }) {
-  return <section className={`surface rounded-2xl p-5 ${className}`}>{children}</section>;
+  return <section className={`surface rounded-2xl p-4 sm:p-5 ${className}`}>{children}</section>;
 }
 
 export function EmptyState({
@@ -91,7 +91,7 @@ export function EmptyState({
       <p className="mx-auto mt-2 max-w-md text-sm text-slate-600">{body}</p>
       {href && label ? (
         <Link
-          className="mt-4 inline-block rounded-lg bg-deep px-4 py-2 text-sm font-semibold text-cream"
+          className="mt-4 inline-flex min-h-11 items-center justify-center rounded-lg bg-deep px-4 py-2 text-sm font-semibold text-cream"
           href={href}
         >
           {label}
@@ -116,25 +116,47 @@ export function Pager({
   const href = (next: number) => `${basePath}${basePath.includes("?") ? "&" : "?"}page=${next}`;
   return (
     <nav
-      className="mt-5 flex items-center justify-between text-sm text-slate-600"
+      className="mt-5 flex flex-col items-stretch gap-3 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between"
       aria-label="Paginación"
     >
       <span>
         Página {page} de {pages} · {total} resultados
       </span>
-      <div className="flex gap-2">
+      <div className="flex gap-2 sm:justify-end">
         {page > 1 ? (
-          <Link className="rounded border px-3 py-1.5" href={href(page - 1)}>
+          <Link
+            className="inline-flex min-h-11 items-center justify-center rounded border px-3 py-1.5"
+            href={href(page - 1)}
+          >
             Anterior
           </Link>
         ) : null}
         {page < pages ? (
-          <Link className="rounded border px-3 py-1.5" href={href(page + 1)}>
+          <Link
+            className="inline-flex min-h-11 items-center justify-center rounded border px-3 py-1.5"
+            href={href(page + 1)}
+          >
             Siguiente
           </Link>
         ) : null}
       </div>
     </nav>
+  );
+}
+
+export function AdminResponsiveTable({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className="admin-table-wrap">
+      <table className={`admin-responsive-table w-full text-left text-sm ${className}`}>
+        {children}
+      </table>
+    </div>
   );
 }
 

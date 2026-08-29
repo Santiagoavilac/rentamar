@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   AdminPageHeader,
+  AdminResponsiveTable,
   EmptyState,
   Money,
   Pager,
@@ -48,7 +49,7 @@ export default async function AffiliatesPage({
         description="Reservas creadas desde /afiliados. Bloquean las fechas hasta que se confirmen o se cancelen."
       />
       <Panel>
-        <form method="get" className="flex flex-wrap items-end gap-3">
+        <form method="get" className="admin-filter-form flex flex-wrap items-end gap-3">
           <label className="text-sm font-semibold text-slate-700">
             Estado
             <select
@@ -86,7 +87,7 @@ export default async function AffiliatesPage({
       <Panel className="mt-5">
         {result.rows.length ? (
           <>
-            <table className="w-full text-left text-sm">
+            <AdminResponsiveTable>
               <thead className="border-b text-slate-500">
                 <tr>
                   <th className="pb-3">Código</th>
@@ -100,7 +101,7 @@ export default async function AffiliatesPage({
               <tbody>
                 {result.rows.map((row) => (
                   <tr key={row.id} className="border-b">
-                    <td className="py-3">
+                    <td data-label="Código" className="py-3">
                       <Link
                         className="font-semibold text-cyan-700"
                         href={`/admin/affiliates/${row.id}`}
@@ -108,29 +109,31 @@ export default async function AffiliatesPage({
                         {row.booking_code}
                       </Link>
                     </td>
-                    <td>
+                    <td data-label="Afiliado">
                       {row.guest_name}
                       <span className="block text-xs text-slate-500">
                         CI {row.affiliate_document_id || "—"} · {row.guest_phone || "—"}
                       </span>
                     </td>
-                    <td>{propertyNames.get(row.property_id) || row.property_id.slice(0, 8)}</td>
-                    <td>
+                    <td data-label="Propiedad">
+                      {propertyNames.get(row.property_id) || row.property_id.slice(0, 8)}
+                    </td>
+                    <td data-label="Estadía">
                       {row.check_in} → {row.check_out}
                       <span className="block text-xs text-slate-500">
                         {row.nights} noches · {row.guests} personas
                       </span>
                     </td>
-                    <td>
+                    <td data-label="Estado">
                       <StatusBadge value={row.status} />
                     </td>
-                    <td>
+                    <td data-label="Total">
                       <Money amount={row.total_minor} currency={row.currency} />
                     </td>
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </AdminResponsiveTable>
             <Pager {...result} basePath={basePath} />
           </>
         ) : (

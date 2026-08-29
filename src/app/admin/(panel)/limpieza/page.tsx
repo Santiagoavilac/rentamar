@@ -2,7 +2,7 @@ import { requireStaff } from "@/lib/auth";
 import { assertAdminAction } from "@/lib/permissions";
 import { listCleaningReports, listDayTurnover, type TurnoverRow } from "@/lib/admin/cleaning";
 import { todayInLaPaz } from "@/lib/admin/planner-query";
-import { AdminPageHeader, EmptyState, Panel } from "@/components/admin/ui";
+import { AdminPageHeader, AdminResponsiveTable, EmptyState, Panel } from "@/components/admin/ui";
 import { PanelHeading } from "@/components/admin/help";
 
 export const dynamic = "force-dynamic";
@@ -26,7 +26,10 @@ function TurnoverList({
       ) : (
         <ul className="mt-2 grid gap-2">
           {rows.map((row) => (
-            <li key={row.bookingCode} className="flex justify-between gap-3 text-sm">
+            <li
+              key={row.bookingCode}
+              className="flex flex-col gap-1 text-sm sm:flex-row sm:justify-between sm:gap-3"
+            >
               <span className="font-medium">{row.propertyName}</span>
               <span className="text-slate-500">
                 {row.time} · {row.bookingCode}
@@ -60,7 +63,7 @@ export default async function CleaningPage({
       />
 
       <Panel>
-        <form method="get" className="flex flex-wrap items-end gap-3">
+        <form method="get" className="admin-filter-form flex flex-wrap items-end gap-3">
           <label className="text-sm font-semibold text-slate-700">
             Día
             <input type="date" name="date" defaultValue={date} className={field} />
@@ -100,31 +103,35 @@ export default async function CleaningPage({
               body="El personal de limpieza carga su entrada y salida desde /limpieza."
             />
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[560px] text-sm">
-                <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
-                  <tr>
-                    <th className="py-2">Persona</th>
-                    <th className="py-2">Departamento</th>
-                    <th className="py-2">Entrada</th>
-                    <th className="py-2">Salida</th>
+            <AdminResponsiveTable className="md:min-w-[560px]">
+              <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+                <tr>
+                  <th className="py-2">Persona</th>
+                  <th className="py-2">Departamento</th>
+                  <th className="py-2">Entrada</th>
+                  <th className="py-2">Salida</th>
+                </tr>
+              </thead>
+              <tbody>
+                {reports.map((report) => (
+                  <tr key={report.id} className="border-t border-slate-200">
+                    <td data-label="Persona" className="py-3">
+                      <strong className="block font-medium">{report.fullName}</strong>
+                      <small className="text-slate-500">{report.username}</small>
+                    </td>
+                    <td data-label="Departamento" className="py-3">
+                      {report.propertyName}
+                    </td>
+                    <td data-label="Entrada" className="py-3">
+                      {report.entryTime}
+                    </td>
+                    <td data-label="Salida" className="py-3">
+                      {report.exitTime}
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {reports.map((report) => (
-                    <tr key={report.id} className="border-t border-slate-200">
-                      <td className="py-3">
-                        <strong className="block font-medium">{report.fullName}</strong>
-                        <small className="text-slate-500">{report.username}</small>
-                      </td>
-                      <td className="py-3">{report.propertyName}</td>
-                      <td className="py-3">{report.entryTime}</td>
-                      <td className="py-3">{report.exitTime}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </AdminResponsiveTable>
           )}
         </Panel>
       </div>

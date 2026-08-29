@@ -61,7 +61,7 @@ export default async function PropertyDetailPage({
             <PanelHeading helpKey="properties.detail.status" className="mb-3 font-bold">
               Estado actual
             </PanelHeading>
-            <dl className="grid grid-cols-2 gap-4">
+            <dl className="grid gap-4 sm:grid-cols-2">
               <KeyValue label="Estado">
                 <StatusBadge value={property.status} />
               </KeyValue>
@@ -75,7 +75,7 @@ export default async function PropertyDetailPage({
             </dl>
           </Panel>
           <Panel>
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
               <PanelHeading helpKey="properties.detail.images">
                 Imágenes ({images.length})
               </PanelHeading>

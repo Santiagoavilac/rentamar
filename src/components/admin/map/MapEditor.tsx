@@ -312,15 +312,15 @@ export function MapEditor({
     <div className="grid gap-5 xl:grid-cols-[1fr_360px]">
       {/* ---------- Canvas + toolbar ---------- */}
       <div className="grid gap-3">
-        <div className="surface flex flex-wrap items-center gap-2 rounded-xl p-3">
-          <div className="flex items-center gap-1 rounded-lg bg-slate-100 p-1">
+        <div className="surface flex flex-col items-stretch gap-2 rounded-xl p-3 sm:flex-row sm:flex-wrap sm:items-center">
+          <div className="grid grid-cols-2 gap-1 rounded-lg bg-slate-100 p-1 sm:flex">
             <button
               type="button"
               onClick={() => {
                 setTool("select");
                 setPlacingTowerId(null);
               }}
-              className={`rounded px-3 py-1.5 text-sm font-semibold ${tool === "select" ? "bg-white shadow" : "text-slate-600"}`}
+              className={`min-h-11 rounded px-3 py-1.5 text-sm font-semibold sm:min-h-0 ${tool === "select" ? "bg-white shadow" : "text-slate-600"}`}
               disabled={preview}
             >
               Seleccionar
@@ -331,7 +331,7 @@ export function MapEditor({
                 setTool("add");
                 setPlacingTowerId(null);
               }}
-              className={`rounded px-3 py-1.5 text-sm font-semibold ${tool === "add" ? "bg-white shadow" : "text-slate-600"}`}
+              className={`min-h-11 rounded px-3 py-1.5 text-sm font-semibold sm:min-h-0 ${tool === "add" ? "bg-white shadow" : "text-slate-600"}`}
               disabled={preview}
             >
               Agregar
@@ -342,7 +342,7 @@ export function MapEditor({
             <select
               value={addType}
               onChange={(e) => setAddType(e.target.value as MapItemType)}
-              className="rounded-lg border border-slate-300 px-2 py-1.5 text-sm"
+              className="min-h-11 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm sm:min-h-0 sm:w-auto"
               aria-label="Tipo de elemento a agregar"
             >
               {MAP_ITEM_TYPES.filter((type) => type !== "tower").map((t) => (
@@ -353,11 +353,11 @@ export function MapEditor({
             </select>
           ) : null}
 
-          <div className="ml-auto flex items-center gap-1">
+          <div className="grid w-full grid-cols-[44px_44px_minmax(0,1fr)] gap-2 sm:ml-auto sm:flex sm:w-auto sm:items-center sm:gap-1">
             <button
               type="button"
               onClick={() => setScale((s) => Math.min(MAX_SCALE, s + 0.5))}
-              className="h-8 w-8 rounded bg-slate-100 font-bold"
+              className="h-11 w-11 rounded bg-slate-100 font-bold sm:h-8 sm:w-8"
               aria-label="Acercar"
             >
               +
@@ -365,7 +365,7 @@ export function MapEditor({
             <button
               type="button"
               onClick={() => setScale((s) => Math.max(MIN_SCALE, s - 0.5))}
-              className="h-8 w-8 rounded bg-slate-100 font-bold"
+              className="h-11 w-11 rounded bg-slate-100 font-bold sm:h-8 sm:w-8"
               aria-label="Alejar"
             >
               −
@@ -376,7 +376,7 @@ export function MapEditor({
                 setScale(1);
                 setPan({ x: 0, y: 0 });
               }}
-              className="h-8 rounded bg-slate-100 px-2 text-xs font-semibold"
+              className="h-11 rounded bg-slate-100 px-2 text-xs font-semibold sm:h-8"
             >
               Reiniciar
             </button>
@@ -386,7 +386,7 @@ export function MapEditor({
                 setPreview((p) => !p);
                 setSelectedId(null);
               }}
-              className={`h-8 rounded px-3 text-xs font-semibold ${preview ? "bg-deep text-cream" : "bg-slate-100"}`}
+              className={`col-span-3 min-h-11 rounded px-3 text-xs font-semibold sm:col-auto sm:h-8 sm:min-h-0 ${preview ? "bg-deep text-cream" : "bg-slate-100"}`}
             >
               {preview ? "Salir de vista previa" : "Vista previa como residente"}
             </button>
@@ -432,7 +432,7 @@ export function MapEditor({
                   key={item.id}
                   type="button"
                   onPointerDown={(e) => onMarkerPointerDown(e, item.id)}
-                  className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full p-1.5 shadow-md ring-2 transition ${
+                  className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full p-1.5 shadow-md ring-2 transition after:absolute after:-inset-2 after:content-[''] ${
                     isSel ? "bg-turquoise ring-deep" : "bg-deep ring-white"
                   } ${item.is_visible ? "" : "opacity-40"}`}
                   style={{
@@ -459,7 +459,7 @@ export function MapEditor({
 
         {tool === "add" && !preview ? (
           <p className="text-sm text-slate-600">
-            Hacé clic sobre el mapa para colocar{" "}
+            Tocá sobre el mapa para colocar{" "}
             <strong>
               {placingTowerId
                 ? towers.find((tower) => tower.id === placingTowerId)?.name
@@ -488,7 +488,7 @@ export function MapEditor({
               type="button"
               onClick={saveDraft}
               disabled={!hasUnsaved || pending}
-              className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
+              className="min-h-11 rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
             >
               Guardar borrador
             </button>
@@ -497,7 +497,7 @@ export function MapEditor({
                 type="button"
                 onClick={() => setPublishStep(1)}
                 disabled={pending || incompleteTowers.length > 0}
-                className="rounded-lg bg-deep px-4 py-2 text-sm font-semibold text-cream disabled:opacity-40"
+                className="min-h-11 rounded-lg bg-deep px-4 py-2 text-sm font-semibold text-cream disabled:opacity-40"
               >
                 Publicar cambios
               </button>
@@ -511,14 +511,14 @@ export function MapEditor({
                     type="button"
                     onClick={doPublish}
                     disabled={pending || incompleteTowers.length > 0}
-                    className="rounded bg-deep px-3 py-1.5 text-xs font-semibold text-cream disabled:opacity-40"
+                    className="min-h-11 rounded bg-deep px-3 py-1.5 text-xs font-semibold text-cream disabled:opacity-40"
                   >
                     Sí, publicar
                   </button>
                   <button
                     type="button"
                     onClick={() => setPublishStep(0)}
-                    className="rounded bg-slate-100 px-3 py-1.5 text-xs font-semibold"
+                    className="min-h-11 rounded bg-slate-100 px-3 py-1.5 text-xs font-semibold"
                   >
                     Cancelar
                   </button>
@@ -560,7 +560,10 @@ export function MapEditor({
           {unplacedTowers.length ? (
             <ul className="mt-3 grid gap-2">
               {unplacedTowers.map((tower) => (
-                <li key={tower.id} className="flex items-center justify-between gap-3 text-sm">
+                <li
+                  key={tower.id}
+                  className="flex flex-col items-stretch gap-2 text-sm sm:flex-row sm:items-center sm:justify-between"
+                >
                   <span className="font-medium">{tower.name}</span>
                   <button
                     type="button"
@@ -570,7 +573,7 @@ export function MapEditor({
                       setPreview(false);
                       setMessage(null);
                     }}
-                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${
+                    className={`min-h-11 rounded-lg px-3 py-1.5 text-xs font-semibold ${
                       placingTowerId === tower.id ? "bg-turquoise text-night" : "bg-deep text-cream"
                     }`}
                   >
@@ -616,7 +619,7 @@ export function MapEditor({
                       setSelectedId(it.id);
                       setPreview(false);
                     }}
-                    className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm ${
+                    className={`flex min-h-11 w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm ${
                       it.id === selectedId ? "bg-turquoise/15" : "hover:bg-slate-100"
                     }`}
                   >
@@ -650,7 +653,7 @@ export function MapEditor({
               <button
                 type="button"
                 onClick={() => setConfirmDeleteId(null)}
-                className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold"
+                className="min-h-11 rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold"
               >
                 Cancelar
               </button>
@@ -658,7 +661,7 @@ export function MapEditor({
                 type="button"
                 onClick={() => confirmDelete(confirmDeleteId)}
                 disabled={pending}
-                className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
+                className="min-h-11 rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
               >
                 Eliminar
               </button>
@@ -812,7 +815,7 @@ function ItemProperties({
       <button
         type="button"
         onClick={onDelete}
-        className="mt-1 rounded-lg border border-rose-300 px-3 py-1.5 text-sm font-semibold text-rose-700 hover:bg-rose-50"
+        className="mt-1 min-h-11 rounded-lg border border-rose-300 px-3 py-1.5 text-sm font-semibold text-rose-700 hover:bg-rose-50"
       >
         {isTower ? "Quitar ubicación" : "Eliminar elemento"}
       </button>

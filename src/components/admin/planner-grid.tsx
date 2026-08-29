@@ -29,7 +29,7 @@ export function PlannerGrid({ from, to, properties, events, onSelect, onNewAt }:
     <div className="planner-scroll max-h-[68vh] overflow-auto rounded-xl border border-slate-200 bg-white">
       <div className="min-w-max">
         <div className="sticky top-0 z-30 flex border-b border-slate-200 bg-white shadow-sm">
-          <div className="sticky left-0 z-40 flex w-56 shrink-0 items-center border-r border-slate-200 bg-white px-4 py-3 text-xs font-bold uppercase tracking-wide text-slate-500">
+          <div className="sticky left-0 z-40 flex w-36 shrink-0 items-center border-r border-slate-200 bg-white px-2 py-3 text-xs font-bold uppercase tracking-wide text-slate-500 sm:w-56 sm:px-4">
             Propiedad
           </div>
           <div className="flex" style={{ width: timelineWidth }}>
@@ -66,7 +66,7 @@ export function PlannerGrid({ from, to, properties, events, onSelect, onNewAt }:
               key={property.id}
               className="flex min-h-16 border-b border-slate-100 last:border-b-0"
             >
-              <div className="sticky left-0 z-20 flex w-56 shrink-0 flex-col justify-center border-r border-slate-200 bg-white px-4 py-3 shadow-[4px_0_10px_-8px_rgba(15,23,42,.4)]">
+              <div className="sticky left-0 z-20 flex w-36 shrink-0 flex-col justify-center border-r border-slate-200 bg-white px-2 py-3 shadow-[4px_0_10px_-8px_rgba(15,23,42,.4)] sm:w-56 sm:px-4">
                 <strong className="truncate text-sm text-night">{property.name}</strong>
                 <span className="truncate text-xs text-slate-500">{property.slug}</span>
               </div>

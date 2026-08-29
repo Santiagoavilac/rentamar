@@ -32,11 +32,11 @@ export type EditorRate = {
 function SaveBar({ state }: { state: ActionResult }) {
   const { pending } = useFormStatus();
   return (
-    <div className="sticky bottom-0 -mx-5 mt-6 flex flex-wrap items-center gap-4 border-t border-slate-200 bg-white/95 px-5 py-4 backdrop-blur">
+    <div className="admin-save-bar sticky bottom-0 -mx-4 mt-6 flex flex-col items-stretch gap-3 border-t border-slate-200 bg-white/95 px-4 py-4 backdrop-blur sm:-mx-5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4 sm:px-5">
       <button
         type="submit"
         disabled={pending}
-        className="rounded-lg bg-deep px-6 py-2.5 text-sm font-semibold text-cream disabled:opacity-50"
+        className="min-h-11 w-full rounded-lg bg-deep px-6 py-2.5 text-sm font-semibold text-cream disabled:opacity-50 sm:w-auto"
       >
         {pending ? "Guardando…" : "Guardar todo"}
       </button>
@@ -155,7 +155,7 @@ export function PropertyEditor({
                 { id: null, startDate: "", endDate: "", price: "", minimumNights: "", label: "" },
               ])
             }
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold"
           >
             <Plus size={16} /> Añadir tarifa
           </button>
@@ -222,7 +222,7 @@ export function PropertyEditor({
                   onClick={() =>
                     setRows((current) => current.filter((_, rowIndex) => rowIndex !== index))
                   }
-                  className="self-center rounded-lg p-2 text-rose-700 hover:bg-rose-50"
+                  className="inline-flex h-11 w-11 items-center justify-center self-center rounded-lg text-rose-700 hover:bg-rose-50"
                 >
                   <Trash2 size={18} />
                 </button>

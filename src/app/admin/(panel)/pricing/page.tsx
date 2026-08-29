@@ -60,8 +60,8 @@ export default async function PricingPage({
         }
       />
       <Panel>
-        <form method="get" className="flex flex-wrap items-end gap-3">
-          <label className="min-w-64 flex-1 text-sm font-semibold text-slate-700">
+        <form method="get" className="admin-filter-form flex flex-wrap items-end gap-3">
+          <label className="min-w-0 flex-1 text-sm font-semibold text-slate-700 sm:min-w-64">
             Propiedad
             <select
               name="propertyId"

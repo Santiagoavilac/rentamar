@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState, type FormEvent } from "react";
+import { useCallback, useState, useSyncExternalStore, type FormEvent } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -30,6 +30,22 @@ const MONTH_LABEL = new Intl.DateTimeFormat("es-BO", {
   year: "numeric",
   timeZone: "UTC",
 });
+
+const MOBILE_QUERY = "(max-width: 767px)";
+
+function subscribeToMobileQuery(callback: () => void) {
+  const media = window.matchMedia(MOBILE_QUERY);
+  media.addEventListener("change", callback);
+  return () => media.removeEventListener("change", callback);
+}
+
+function getMobileSnapshot() {
+  return window.matchMedia(MOBILE_QUERY).matches;
+}
+
+function getServerMobileSnapshot() {
+  return false;
+}
 
 // Lista fija alrededor del mes actual, más el mes consultado si cae fuera del rango.
 function buildMonthOptions(selected: string) {
@@ -68,6 +84,12 @@ export function AvailabilityBoard({
   const [selected, setSelected] = useState<PlannerEvent | null>(null);
   const [draft, setDraft] = useState<NewRecordDraft | null>(null);
   const [propertySearch, setPropertySearch] = useState("");
+  const isMobile = useSyncExternalStore(
+    subscribeToMobileQuery,
+    getMobileSnapshot,
+    getServerMobileSnapshot,
+  );
+  const activeView = !currentParams.has("view") && isMobile ? "list" : view;
   const closeEditor = useCallback(() => {
     setSelected(null);
     setDraft(null);
@@ -76,7 +98,7 @@ export function AvailabilityBoard({
   const exportParams = plannerQueryString(query);
   exportParams.set("format", "csv");
 
-  const navigate = (nextQuery: PlannerQueryInput, nextView = view) => {
+  const navigate = (nextQuery: PlannerQueryInput, nextView = activeView) => {
     const params = plannerQueryString(nextQuery);
     params.set("view", nextView);
     router.replace(`${pathname}?${params.toString()}`);
@@ -106,7 +128,7 @@ export function AvailabilityBoard({
 
   return (
     <div className="grid gap-5">
-      <section className="surface rounded-2xl p-4">
+      <section className="surface rounded-2xl p-3 sm:p-4">
         <form
           onSubmit={handleFilters}
           className="grid gap-4 xl:grid-cols-[auto_minmax(160px,1fr)_minmax(180px,1.2fr)_auto] xl:items-end"
@@ -135,7 +157,7 @@ export function AvailabilityBoard({
                   ? `${query.propertyIds.length} seleccionadas`
                   : "Todas las propiedades"}
               </summary>
-              <div className="absolute z-40 mt-1 w-full min-w-64 rounded-lg border border-slate-200 bg-white p-3 shadow-xl">
+              <div className="absolute left-0 right-0 z-40 mt-1 min-w-0 rounded-lg border border-slate-200 bg-white p-3 shadow-xl sm:right-auto sm:w-full sm:min-w-64">
                 <input
                   value={propertySearch}
                   onChange={(event) => setPropertySearch(event.target.value)}
@@ -183,9 +205,9 @@ export function AvailabilityBoard({
             Aplicar filtros
           </button>
         </form>
-        <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4">
+        <div className="mt-4 flex flex-col items-stretch gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:flex-wrap sm:items-center">
           <span className="text-sm text-slate-500">Hoy: {todayInLaPaz()}</span>
-          <div className="ml-auto flex flex-wrap gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:ml-auto sm:flex sm:flex-wrap">
             <a
               href={`/admin/calendar/export?${exportParams.toString()}`}
               className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold"
@@ -201,7 +223,7 @@ export function AvailabilityBoard({
             <button
               type="button"
               onClick={() => openDraft("pre_reservation")}
-              className="rounded-lg bg-amber-200 px-3 py-2 text-sm font-bold text-amber-950"
+              className="min-h-11 rounded-lg bg-amber-200 px-3 py-2 text-sm font-bold text-amber-950"
             >
               Nueva pre-reserva
             </button>
@@ -209,7 +231,7 @@ export function AvailabilityBoard({
               <button
                 type="button"
                 onClick={() => openDraft("rental")}
-                className="rounded-lg bg-teal-700 px-3 py-2 text-sm font-bold text-white"
+                className="min-h-11 rounded-lg bg-teal-700 px-3 py-2 text-sm font-bold text-white"
               >
                 Nuevo alquiler
               </button>
@@ -217,7 +239,7 @@ export function AvailabilityBoard({
             <button
               type="button"
               onClick={() => openDraft("blocked")}
-              className="rounded-lg bg-rose-200 px-3 py-2 text-sm font-bold text-rose-950"
+              className="min-h-11 rounded-lg bg-rose-200 px-3 py-2 text-sm font-bold text-rose-950"
             >
               Nuevo bloqueo
             </button>
@@ -225,7 +247,7 @@ export function AvailabilityBoard({
         </div>
       </section>
 
-      <nav className="flex gap-2" aria-label="Vistas de disponibilidad">
+      <nav className="grid grid-cols-2 gap-2 sm:flex" aria-label="Vistas de disponibilidad">
         {tabs.map(([value, label]) => {
           const params = new URLSearchParams(currentParams);
           params.set("view", value);
@@ -233,7 +255,7 @@ export function AvailabilityBoard({
             <Link
               key={value}
               href={`${pathname}?${params.toString()}`}
-              className={`rounded-lg px-4 py-2 text-sm font-bold ${view === value ? "bg-deep text-cream" : "border border-slate-300 bg-white text-night"}`}
+              className={`flex min-h-11 items-center justify-center rounded-lg px-4 py-2 text-sm font-bold ${activeView === value ? "bg-deep text-cream" : "border border-slate-300 bg-white text-night"}`}
             >
               {label}
             </Link>
@@ -242,20 +264,25 @@ export function AvailabilityBoard({
       </nav>
 
       <section className="surface rounded-2xl p-4 sm:p-5">
-        {view === "planner" ? (
-          <PlannerGrid
-            from={query.from}
-            to={query.to}
-            properties={data.properties}
-            events={data.events}
-            onSelect={(event) => {
-              setDraft(null);
-              setSelected(event);
-            }}
-            onNewAt={(propertyId, from, to) => openDraft("pre_reservation", propertyId, from, to)}
-          />
+        {activeView === "planner" ? (
+          <>
+            <p className="mb-2 text-xs text-slate-500 md:hidden">
+              Deslizá horizontalmente para recorrer los días.
+            </p>
+            <PlannerGrid
+              from={query.from}
+              to={query.to}
+              properties={data.properties}
+              events={data.events}
+              onSelect={(event) => {
+                setDraft(null);
+                setSelected(event);
+              }}
+              onNewAt={(propertyId, from, to) => openDraft("pre_reservation", propertyId, from, to)}
+            />
+          </>
         ) : null}
-        {view === "list" ? (
+        {activeView === "list" ? (
           <AvailabilityList
             properties={data.properties}
             events={data.events}

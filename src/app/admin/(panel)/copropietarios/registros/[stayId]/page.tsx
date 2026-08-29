@@ -6,7 +6,13 @@ import { getCoOwnerStay } from "@/lib/admin/co-owners";
 import { getDeclarationForStay } from "@/lib/admin/declarations";
 import { DeclarationPanel } from "@/components/admin/declaration-cell";
 import { AppError } from "@/lib/errors";
-import { AdminPageHeader, KeyValue, Panel, formatDateTime } from "@/components/admin/ui";
+import {
+  AdminPageHeader,
+  AdminResponsiveTable,
+  KeyValue,
+  Panel,
+  formatDateTime,
+} from "@/components/admin/ui";
 import { PanelHeading } from "@/components/admin/help";
 
 export const dynamic = "force-dynamic";
@@ -73,26 +79,30 @@ export default async function CoOwnerStayDetailPage({
           Huéspedes adicionales
         </PanelHeading>
         {stay.guests.length ? (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[520px] text-left text-sm">
-              <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
-                <tr>
-                  <th className="px-4 py-3">Nombre completo</th>
-                  <th className="px-4 py-3">CI</th>
-                  <th className="px-4 py-3">Nacimiento</th>
+          <AdminResponsiveTable className="md:min-w-[520px]">
+            <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+              <tr>
+                <th className="px-4 py-3">Nombre completo</th>
+                <th className="px-4 py-3">CI</th>
+                <th className="px-4 py-3">Nacimiento</th>
+              </tr>
+            </thead>
+            <tbody>
+              {stay.guests.map((guest, index) => (
+                <tr key={index} className="border-t border-slate-100">
+                  <td data-label="Nombre completo" className="px-4 py-3 font-semibold">
+                    {guest.full_name}
+                  </td>
+                  <td data-label="CI" className="px-4 py-3">
+                    {guest.document_id}
+                  </td>
+                  <td data-label="Nacimiento" className="px-4 py-3 whitespace-nowrap">
+                    {guest.birth_date}
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {stay.guests.map((guest, index) => (
-                  <tr key={index} className="border-t border-slate-100">
-                    <td className="px-4 py-3 font-semibold">{guest.full_name}</td>
-                    <td className="px-4 py-3">{guest.document_id}</td>
-                    <td className="px-4 py-3 whitespace-nowrap">{guest.birth_date}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </AdminResponsiveTable>
         ) : (
           <p className="text-sm text-slate-500">La estadía se declaró con un solo huésped.</p>
         )}

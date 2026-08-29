@@ -491,14 +491,42 @@ export function AvailabilityEditor({
   onClose,
 }: AvailabilityEditorProps) {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLElement>(null);
+  const returnFocusRef = useRef<HTMLElement | null>(null);
   useEffect(() => {
     if (!selected && !draft) return;
+    returnFocusRef.current = document.activeElement as HTMLElement | null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     closeButtonRef.current?.focus();
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") {
+        onClose();
+        return;
+      }
+      if (event.key !== "Tab" || !panelRef.current) return;
+      const focusable = Array.from(
+        panelRef.current.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      );
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
     window.addEventListener("keydown", closeOnEscape);
-    return () => window.removeEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+      returnFocusRef.current?.focus();
+    };
   }, [draft, onClose, selected]);
   if (!selected && !draft) return null;
   return (
@@ -510,16 +538,17 @@ export function AvailabilityEditor({
       }}
     >
       <aside
+        ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-label="Editor de disponibilidad"
-        className="absolute inset-y-0 right-0 w-full max-w-xl overflow-y-auto bg-white p-5 shadow-2xl sm:p-7"
+        className="admin-side-panel absolute inset-y-0 right-0 w-full max-w-xl overflow-y-auto bg-white p-4 shadow-2xl sm:p-7"
       >
         <button
           ref={closeButtonRef}
           type="button"
           onClick={onClose}
-          className="mb-5 ml-auto block rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold"
+          className="sticky top-0 z-10 mb-5 ml-auto block min-h-11 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold"
         >
           Cerrar
         </button>

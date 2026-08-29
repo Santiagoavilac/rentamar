@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { PlannerEvent, PlannerProperty } from "@/lib/admin/availability";
 import { formatCurrency } from "@/lib/money";
 import { DeclarationButton } from "@/components/declaration-button";
+import { AdminResponsiveTable } from "@/components/admin/ui";
 
 type AvailabilityListProps = {
   properties: PlannerProperty[];
@@ -24,8 +25,8 @@ export function AvailabilityList({ properties, events, onSelect }: AvailabilityL
     return a.from.localeCompare(b.from);
   });
   return (
-    <div className="overflow-x-auto rounded-xl border border-slate-200">
-      <table className="w-full min-w-[760px] text-left text-sm">
+    <div className="rounded-xl border border-slate-200 p-2 md:p-0">
+      <AdminResponsiveTable className="md:min-w-[760px]">
         <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
           <tr>
             <th className="px-4 py-3">
@@ -55,27 +56,35 @@ export function AvailabilityList({ properties, events, onSelect }: AvailabilityL
         <tbody>
           {sortedEvents.map((event) => (
             <tr key={`${event.entity}-${event.id}`} className="border-t border-slate-100">
-              <td className="px-4 py-3 font-semibold">{propertyById.get(event.propertyId)}</td>
-              <td className="px-4 py-3">{event.title}</td>
-              <td className="px-4 py-3">
+              <td data-label="Propiedad" className="px-4 py-3 font-semibold">
+                {propertyById.get(event.propertyId)}
+              </td>
+              <td data-label="Tipo" className="px-4 py-3">
+                {event.title}
+              </td>
+              <td data-label="Huésped o motivo" className="px-4 py-3">
                 {event.guestName ?? event.reason ?? event.blockType ?? "Sin detalle"}
               </td>
-              <td className="px-4 py-3 whitespace-nowrap">
+              <td data-label="Fechas" className="px-4 py-3 whitespace-nowrap">
                 {event.from} a {event.to}
               </td>
-              <td className="px-4 py-3">{event.bookingStatus ?? event.blockType}</td>
-              <td className="px-4 py-3">{event.paymentStatus ?? "-"}</td>
-              <td className="px-4 py-3">
+              <td data-label="Estado" className="px-4 py-3">
+                {event.bookingStatus ?? event.blockType}
+              </td>
+              <td data-label="Pago" className="px-4 py-3">
+                {event.paymentStatus ?? "-"}
+              </td>
+              <td data-label="Total" className="px-4 py-3">
                 {event.totalMinor === null
                   ? "-"
                   : formatCurrency(event.totalMinor, event.currency ?? "BOB")}
               </td>
-              <td className="px-4 py-3">
+              <td data-label="Acciones" data-mobile-full="true" className="px-4 py-3">
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
                     onClick={() => onSelect(event)}
-                    className="font-semibold text-cyan-700"
+                    className="inline-flex min-h-11 items-center font-semibold text-cyan-700"
                   >
                     Ver detalle
                   </button>
@@ -91,7 +100,7 @@ export function AvailabilityList({ properties, events, onSelect }: AvailabilityL
             </tr>
           ))}
         </tbody>
-      </table>
+      </AdminResponsiveTable>
       {!events.length ? (
         <p className="p-8 text-center text-sm text-slate-500">
           No hay registros para los filtros seleccionados.

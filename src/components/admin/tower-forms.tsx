@@ -85,12 +85,15 @@ export function PropertyTowerForm({
 }) {
   const [state, formAction] = useActionState(action, initial);
   return (
-    <form action={formAction} className="flex min-w-64 flex-wrap items-start gap-2">
+    <form
+      action={formAction}
+      className="flex w-full min-w-0 flex-wrap items-start gap-2 sm:w-auto sm:min-w-64"
+    >
       <label className="sr-only">Torre asignada</label>
       <select
         name="towerId"
         defaultValue={currentTowerId ?? ""}
-        className="min-w-40 flex-1 rounded border border-slate-300 px-2 py-2 text-sm"
+        className="min-w-0 flex-1 rounded border border-slate-300 px-2 py-2 text-sm sm:min-w-40"
       >
         <option value="">Sin torre</option>
         {towers.map((tower) => (

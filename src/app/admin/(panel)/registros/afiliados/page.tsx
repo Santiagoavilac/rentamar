@@ -5,6 +5,7 @@ import { listAffiliateEnabledProperties, listAffiliateRequests } from "@/lib/adm
 import { listDeclarationsByBooking } from "@/lib/admin/declarations";
 import {
   AdminPageHeader,
+  AdminResponsiveTable,
   EmptyState,
   Money,
   Pager,
@@ -64,7 +65,7 @@ export default async function AffiliateRecordsPage({
       />
 
       <Panel>
-        <form method="get" className="flex flex-wrap items-end gap-3">
+        <form method="get" className="admin-filter-form flex flex-wrap items-end gap-3">
           <label className="text-sm font-semibold text-slate-700">
             Estado
             <select name="status" defaultValue={p.status ?? ""} className={field}>
@@ -95,60 +96,58 @@ export default async function AffiliateRecordsPage({
       <Panel className="mt-5">
         {result.rows.length ? (
           <>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[940px] text-left text-sm">
-                <thead className="border-b text-slate-500">
-                  <tr>
-                    <th className="pb-3">Reserva</th>
-                    <th>Afiliado</th>
-                    <th>Propiedad</th>
-                    <th>Entrada</th>
-                    <th>Salida</th>
-                    <th>Estado</th>
-                    <th>Total</th>
-                    <th>Declaración</th>
+            <AdminResponsiveTable className="md:min-w-[940px]">
+              <thead className="border-b text-slate-500">
+                <tr>
+                  <th className="pb-3">Reserva</th>
+                  <th>Afiliado</th>
+                  <th>Propiedad</th>
+                  <th>Entrada</th>
+                  <th>Salida</th>
+                  <th>Estado</th>
+                  <th>Total</th>
+                  <th>Declaración</th>
+                </tr>
+              </thead>
+              <tbody>
+                {result.rows.map((row) => (
+                  <tr key={row.id} className="border-b align-top">
+                    <td data-label="Reserva" className="py-3">
+                      <Link
+                        className="font-semibold text-cyan-700"
+                        href={`/admin/affiliates/${row.id}`}
+                      >
+                        {row.booking_code}
+                      </Link>
+                      <span className="block text-xs text-slate-500">
+                        {formatDateTime(row.created_at)}
+                      </span>
+                    </td>
+                    <td data-label="Afiliado">
+                      {row.guest_name}
+                      <span className="block text-xs text-slate-500">
+                        CI {row.affiliate_document_id ?? "—"}
+                      </span>
+                    </td>
+                    <td data-label="Propiedad">{propertyNames.get(row.property_id) ?? "—"}</td>
+                    <td data-label="Entrada">{row.check_in}</td>
+                    <td data-label="Salida">{row.check_out}</td>
+                    <td data-label="Estado">
+                      <StatusBadge value={row.status} />
+                    </td>
+                    <td data-label="Total">
+                      <Money amount={row.total_minor} currency={row.currency} />
+                    </td>
+                    <td data-label="Declaración" data-mobile-full="true">
+                      <DeclarationCell
+                        declaration={declarations.get(row.id)}
+                        target={{ kind: "booking", bookingId: row.id }}
+                      />
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {result.rows.map((row) => (
-                    <tr key={row.id} className="border-b align-top">
-                      <td className="py-3">
-                        <Link
-                          className="font-semibold text-cyan-700"
-                          href={`/admin/affiliates/${row.id}`}
-                        >
-                          {row.booking_code}
-                        </Link>
-                        <span className="block text-xs text-slate-500">
-                          {formatDateTime(row.created_at)}
-                        </span>
-                      </td>
-                      <td>
-                        {row.guest_name}
-                        <span className="block text-xs text-slate-500">
-                          CI {row.affiliate_document_id ?? "—"}
-                        </span>
-                      </td>
-                      <td>{propertyNames.get(row.property_id) ?? "—"}</td>
-                      <td>{row.check_in}</td>
-                      <td>{row.check_out}</td>
-                      <td>
-                        <StatusBadge value={row.status} />
-                      </td>
-                      <td>
-                        <Money amount={row.total_minor} currency={row.currency} />
-                      </td>
-                      <td>
-                        <DeclarationCell
-                          declaration={declarations.get(row.id)}
-                          target={{ kind: "booking", bookingId: row.id }}
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </AdminResponsiveTable>
             <Pager
               page={result.page}
               pageSize={result.pageSize}

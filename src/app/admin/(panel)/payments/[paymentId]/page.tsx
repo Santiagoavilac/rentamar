@@ -64,7 +64,7 @@ export default async function PaymentDetail({
             <ul className="mt-3 grid gap-4 text-sm">
               {receipts.map((r) => (
                 <li key={r.id} className="rounded-lg border border-slate-200 p-3">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                     <strong>Intento {r.attemptNo}</strong>
                     <span className="text-slate-500">
                       {new Date(r.createdAt).toLocaleString("es-BO")}

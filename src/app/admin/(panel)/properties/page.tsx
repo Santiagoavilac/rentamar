@@ -2,6 +2,7 @@ import Link from "next/link";
 import { listProperties } from "@/lib/admin/properties";
 import {
   AdminPageHeader,
+  AdminResponsiveTable,
   EmptyState,
   Money,
   Pager,
@@ -34,52 +35,52 @@ export default async function PropertiesPage({
       <Panel>
         {result.rows.length ? (
           <>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="border-b text-slate-500">
-                  <tr>
-                    <th className="pb-3">Propiedad</th>
-                    <th className="pb-3">Estado</th>
-                    <th className="pb-3">Zona</th>
-                    <th className="pb-3">Precio base</th>
-                    <th className="pb-3"></th>
+            <AdminResponsiveTable>
+              <thead className="border-b text-slate-500">
+                <tr>
+                  <th className="pb-3">Propiedad</th>
+                  <th className="pb-3">Estado</th>
+                  <th className="pb-3">Zona</th>
+                  <th className="pb-3">Precio base</th>
+                  <th className="pb-3"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {result.rows.map((p) => (
+                  <tr key={p.id} className="border-b last:border-0">
+                    <td data-label="Propiedad" className="py-3 font-semibold">
+                      {p.name}
+                      <span className="block text-xs font-normal text-slate-500">
+                        /{p.slug} · {p.max_guests} huéspedes
+                      </span>
+                    </td>
+                    <td data-label="Estado" className="py-3">
+                      <StatusBadge value={p.status} />
+                    </td>
+                    <td data-label="Zona" className="py-3">
+                      {p.zone || "—"}
+                    </td>
+                    <td data-label="Precio base" className="py-3">
+                      <Money amount={p.base_price_minor} currency={p.currency} />
+                    </td>
+                    <td data-label="Acciones" data-mobile-full="true" className="py-3 text-right">
+                      <Link
+                        className="font-semibold text-cyan-700"
+                        href={`/admin/properties/${p.id}/images`}
+                      >
+                        Imágenes
+                      </Link>
+                      <Link
+                        className="ml-4 font-semibold text-cyan-700"
+                        href={`/admin/properties/${p.id}`}
+                      >
+                        Abrir
+                      </Link>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {result.rows.map((p) => (
-                    <tr key={p.id} className="border-b last:border-0">
-                      <td className="py-3 font-semibold">
-                        {p.name}
-                        <span className="block text-xs font-normal text-slate-500">
-                          /{p.slug} · {p.max_guests} huéspedes
-                        </span>
-                      </td>
-                      <td className="py-3">
-                        <StatusBadge value={p.status} />
-                      </td>
-                      <td className="py-3">{p.zone || "—"}</td>
-                      <td className="py-3">
-                        <Money amount={p.base_price_minor} currency={p.currency} />
-                      </td>
-                      <td className="py-3 text-right">
-                        <Link
-                          className="font-semibold text-cyan-700"
-                          href={`/admin/properties/${p.id}/images`}
-                        >
-                          Imágenes
-                        </Link>
-                        <Link
-                          className="ml-4 font-semibold text-cyan-700"
-                          href={`/admin/properties/${p.id}`}
-                        >
-                          Abrir
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </AdminResponsiveTable>
             <Pager {...result} basePath="/admin/properties" />
           </>
         ) : (

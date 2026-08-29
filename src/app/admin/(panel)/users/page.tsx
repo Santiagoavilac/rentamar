@@ -17,7 +17,13 @@ import {
   setCleanerActiveAction,
   setCleanerPasswordAction,
 } from "@/lib/admin/cleaner-actions";
-import { AdminPageHeader, EmptyState, Panel, StatusBadge } from "@/components/admin/ui";
+import {
+  AdminPageHeader,
+  AdminResponsiveTable,
+  EmptyState,
+  Panel,
+  StatusBadge,
+} from "@/components/admin/ui";
 import { UserForm } from "@/components/admin/forms";
 import {
   ChangePasswordForm,
@@ -158,8 +164,11 @@ async function StaffTab() {
         ) : (
           <ul className="grid gap-3">
             {staff.map((user) => (
-              <li key={user.id} className="flex items-center justify-between border-b pb-3">
-                <span>
+              <li
+                key={user.id}
+                className="flex flex-col items-start gap-2 border-b pb-3 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <span className="min-w-0">
                   <strong className="block text-sm">{user.full_name || user.email}</strong>
                   <small className="text-slate-500">{user.email}</small>
                 </span>
@@ -193,56 +202,64 @@ async function CoOwnersTab() {
             body="Creá la primera cuenta con su propiedad y cantidad de habitaciones."
           />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[980px] text-sm">
-              <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
-                <tr>
-                  <th className={th}>Usuario</th>
-                  <th className={th}>Propiedad</th>
-                  <th className={th}>Habitaciones</th>
-                  <th className={th}>Teléfono</th>
-                  <th className={th}>Límite</th>
-                  <th className={th}>Estado</th>
-                  <th className={th}>Acciones</th>
+          <AdminResponsiveTable className="md:min-w-[980px]">
+            <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+              <tr>
+                <th className={th}>Usuario</th>
+                <th className={th}>Propiedad</th>
+                <th className={th}>Habitaciones</th>
+                <th className={th}>Teléfono</th>
+                <th className={th}>Límite</th>
+                <th className={th}>Estado</th>
+                <th className={th}>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {accounts.map((account) => (
+                <tr key={account.id} className="border-t border-slate-200 align-top">
+                  <td data-label="Usuario" className="py-3 font-medium">
+                    {account.username}
+                  </td>
+                  <td data-label="Propiedad" className="py-3">
+                    {account.propertyName}
+                  </td>
+                  <td data-label="Habitaciones" className="py-3">
+                    {account.roomCount}
+                  </td>
+                  <td data-label="Teléfono" className="py-3">
+                    {account.phone ?? "—"}
+                  </td>
+                  <td data-label="Límite" className="py-3">
+                    {account.maxGuests}
+                  </td>
+                  <td data-label="Estado" className="py-3">
+                    <StatusBadge value={account.isActive ? "active" : "cancelada"} />
+                  </td>
+                  <td data-label="Acciones" data-mobile-full="true" className="py-3">
+                    <div className="grid gap-3">
+                      <EditCoOwnerForm
+                        action={updateCoOwnerAccountAction}
+                        account={{
+                          id: account.id,
+                          propertyName: account.propertyName,
+                          roomCount: account.roomCount,
+                          phone: account.phone,
+                          maxGuests: account.maxGuests,
+                        }}
+                      />
+                      <AccountActions
+                        accountId={account.id}
+                        isActive={account.isActive}
+                        passwordAction={setCoOwnerPasswordAction}
+                        activeAction={setCoOwnerActiveAction}
+                        deleteAction={deleteCoOwnerAccountAction}
+                      />
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {accounts.map((account) => (
-                  <tr key={account.id} className="border-t border-slate-200 align-top">
-                    <td className="py-3 font-medium">{account.username}</td>
-                    <td className="py-3">{account.propertyName}</td>
-                    <td className="py-3">{account.roomCount}</td>
-                    <td className="py-3">{account.phone ?? "—"}</td>
-                    <td className="py-3">{account.maxGuests}</td>
-                    <td className="py-3">
-                      <StatusBadge value={account.isActive ? "active" : "cancelada"} />
-                    </td>
-                    <td className="py-3">
-                      <div className="grid gap-3">
-                        <EditCoOwnerForm
-                          action={updateCoOwnerAccountAction}
-                          account={{
-                            id: account.id,
-                            propertyName: account.propertyName,
-                            roomCount: account.roomCount,
-                            phone: account.phone,
-                            maxGuests: account.maxGuests,
-                          }}
-                        />
-                        <AccountActions
-                          accountId={account.id}
-                          isActive={account.isActive}
-                          passwordAction={setCoOwnerPasswordAction}
-                          activeAction={setCoOwnerActiveAction}
-                          deleteAction={deleteCoOwnerAccountAction}
-                        />
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </AdminResponsiveTable>
         )}
       </Panel>
     </div>
@@ -268,38 +285,40 @@ async function CleanersTab() {
             body="Creá la primera cuenta con su nombre, usuario y contraseña."
           />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px] text-sm">
-              <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
-                <tr>
-                  <th className={th}>Persona</th>
-                  <th className={th}>Usuario</th>
-                  <th className={th}>Estado</th>
-                  <th className={th}>Acciones</th>
+          <AdminResponsiveTable className="md:min-w-[640px]">
+            <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+              <tr>
+                <th className={th}>Persona</th>
+                <th className={th}>Usuario</th>
+                <th className={th}>Estado</th>
+                <th className={th}>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {accounts.map((account) => (
+                <tr key={account.id} className="border-t border-slate-200 align-top">
+                  <td data-label="Persona" className="py-3 font-medium">
+                    {account.fullName}
+                  </td>
+                  <td data-label="Usuario" className="py-3">
+                    {account.username}
+                  </td>
+                  <td data-label="Estado" className="py-3">
+                    <StatusBadge value={account.isActive ? "active" : "cancelada"} />
+                  </td>
+                  <td data-label="Acciones" data-mobile-full="true" className="py-3">
+                    <AccountActions
+                      accountId={account.id}
+                      isActive={account.isActive}
+                      passwordAction={setCleanerPasswordAction}
+                      activeAction={setCleanerActiveAction}
+                      deleteAction={deleteCleanerAccountAction}
+                    />
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {accounts.map((account) => (
-                  <tr key={account.id} className="border-t border-slate-200 align-top">
-                    <td className="py-3 font-medium">{account.fullName}</td>
-                    <td className="py-3">{account.username}</td>
-                    <td className="py-3">
-                      <StatusBadge value={account.isActive ? "active" : "cancelada"} />
-                    </td>
-                    <td className="py-3">
-                      <AccountActions
-                        accountId={account.id}
-                        isActive={account.isActive}
-                        passwordAction={setCleanerPasswordAction}
-                        activeAction={setCleanerActiveAction}
-                        deleteAction={deleteCleanerAccountAction}
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </AdminResponsiveTable>
         )}
       </Panel>
     </div>

@@ -132,7 +132,7 @@ export function WeekendPricingFields({
         </p>
       </fieldset>
 
-      <label className="max-w-56 text-sm font-semibold text-slate-700">
+      <label className="w-full text-sm font-semibold text-slate-700 sm:max-w-56">
         Recargo sobre el precio base (%)
         <input
           required

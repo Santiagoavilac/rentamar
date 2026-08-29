@@ -32,7 +32,7 @@ export default function LoginForm({ redirectTo }: { redirectTo?: string }) {
           type="email"
           autoComplete="username"
           required
-          className="rounded-xl border border-white/15 bg-night/60 px-3.5 py-2.5 text-cream outline-none focus:border-turquoise-soft"
+          className="min-h-11 rounded-xl border border-white/15 bg-night/60 px-3.5 py-2.5 text-cream outline-none focus:border-turquoise-soft"
         />
       </label>
       <label className="flex flex-col gap-1.5 text-sm">
@@ -42,7 +42,7 @@ export default function LoginForm({ redirectTo }: { redirectTo?: string }) {
           type="password"
           autoComplete="current-password"
           required
-          className="rounded-xl border border-white/15 bg-night/60 px-3.5 py-2.5 text-cream outline-none focus:border-turquoise-soft"
+          className="min-h-11 rounded-xl border border-white/15 bg-night/60 px-3.5 py-2.5 text-cream outline-none focus:border-turquoise-soft"
         />
       </label>
 

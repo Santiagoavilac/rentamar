@@ -128,7 +128,7 @@ export function PricingEditor({
           </label>
         </div>
 
-        <div className="mt-6 flex items-center justify-between gap-3">
+        <div className="mt-6 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <PanelHeading helpKey="pricing.stayPrices">Precios por estadía</PanelHeading>
             <p className="text-sm text-slate-600">
@@ -138,7 +138,7 @@ export function PricingEditor({
           <button
             type="button"
             onClick={() => setRows((current) => [...current, { nights: 1, total: decimal(base) }])}
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold"
           >
             <Plus size={16} /> Añadir
           </button>
@@ -201,7 +201,7 @@ export function PricingEditor({
                     onClick={() =>
                       setRows((current) => current.filter((_, rowIndex) => rowIndex !== index))
                     }
-                    className="self-center rounded-lg p-2 text-rose-700 hover:bg-rose-50"
+                    className="inline-flex h-11 w-11 items-center justify-center self-center rounded-lg text-rose-700 hover:bg-rose-50"
                   >
                     <Trash2 size={18} />
                   </button>
@@ -224,7 +224,7 @@ export function PricingEditor({
             className="mt-1 min-h-20 w-full rounded-lg border border-slate-300 p-3"
           />
         </label>
-        <div className="mt-4 flex items-center gap-4">
+        <div className="mt-4 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:gap-4">
           <SaveButton />
           {state.error ? <p className="text-sm text-rose-700">{state.error}</p> : null}
           {state.ok ? <p className="text-sm text-emerald-700">Precios guardados.</p> : null}
@@ -270,7 +270,7 @@ export function PricingEditor({
             type="button"
             onClick={simulate}
             disabled={quoting}
-            className="rounded-lg bg-cyan-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+            className="min-h-11 rounded-lg bg-cyan-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
           >
             {quoting ? "Calculando…" : "Calcular"}
           </button>

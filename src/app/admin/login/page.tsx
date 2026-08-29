@@ -15,7 +15,7 @@ export default async function AdminLoginPage({
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-deep px-4 py-16">
-      <div className="glass-strong w-full max-w-sm rounded-3xl p-8">
+      <div className="glass-strong w-full max-w-sm rounded-3xl p-5 sm:p-8">
         <p className="eyebrow text-turquoise-soft">RentaMar</p>
         <h1 className="mt-2 text-2xl font-semibold text-cream">Panel interno</h1>
         <p className="mt-1 mb-6 text-sm text-cream/60">

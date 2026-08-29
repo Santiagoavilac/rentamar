@@ -2,6 +2,7 @@ import Link from "next/link";
 import { listLatestReceipts, listPayments, type ReceiptSummary } from "@/lib/admin/payments";
 import {
   AdminPageHeader,
+  AdminResponsiveTable,
   EmptyState,
   Money,
   Pager,
@@ -38,7 +39,7 @@ export default async function PaymentsPage({
       <Panel>
         {result.rows.length ? (
           <>
-            <table className="w-full text-left text-sm">
+            <AdminResponsiveTable>
               <thead className="border-b text-slate-500">
                 <tr>
                   <th className="pb-3">Pago</th>
@@ -52,7 +53,7 @@ export default async function PaymentsPage({
               <tbody>
                 {result.rows.map((x) => (
                   <tr key={x.id} className="border-b">
-                    <td className="py-3">
+                    <td data-label="Pago" className="py-3">
                       <Link
                         className="font-semibold text-cyan-700"
                         href={`/admin/payments/${x.id}`}
@@ -60,21 +61,21 @@ export default async function PaymentsPage({
                         {x.id.slice(0, 8)}
                       </Link>
                     </td>
-                    <td>{x.booking_id.slice(0, 8)}</td>
-                    <td>{x.provider}</td>
-                    <td>
+                    <td data-label="Reserva">{x.booking_id.slice(0, 8)}</td>
+                    <td data-label="Proveedor">{x.provider}</td>
+                    <td data-label="Estado">
                       <StatusBadge value={x.status} />
                     </td>
-                    <td>
+                    <td data-label="Monto">
                       <Money amount={x.amount_minor} currency={x.currency} />
                     </td>
-                    <td className="py-2">
+                    <td data-label="Comprobante" className="py-2">
                       <ReceiptCell receipt={receipts.get(x.id)} />
                     </td>
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </AdminResponsiveTable>
             <Pager {...result} basePath="/admin/payments" />
           </>
         ) : (
@@ -93,7 +94,10 @@ export default async function PaymentsPage({
 function ReceiptCell({ receipt }: { receipt?: ReceiptSummary }) {
   if (!receipt?.url) return <span className="text-slate-400">—</span>;
 
-  const label = receipt.aiStatus === "unavailable" ? "IA no disponible" : AI_RESULT_LABEL[receipt.aiResult ?? 4];
+  const label =
+    receipt.aiStatus === "unavailable"
+      ? "IA no disponible"
+      : AI_RESULT_LABEL[receipt.aiResult ?? 4];
 
   return (
     <a
@@ -110,7 +114,9 @@ function ReceiptCell({ receipt }: { receipt?: ReceiptSummary }) {
           className="h-10 w-10 rounded border border-slate-200 object-cover"
         />
       ) : (
-        <span className="rounded border border-slate-200 px-2 py-1 text-xs text-slate-600">PDF</span>
+        <span className="rounded border border-slate-200 px-2 py-1 text-xs text-slate-600">
+          PDF
+        </span>
       )}
       <span className="text-xs font-normal text-slate-600">{label}</span>
     </a>
