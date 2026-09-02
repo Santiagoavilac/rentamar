@@ -56,7 +56,7 @@ export default async function Hero() {
                   <ArrowRight size={18} aria-hidden="true" />
                 </a>
                 <a
-                  href="#experiencia"
+                  href="#experiencias"
                   className="glass-pill inline-flex items-center justify-center rounded-full px-6 py-3.5 text-sm font-semibold text-cream transition-colors hover:bg-white/10"
                 >
                   Conocer Mar Adentro

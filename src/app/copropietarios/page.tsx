@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { requireCoOwner } from "@/lib/auth";
 import { getCoOwnerAccount } from "@/lib/admin/co-owners";
-import StayForm from "@/components/co-owner/stay-form";
-import { signOutCoOwnerAction } from "./login/actions";
+import CoOwnerShell from "@/components/co-owner/page-shell";
 
 export const metadata: Metadata = {
   title: "Copropietarios | RentaMar",
@@ -11,34 +11,54 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default async function CoOwnerPage() {
+// Pantalla de entrada: en vez de caer directo al formulario, el copropietario elige qué
+// hacer. "Reservas de mi propiedad" solo aparece si administración vinculó la cuenta a una
+// propiedad publicada; sin ese vínculo no hay nada que mostrar.
+export default async function CoOwnerHomePage() {
   const session = await requireCoOwner();
   const account = await getCoOwnerAccount(session.userId);
 
   return (
-    <main className="min-h-screen bg-[#f6f4ef] px-4 py-10 text-night">
-      <div className="mx-auto max-w-2xl">
-        <header className="mb-7 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="eyebrow text-turquoise">RentaMar</p>
-            <h1 className="mt-2 text-2xl font-bold tracking-tight">Registrar estadía</h1>
-            <p className="mt-1 text-sm text-slate-600">Sesión de {session.username}.</p>
-          </div>
-          <form action={signOutCoOwnerAction}>
-            <button className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm">
-              Salir
-            </button>
-          </form>
-        </header>
-
-        <section className="surface rounded-2xl p-5">
-          <StayForm
-            propertyName={account.propertyName}
-            roomCount={account.roomCount}
-            maxGuests={account.maxGuests}
+    <CoOwnerShell
+      title={account.propertyName}
+      subtitle={`Sesión de ${session.username}. ¿Qué querés hacer?`}
+    >
+      <div className="grid gap-3">
+        <Option
+          href="/copropietarios/registro"
+          title="Registrar estadía"
+          body="Declarar quién se queda en tu propiedad, con sus datos y fechas."
+        />
+        <Option
+          href="/copropietarios/estadias"
+          title="Mis estadías declaradas"
+          body="Todo lo que registraste, de lo más reciente a lo más antiguo."
+        />
+        {account.propertyId ? (
+          <Option
+            href="/copropietarios/reservas"
+            title="Reservas de mi propiedad"
+            body="Los alquileres que RentaMar generó sobre tu departamento."
           />
-        </section>
+        ) : (
+          <p className="rounded-2xl border border-dashed border-slate-300 p-5 text-sm text-slate-600">
+            Todavía no hay una propiedad publicada vinculada a tu cuenta, así que no podemos
+            mostrarte sus reservas. Avisá a administración.
+          </p>
+        )}
       </div>
-    </main>
+    </CoOwnerShell>
+  );
+}
+
+function Option({ href, title, body }: { href: string; title: string; body: string }) {
+  return (
+    <Link
+      href={href}
+      className="surface rounded-2xl p-5 transition-colors hover:border-turquoise hover:bg-white"
+    >
+      <p className="text-base font-semibold">{title}</p>
+      <p className="mt-1 text-sm text-slate-600">{body}</p>
+    </Link>
   );
 }

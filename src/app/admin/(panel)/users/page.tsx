@@ -3,6 +3,7 @@ import { getStaffSession } from "@/lib/auth";
 import { listStaff } from "@/lib/admin/users";
 import { createUserAction } from "@/lib/admin/actions";
 import { listCoOwnerAccounts } from "@/lib/admin/co-owners";
+import { listProperties } from "@/lib/admin/properties";
 import { listCleanerAccounts } from "@/lib/admin/cleaners";
 import {
   createCoOwnerAccountAction,
@@ -183,7 +184,16 @@ async function StaffTab() {
 }
 
 async function CoOwnersTab() {
-  const accounts = await listCoOwnerAccounts();
+  const [accounts, properties] = await Promise.all([
+    listCoOwnerAccounts(),
+    // Todas las propiedades del catálogo, para poder vincular la cuenta a la suya.
+    listProperties({ page: 1, pageSize: 200 }),
+  ]);
+  const propertyOptions = properties.rows.map((property) => ({
+    id: property.id,
+    name: property.name,
+  }));
+  const propertyNameById = new Map(propertyOptions.map((p) => [p.id, p.name]));
   return (
     <div className="grid gap-5">
       <CreatePanel label="Crear copropietario">
@@ -192,7 +202,7 @@ async function CoOwnersTab() {
           paso. El copropietario entra en /copropietarios y solo registra estadías: no es staff ni
           ve el panel.
         </p>
-        <CreateCoOwnerForm action={createCoOwnerAccountAction} />
+        <CreateCoOwnerForm action={createCoOwnerAccountAction} properties={propertyOptions} />
       </CreatePanel>
 
       <Panel>
@@ -210,6 +220,7 @@ async function CoOwnersTab() {
                 <th className={th}>Habitaciones</th>
                 <th className={th}>Teléfono</th>
                 <th className={th}>Límite</th>
+                <th className={th}>Vinculada a</th>
                 <th className={th}>Estado</th>
                 <th className={th}>Acciones</th>
               </tr>
@@ -232,6 +243,9 @@ async function CoOwnersTab() {
                   <td data-label="Límite" className="py-3">
                     {account.maxGuests}
                   </td>
+                  <td data-label="Vinculada a" className="py-3">
+                    {(account.propertyId && propertyNameById.get(account.propertyId)) ?? "—"}
+                  </td>
                   <td data-label="Estado" className="py-3">
                     <StatusBadge value={account.isActive ? "active" : "cancelada"} />
                   </td>
@@ -245,7 +259,9 @@ async function CoOwnersTab() {
                           roomCount: account.roomCount,
                           phone: account.phone,
                           maxGuests: account.maxGuests,
+                          propertyId: account.propertyId,
                         }}
+                        properties={propertyOptions}
                       />
                       <AccountActions
                         accountId={account.id}

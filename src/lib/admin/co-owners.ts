@@ -56,16 +56,15 @@ export async function createCoOwnerAccount(
   });
   if (roleErr) throw mapPostgresError(roleErr.message);
 
-  const { error: insertErr } = await supabase
-    .from("co_owner_accounts")
-    .insert({
-      id: userId,
-      username: input.username,
-      property_name: input.propertyName,
-      room_count: input.roomCount,
-      phone: input.phone,
-      max_guests: input.maxGuests,
-    });
+  const { error: insertErr } = await supabase.from("co_owner_accounts").insert({
+    id: userId,
+    username: input.username,
+    property_name: input.propertyName,
+    room_count: input.roomCount,
+    phone: input.phone,
+    max_guests: input.maxGuests,
+    property_id: input.propertyId,
+  });
   if (insertErr) {
     // La cuenta de Auth quedaría huérfana sin profile de copropietario utilizable.
     await supabase.auth.admin.deleteUser(userId);
@@ -87,6 +86,7 @@ export async function updateCoOwnerAccount(input: CoOwnerAccountUpdateInput): Pr
       room_count: input.roomCount,
       phone: input.phone,
       max_guests: input.maxGuests,
+      property_id: input.propertyId,
     })
     .eq("id", input.accountId);
   if (error) throw internal();
@@ -144,6 +144,7 @@ export type CoOwnerAccountRow = {
   roomCount: number;
   phone: string | null;
   maxGuests: number;
+  propertyId: string | null;
   createdAt: string;
 };
 
@@ -151,7 +152,9 @@ export async function listCoOwnerAccounts(): Promise<CoOwnerAccountRow[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("co_owner_accounts")
-    .select("id, username, is_active, property_name, room_count, phone, max_guests, created_at")
+    .select(
+      "id, username, is_active, property_name, room_count, phone, max_guests, property_id, created_at",
+    )
     .order("username", { ascending: true });
   if (error) throw internal();
 
@@ -163,6 +166,7 @@ export async function listCoOwnerAccounts(): Promise<CoOwnerAccountRow[]> {
     roomCount: account.room_count,
     phone: account.phone,
     maxGuests: account.max_guests,
+    propertyId: account.property_id,
     createdAt: account.created_at,
   }));
 }
@@ -172,7 +176,9 @@ export async function getCoOwnerAccount(accountId: string): Promise<CoOwnerAccou
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("co_owner_accounts")
-    .select("id, username, is_active, property_name, room_count, phone, max_guests, created_at")
+    .select(
+      "id, username, is_active, property_name, room_count, phone, max_guests, property_id, created_at",
+    )
     .eq("id", accountId)
     .maybeSingle();
   if (error) throw internal();
@@ -185,6 +191,7 @@ export async function getCoOwnerAccount(accountId: string): Promise<CoOwnerAccou
     roomCount: data.room_count,
     phone: data.phone,
     maxGuests: data.max_guests,
+    propertyId: data.property_id,
     createdAt: data.created_at,
   };
 }
@@ -286,4 +293,36 @@ export async function getCoOwnerStay(
   if (guestsError) throw internal();
 
   return { ...(data as CoOwnerStayRow), guests: guests ?? [] };
+}
+
+// ---------- Reservas de la propiedad ----------
+
+export type CoOwnerBookingRow = {
+  id: string;
+  booking_code: string;
+  guest_name: string;
+  check_in: string;
+  check_out: string;
+  guests: number;
+  nights: number;
+  status: string;
+  total_minor: number;
+  currency: string;
+};
+
+// Reservas del departamento del copropietario, de la más próxima a la más vieja. Va con el
+// cliente de sesión: la política `bookings_select_own` deja pasar al copropietario solo
+// cuando `is_co_owner_of(property_id)`, así que un property_id ajeno no devuelve nada.
+export async function listCoOwnerBookings(propertyId: string): Promise<CoOwnerBookingRow[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("bookings")
+    .select(
+      "id, booking_code, guest_name, check_in, check_out, guests, nights, status, total_minor, currency",
+    )
+    .eq("property_id", propertyId)
+    .order("check_in", { ascending: false })
+    .limit(100);
+  if (error) throw internal();
+  return (data ?? []) as CoOwnerBookingRow[];
 }

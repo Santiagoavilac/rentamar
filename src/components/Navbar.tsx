@@ -55,12 +55,10 @@ export default function Navbar() {
         <ul className="hidden items-center gap-8 lg:flex">
           {navLinks.map((link) => (
             <li key={link.label}>
-              <Link
-                href={link.href}
+              <NavLink
+                link={link}
                 className="text-sm text-cream/75 transition-colors hover:text-cream"
-              >
-                {link.label}
-              </Link>
+              />
             </li>
           ))}
         </ul>
@@ -90,13 +88,11 @@ export default function Navbar() {
           <ul className="flex flex-col">
             {navLinks.map((link) => (
               <li key={link.label}>
-                <Link
-                  href={link.href}
+                <NavLink
+                  link={link}
                   onClick={() => setOpen(false)}
                   className="block rounded-2xl px-4 py-3 text-base text-cream/85 transition-colors hover:bg-white/10 hover:text-cream"
-                >
-                  {link.label}
-                </Link>
+                />
               </li>
             ))}
             <li className="mt-2">
@@ -112,5 +108,36 @@ export default function Navbar() {
         </div>
       )}
     </header>
+  );
+}
+
+// Los enlaces externos salen con <a target="_blank">: next/link no aporta nada fuera del
+// sitio y el prefetch sobre otro dominio no aplica.
+function NavLink({
+  link,
+  className,
+  onClick,
+}: {
+  link: (typeof navLinks)[number];
+  className: string;
+  onClick?: () => void;
+}) {
+  if (link.external) {
+    return (
+      <a
+        href={link.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={onClick}
+        className={className}
+      >
+        {link.label}
+      </a>
+    );
+  }
+  return (
+    <Link href={link.href} onClick={onClick} className={className}>
+      {link.label}
+    </Link>
   );
 }

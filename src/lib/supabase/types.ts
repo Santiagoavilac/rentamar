@@ -520,6 +520,7 @@ export type Database = {
           is_active: boolean;
           max_guests: number;
           phone: string | null;
+          property_id: string | null;
           property_name: string;
           room_count: number;
           updated_at: string;
@@ -531,6 +532,7 @@ export type Database = {
           is_active?: boolean;
           max_guests?: number;
           phone?: string | null;
+          property_id?: string | null;
           property_name: string;
           room_count: number;
           updated_at?: string;
@@ -542,12 +544,21 @@ export type Database = {
           is_active?: boolean;
           max_guests?: number;
           phone?: string | null;
+          property_id?: string | null;
           property_name?: string;
           room_count?: number;
           updated_at?: string;
           username?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "co_owner_accounts_property_id_fkey";
+            columns: ["property_id"];
+            isOneToOne: false;
+            referencedRelation: "properties";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       co_owner_stay_guests: {
         Row: {
@@ -1659,6 +1670,7 @@ export type Database = {
         }[];
       };
       is_admin: { Args: never; Returns: boolean };
+      is_co_owner_of: { Args: { p_property_id: string }; Returns: boolean };
       is_staff: { Args: never; Returns: boolean };
       mark_booking_manual_review: {
         Args: {

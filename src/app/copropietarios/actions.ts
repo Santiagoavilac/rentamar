@@ -112,7 +112,8 @@ export async function registerStayAction(
         revalidatePath("/admin/copropietarios/registros");
         return {
           ok: false,
-          error: "La estadía se registró pero no se pudieron guardar los huéspedes. Avisá a administración.",
+          error:
+            "La estadía se registró pero no se pudieron guardar los huéspedes. Avisá a administración.",
           stayId,
         };
       }
@@ -129,5 +130,6 @@ export async function registerStayAction(
   }
 
   revalidatePath("/admin/copropietarios/registros");
+  revalidatePath("/copropietarios/estadias");
   return { ok: true, error: null, stayId };
 }

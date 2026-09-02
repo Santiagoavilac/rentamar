@@ -26,6 +26,11 @@ html {
   scroll-behavior: smooth;
 }
 
+/* El header es fixed: sin este margen el salto a un ancla deja el título tapado. */
+section[id] {
+  scroll-margin-top: 6rem;
+}
+
 body {
   background-color: var(--color-deep);
   color: var(--color-cream);

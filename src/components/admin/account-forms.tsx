@@ -9,6 +9,9 @@ const initial: ActionResult = { ok: false, error: null };
 
 const input = "mt-1 w-full rounded border p-2";
 
+// Propiedades publicadas a las que se puede vincular una cuenta de copropietario.
+export type PropertyOption = { id: string; name: string };
+
 function Feedback({ state, okLabel }: { state: ActionResult; okLabel: string }) {
   if (state.error) {
     return (
@@ -34,7 +37,13 @@ function Feedback({ state, okLabel }: { state: ActionResult; okLabel: string }) 
 // Alta completa en un solo paso: usuario, contraseña, propiedad y habitaciones. El email
 // que Supabase Auth necesita se deriva del usuario en el servidor, así que acá no se pide
 // ni se muestra.
-export function CreateCoOwnerForm({ action }: { action: FormAction }) {
+export function CreateCoOwnerForm({
+  action,
+  properties,
+}: {
+  action: FormAction;
+  properties: PropertyOption[];
+}) {
   const [state, formAction] = useActionState(action, initial);
   return (
     <form action={formAction} className="grid gap-3 md:max-w-md">
@@ -82,6 +91,21 @@ export function CreateCoOwnerForm({ action }: { action: FormAction }) {
           defaultValue={1}
           className={input}
         />
+      </label>
+      <label className="text-sm">
+        Propiedad publicada
+        <select name="propertyId" defaultValue="" className={input}>
+          <option value="">Sin vincular</option>
+          {properties.map((property) => (
+            <option key={property.id} value={property.id}>
+              {property.name}
+            </option>
+          ))}
+        </select>
+        <span className="mt-1 block text-xs text-slate-500">
+          Vinculala para que el copropietario vea las reservas de su departamento. Se puede dejar
+          sin vincular y completar después.
+        </span>
       </label>
       <label className="text-sm">
         Teléfono
@@ -167,6 +191,7 @@ export function CreateCleanerForm({ action }: { action: FormAction }) {
 export function EditCoOwnerForm({
   action,
   account,
+  properties,
 }: {
   action: FormAction;
   account: {
@@ -175,7 +200,9 @@ export function EditCoOwnerForm({
     roomCount: number;
     phone: string | null;
     maxGuests: number;
+    propertyId: string | null;
   };
+  properties: PropertyOption[];
 }) {
   const [state, formAction] = useActionState(action, initial);
   const field = "w-full rounded border p-1.5 text-sm";
@@ -219,6 +246,17 @@ export function EditCoOwnerForm({
           defaultValue={account.maxGuests}
           className={field}
         />
+      </label>
+      <label className="text-xs text-slate-600 sm:col-span-2">
+        Propiedad publicada
+        <select name="propertyId" defaultValue={account.propertyId ?? ""} className={field}>
+          <option value="">Sin vincular</option>
+          {properties.map((property) => (
+            <option key={property.id} value={property.id}>
+              {property.name}
+            </option>
+          ))}
+        </select>
       </label>
       <div className="sm:col-span-4">
         <Submit label="Guardar datos" />

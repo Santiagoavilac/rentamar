@@ -449,6 +449,12 @@ const coOwnerAccountFields = {
   roomCount: z.coerce.number().int().min(1, "Debe haber al menos una habitación").max(200),
   phone: z.string().trim().min(6, "Ingresá el teléfono").max(30),
   maxGuests: z.coerce.number().int().min(1, "Debe permitir al menos un huésped").max(50),
+  // Propiedad publicada a la que se vincula la cuenta, para que el copropietario vea sus
+  // reservas. Opcional: el select del panel manda "" cuando queda sin vincular.
+  propertyId: z
+    .union([z.uuid(), z.literal("")])
+    .optional()
+    .transform((value) => value || null),
 };
 
 // Alta en un solo paso: la propiedad, las habitaciones, el teléfono y el límite de

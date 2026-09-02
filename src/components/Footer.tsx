@@ -1,9 +1,18 @@
 import { Instagram } from "lucide-react";
 import Wordmark from "./Wordmark";
 
-const columns: { title: string; links: string[] }[] = [
-  { title: "Explorar", links: ["Alojamientos", "Experiencias", "Mar Adentro", "Copropietarios"] },
-  { title: "RentaMar", links: ["Contacto", "Términos", "Privacidad"] },
+// Solo destinos que existen. Contacto, Términos y Privacidad se quitaron: no hay páginas
+// para esos enlaces todavía y apuntaban al inicio.
+const columns: { title: string; links: { label: string; href: string; external?: boolean }[] }[] = [
+  {
+    title: "Explorar",
+    links: [
+      { label: "Alojamientos", href: "/#propiedades" },
+      { label: "Experiencias", href: "/#experiencias" },
+      { label: "Mar Adentro", href: "https://maradentroweb.vercel.app/", external: true },
+      { label: "Copropietarios", href: "/copropietarios" },
+    ],
+  },
 ];
 
 export default function Footer() {
@@ -24,18 +33,19 @@ export default function Footer() {
           </a>
         </div>
 
-        <div className="grid grid-cols-2 gap-10 sm:gap-16">
+        <div className="flex flex-wrap gap-10 sm:gap-16">
           {columns.map((col) => (
             <nav key={col.title} aria-label={col.title}>
               <h3 className="eyebrow text-night/45">{col.title}</h3>
               <ul className="mt-4 flex flex-col gap-2.5">
                 {col.links.map((link) => (
-                  <li key={link}>
+                  <li key={link.label}>
                     <a
-                      href="#inicio"
+                      href={link.href}
+                      {...(link.external ? { target: "_blank", rel: "noopener noreferrer" } : null)}
                       className="text-sm text-night/70 transition-colors hover:text-night"
                     >
-                      {link}
+                      {link.label}
                     </a>
                   </li>
                 ))}
