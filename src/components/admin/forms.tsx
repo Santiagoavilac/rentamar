@@ -8,12 +8,20 @@ import { formatCurrency } from "@/lib/money";
 type FormAction = (state: ActionResult, formData: FormData) => Promise<ActionResult>;
 const initial: ActionResult = { ok: false, error: null };
 
-export function Submit({ label = "Guardar" }: { label?: string }) {
+// `disabled` sirve para los formularios que exigen completar algo antes de enviar (p. ej.
+// el checklist de aprobación de ingreso). El pending sigue mandando siempre.
+export function Submit({
+  label = "Guardar",
+  disabled = false,
+}: {
+  label?: string;
+  disabled?: boolean;
+}) {
   const { pending } = useFormStatus();
   return (
     <button
       className="rounded-lg bg-deep px-4 py-2 text-sm font-semibold text-cream disabled:opacity-50"
-      disabled={pending}
+      disabled={pending || disabled}
     >
       {pending ? "Guardando…" : label}
     </button>

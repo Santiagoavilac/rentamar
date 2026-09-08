@@ -5,6 +5,7 @@ import { createUserAction } from "@/lib/admin/actions";
 import { listCoOwnerAccounts } from "@/lib/admin/co-owners";
 import { listProperties } from "@/lib/admin/properties";
 import { listCleanerAccounts } from "@/lib/admin/cleaners";
+import { listGuardAccounts } from "@/lib/admin/guards";
 import {
   createCoOwnerAccountAction,
   deleteCoOwnerAccountAction,
@@ -19,6 +20,12 @@ import {
   setCleanerPasswordAction,
 } from "@/lib/admin/cleaner-actions";
 import {
+  createGuardAccountAction,
+  deleteGuardAccountAction,
+  setGuardActiveAction,
+  setGuardPasswordAction,
+} from "@/lib/admin/guard-actions";
+import {
   AdminPageHeader,
   AdminResponsiveTable,
   EmptyState,
@@ -29,6 +36,7 @@ import { UserForm } from "@/components/admin/forms";
 import {
   ChangePasswordForm,
   CreateCleanerForm,
+  CreateGuardForm,
   CreateCoOwnerForm,
   DeleteAccountForm,
   EditCoOwnerForm,
@@ -41,6 +49,7 @@ const TABS = [
   { key: "staff", label: "Staff" },
   { key: "copropietarios", label: "Copropietarios" },
   { key: "limpieza", label: "Limpieza" },
+  { key: "guardias", label: "Guardias" },
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
@@ -144,6 +153,7 @@ export default async function UsersPage({
       {tab === "staff" ? <StaffTab /> : null}
       {tab === "copropietarios" ? <CoOwnersTab /> : null}
       {tab === "limpieza" ? <CleanersTab /> : null}
+      {tab === "guardias" ? <GuardsTab /> : null}
     </>
   );
 }
@@ -329,6 +339,65 @@ async function CleanersTab() {
                       passwordAction={setCleanerPasswordAction}
                       activeAction={setCleanerActiveAction}
                       deleteAction={deleteCleanerAccountAction}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </AdminResponsiveTable>
+        )}
+      </Panel>
+    </div>
+  );
+}
+
+async function GuardsTab() {
+  const accounts = await listGuardAccounts();
+  return (
+    <div className="grid gap-5">
+      <CreatePanel label="Crear cuenta de guardia">
+        <p className="mb-4 text-sm text-slate-600">
+          El guardia entra en /guardias y solo consulta: ve quiénes están hoy en el condominio y si
+          RentaMar ya los aprobó. No puede editar ni registrar nada.
+        </p>
+        <CreateGuardForm action={createGuardAccountAction} />
+      </CreatePanel>
+
+      <Panel>
+        {accounts.length === 0 ? (
+          <EmptyState
+            title="Todavía no hay guardias"
+            body="Creá la primera cuenta con su nombre, usuario y contraseña."
+          />
+        ) : (
+          <AdminResponsiveTable className="md:min-w-[640px]">
+            <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+              <tr>
+                <th className={th}>Persona</th>
+                <th className={th}>Usuario</th>
+                <th className={th}>Estado</th>
+                <th className={th}>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {accounts.map((account) => (
+                <tr key={account.id} className="border-t border-slate-200 align-top">
+                  <td data-label="Persona" className="py-3 font-medium">
+                    {account.fullName}
+                  </td>
+                  <td data-label="Usuario" className="py-3">
+                    {account.username}
+                  </td>
+                  <td data-label="Estado" className="py-3">
+                    <StatusBadge value={account.isActive ? "active" : "cancelada"} />
+                  </td>
+                  <td data-label="Acciones" data-mobile-full="true" className="py-3">
+                    <AccountActions
+                      accountId={account.id}
+                      isActive={account.isActive}
+                      passwordAction={setGuardPasswordAction}
+                      activeAction={setGuardActiveAction}
+                      deleteAction={deleteGuardAccountAction}
                     />
                   </td>
                 </tr>

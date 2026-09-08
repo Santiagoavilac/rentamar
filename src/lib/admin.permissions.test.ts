@@ -18,4 +18,12 @@ describe("permisos del módulo de disponibilidad", () => {
     expect(canPerformAdminAction("operator", "cleaning.manage")).toBe(false);
     expect(canPerformAdminAction("admin", "cleaning.manage")).toBe(true);
   });
+
+  // Aprobar el ingreso lo hace recepción, no solo un administrador; dar de alta guardias sí
+  // es de administrador.
+  it("deja aprobar ingresos al operador pero no crear guardias", () => {
+    expect(canPerformAdminAction("operator", "access.review")).toBe(true);
+    expect(canPerformAdminAction("operator", "guard.manage")).toBe(false);
+    expect(canPerformAdminAction("admin", "guard.manage")).toBe(true);
+  });
 });

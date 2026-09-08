@@ -31,8 +31,8 @@ function Feedback({ state, okLabel }: { state: ActionResult; okLabel: string }) 
 }
 
 // Formularios de las cuentas con usuario y contraseña que crea administración
-// (copropietarios y personal de limpieza). Cambiar contraseña, activar y eliminar son
-// idénticos para ambos módulos: solo cambia la server action que reciben.
+// (copropietarios, personal de limpieza y guardias). Cambiar contraseña, activar y eliminar
+// son idénticos para los tres módulos: solo cambia la server action que reciben.
 
 // Alta completa en un solo paso: usuario, contraseña, propiedad y habitaciones. El email
 // que Supabase Auth necesita se deriva del usuario en el servidor, así que acá no se pide
@@ -177,6 +177,54 @@ export function CreateCleanerForm({ action }: { action: FormAction }) {
       </label>
       <p className="text-xs text-slate-500">
         Con esta cuenta la persona entra en /limpieza y reporta su hora de entrada y salida.
+      </p>
+      <div>
+        <Submit label="Crear cuenta" />
+      </div>
+      <Feedback state={state} okLabel="Cuenta creada." />
+    </form>
+  );
+}
+
+export function CreateGuardForm({ action }: { action: FormAction }) {
+  const [state, formAction] = useActionState(action, initial);
+  return (
+    <form action={formAction} className="grid gap-3 md:max-w-md">
+      <label className="text-sm">
+        Nombre completo
+        <input required name="fullName" placeholder="Juan Pérez" className={input} />
+      </label>
+      <label className="text-sm">
+        Usuario
+        <input
+          required
+          name="username"
+          autoComplete="off"
+          minLength={3}
+          maxLength={32}
+          pattern="[A-Za-z0-9][A-Za-z0-9._-]{2,31}"
+          placeholder="juan.perez"
+          aria-describedby="guard-username-help"
+          title="Ingresá el usuario sin espacios. Podés usar letras, números, punto, guion o guion bajo."
+          className={input}
+        />
+        <span id="guard-username-help" className="mt-1 block text-xs text-slate-500">
+          Escribilo sin espacios. Podés usar letras, números, punto, guion o guion bajo.
+        </span>
+      </label>
+      <label className="text-sm">
+        Contraseña
+        <input
+          required
+          type="password"
+          name="password"
+          minLength={10}
+          autoComplete="new-password"
+          className={input}
+        />
+      </label>
+      <p className="text-xs text-slate-500">
+        Con esta cuenta la persona entra en /guardias y consulta quién puede ingresar.
       </p>
       <div>
         <Submit label="Crear cuenta" />

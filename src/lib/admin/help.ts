@@ -960,6 +960,41 @@ export const HELP = {
   },
 
   // ---------- Copropietarios ----------
+  "accesos.page": {
+    title: "Control de acceso",
+    short:
+      "Quién puede entrar al condominio y quién todavía no. El guardia ve el mismo listado en verde o rojo.",
+    long: [
+      {
+        tipo: "parrafo",
+        texto:
+          "Junta en una sola pantalla a los tres orígenes: alquileres de RentaMar, solicitudes de afiliados y estadías de copropietarios. Aparecen solos, apenas quedan registrados; nadie los carga a mano.",
+      },
+      { tipo: "subtitulo", texto: "Cómo se aprueba" },
+      {
+        tipo: "pasos",
+        items: [
+          "La persona pasa por la oficina de RentaMar.",
+          "Firma la declaración jurada, deja la garantía y retira sus manillas.",
+          "Marcá las tres casillas y tocá Aprobar.",
+          "El guardia pasa a verlo en verde y recién ahí lo deja entrar.",
+        ],
+      },
+      {
+        tipo: "lista",
+        items: [
+          "Sin aprobar, el guardia lo ve en rojo y no le da acceso.",
+          "En los alquileres del canal directo la reserva solo trae el titular: cargá los nombres del resto del grupo para que el guardia sepa a quién dejar pasar.",
+          "Quitar aprobación devuelve el grupo a rojo en el acto.",
+        ],
+      },
+      {
+        tipo: "aviso",
+        texto:
+          "La búsqueda por nombre o carnet ignora el día: sirve cuando alguien se presenta en la puerta y no aparece en el listado de hoy.",
+      },
+    ],
+  },
   "coowners.page": {
     title: "Estadías declaradas",
     short: "Las estadías que declararon los copropietarios en sus propios departamentos.",

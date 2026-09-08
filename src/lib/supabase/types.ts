@@ -8,6 +8,60 @@ export type Database = {
   };
   public: {
     Tables: {
+      access_approvals: {
+        Row: {
+          approved_at: string;
+          approved_by: string;
+          booking_id: string | null;
+          created_at: string;
+          declaration_signed: boolean;
+          deposit_received: boolean;
+          id: string;
+          notes: string | null;
+          stay_id: string | null;
+          wristbands_delivered: boolean;
+        };
+        Insert: {
+          approved_at?: string;
+          approved_by: string;
+          booking_id?: string | null;
+          created_at?: string;
+          declaration_signed?: boolean;
+          deposit_received?: boolean;
+          id?: string;
+          notes?: string | null;
+          stay_id?: string | null;
+          wristbands_delivered?: boolean;
+        };
+        Update: {
+          approved_at?: string;
+          approved_by?: string;
+          booking_id?: string | null;
+          created_at?: string;
+          declaration_signed?: boolean;
+          deposit_received?: boolean;
+          id?: string;
+          notes?: string | null;
+          stay_id?: string | null;
+          wristbands_delivered?: boolean;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "access_approvals_booking_id_fkey";
+            columns: ["booking_id"];
+            isOneToOne: false;
+            referencedRelation: "bookings";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "access_approvals_stay_id_fkey";
+            columns: ["stay_id"];
+            isOneToOne: false;
+            referencedRelation: "co_owner_stays";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       amenities: {
         Row: {
           created_at: string;
@@ -716,6 +770,33 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      guard_accounts: {
+        Row: {
+          created_at: string;
+          full_name: string;
+          id: string;
+          is_active: boolean;
+          updated_at: string;
+          username: string;
+        };
+        Insert: {
+          created_at?: string;
+          full_name: string;
+          id: string;
+          is_active?: boolean;
+          updated_at?: string;
+          username: string;
+        };
+        Update: {
+          created_at?: string;
+          full_name?: string;
+          id?: string;
+          is_active?: boolean;
+          updated_at?: string;
+          username?: string;
+        };
+        Relationships: [];
       };
       id_documents: {
         Row: {
@@ -1497,6 +1578,20 @@ export type Database = {
         };
         Returns: Json;
       };
+      approve_access: {
+        Args: {
+          p_actor_id: string;
+          // Ajuste manual: la aprobación apunta a una reserva O a una estadía, así que el
+          // otro argumento siempre va en NULL. Reaplicar estos `| null` tras regenerar.
+          p_booking_id: string | null;
+          p_declaration: boolean;
+          p_deposit: boolean;
+          p_notes: string | null;
+          p_stay_id: string | null;
+          p_wristbands: boolean;
+        };
+        Returns: Json;
+      };
       attach_payment_provider_data: {
         Args: {
           p_external_id: string;
@@ -1671,7 +1766,26 @@ export type Database = {
       };
       is_admin: { Args: never; Returns: boolean };
       is_co_owner_of: { Args: { p_property_id: string }; Returns: boolean };
+      is_guard: { Args: never; Returns: boolean };
       is_staff: { Args: never; Returns: boolean };
+      list_access_entries: {
+        Args: { p_date?: string | null; p_search?: string | null };
+        Returns: {
+          approved: boolean;
+          // Ajuste manual: sin aprobar todavía no hay fecha, y una reserva del canal
+          // directo puede no tener carnet cargado.
+          approved_at: string | null;
+          check_in: string;
+          check_out: string;
+          document_id: string | null;
+          entry_id: string;
+          guest_count: number;
+          lugar: string;
+          people: Json;
+          source: string;
+          titular: string;
+        }[];
+      };
       mark_booking_manual_review: {
         Args: {
           p_actor_id: string;
@@ -1716,6 +1830,11 @@ export type Database = {
       };
       remove_property_rate: {
         Args: { p_actor_id: string; p_rate_id: string; p_reason: string };
+        Returns: Json;
+      };
+      revoke_access: {
+        // Ajuste manual: mismo par excluyente que approve_access.
+        Args: { p_booking_id: string | null; p_stay_id: string | null };
         Returns: Json;
       };
       save_property_pricing: {
@@ -1851,7 +1970,7 @@ export type Database = {
         | "affiliate_price";
       price_item_type: "nightly_rate" | "cleaning_fee" | "service_fee" | "discount";
       property_status: "draft" | "published" | "paused" | "archived";
-      user_role: "guest" | "admin" | "operator" | "co_owner" | "cleaner";
+      user_role: "guest" | "admin" | "operator" | "co_owner" | "cleaner" | "guard";
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -2060,7 +2179,7 @@ export const Constants = {
       ],
       price_item_type: ["nightly_rate", "cleaning_fee", "service_fee", "discount"],
       property_status: ["draft", "published", "paused", "archived"],
-      user_role: ["guest", "admin", "operator", "co_owner", "cleaner"],
+      user_role: ["guest", "admin", "operator", "co_owner", "cleaner", "guard"],
     },
   },
 } as const;

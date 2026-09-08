@@ -38,7 +38,7 @@ funciones `SECURITY DEFINER`, RLS), no en la aplicación.
 - `booking_status`: `draft | pending_payment | confirmed | expired | cancelled | completed | manual_review`
 - `hold_status`: `active | converted | expired | released`
 - `price_item_type`: `nightly_rate | cleaning_fee | service_fee | discount`
-- `user_role`: `guest | admin | operator`
+- `user_role`: `guest | admin | operator | co_owner | cleaner | guard`
 - `payment_status`: `created | pending | paid | expired | error | cancelled | refunded | manual_review`
 - `payment_provider`: `mock | bnb`
 - `payment_method`: `qr`
@@ -114,3 +114,23 @@ remoto. `001…010` = Fase 1; `011…018` = Fase 2 (pagos). `supabase/seed.sql` 
 BNB real, webhooks, reembolsos, cron productivo para `expire_stale_payments` /
 `expire_stale_holds`, tarifas y disponibilidad administradas por panel, histórico
 de precios. Ver `payments.md`.
+
+## Control de acceso
+
+`access_approvals` espeja a `declarations`: apunta a `booking_id` **o** a
+`stay_id` (check `num_nonnulls(...) = 1`, más un índice único parcial por cada
+uno). No hay estado intermedio: si no hay fila, el ingreso no está aprobado.
+
+| Función                                | Seguridad | Expuesta a                  |
+| -------------------------------------- | --------- | --------------------------- |
+| `approve_access(...)`                  | DEFINER   | **solo service_role**       |
+| `revoke_access(booking, stay)`         | DEFINER   | **solo service_role**       |
+| `list_access_entries(fecha, búsqueda)` | DEFINER   | authenticated, service_role |
+| `is_guard()`                           | DEFINER   | authenticated, service_role |
+
+`list_access_entries` es la única lectura del guardia: une reservas
+(`bookings` + `booking_companions`, excluyendo `cancelled`/`expired`/`draft`) con
+estadías de copropietarios (`co_owner_stays` + `co_owner_stay_guests`) y devuelve
+solo nombres, carnets, lugar, fechas y el booleano de aprobación — nunca montos,
+correos, teléfonos ni tokens. Su primera línea corta con `FORBIDDEN` si el que
+llama no es `is_guard()` ni `is_staff()`.

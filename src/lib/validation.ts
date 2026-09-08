@@ -565,6 +565,65 @@ export const cleaningReportSchema = z
     path: ["exitTime"],
   });
 
+// ---------- Módulo de guardias y control de acceso ----------
+
+export const guardAccountSchema = z.object({
+  username: accountUsername,
+  password: accountPassword,
+  fullName: z.string().trim().min(2, "Ingresá el nombre completo").max(160),
+});
+
+export const guardPasswordSchema = z.object({
+  accountId: z.uuid(),
+  password: accountPassword,
+});
+
+export const guardActiveSchema = z.object({
+  accountId: z.uuid(),
+  isActive: z.boolean(),
+});
+
+// La aprobación apunta a una reserva o a una estadía de copropietario, nunca a las dos:
+// el mismo par excluyente que ya usa la declaración jurada.
+const accessTargetShape = {
+  bookingId: z.uuid().nullable().default(null),
+  stayId: z.uuid().nullable().default(null),
+};
+
+const oneTarget = (value: { bookingId: string | null; stayId: string | null }) =>
+  (value.bookingId === null) !== (value.stayId === null);
+
+const targetMessage = { message: "Indicá una reserva o una estadía", path: ["bookingId"] };
+
+export const accessApprovalSchema = z
+  .object({
+    ...accessTargetShape,
+    declarationSigned: z.boolean(),
+    depositReceived: z.boolean(),
+    wristbandsDelivered: z.boolean(),
+    notes: z.string().trim().max(500).nullable().default(null),
+  })
+  .refine(oneTarget, targetMessage);
+
+export const accessRevokeSchema = z.object(accessTargetShape).refine(oneTarget, targetMessage);
+
+// Acompañantes que recepción carga para un alquiler del canal directo. Los mínimos son los
+// mismos que la tabla booking_companions exige en la base.
+export const accessCompanionsSchema = z.object({
+  bookingId: z.uuid(),
+  companions: z
+    .array(
+      z.object({
+        fullName: z.string().trim().min(2, "Ingresá el nombre completo").max(160),
+        documentId: z.string().trim().min(4, "Ingresá el carnet").max(40),
+      }),
+    )
+    .max(20, "Como máximo 20 acompañantes"),
+});
+
+export type GuardAccountInput = z.infer<typeof guardAccountSchema>;
+export type AccessApprovalInput = z.infer<typeof accessApprovalSchema>;
+
 export type CleanerAccountInput = z.infer<typeof cleanerAccountSchema>;
 export type CleaningReportInput = z.infer<typeof cleaningReportSchema>;
 

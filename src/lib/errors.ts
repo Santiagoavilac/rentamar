@@ -167,11 +167,7 @@ export class NotFoundError extends AppError {
 
 export class AffiliateDisabledError extends AppError {
   constructor() {
-    super(
-      "AFFILIATE_DISABLED",
-      "Esta propiedad todavía no tiene precio de afiliado cargado",
-      409,
-    );
+    super("AFFILIATE_DISABLED", "Esta propiedad todavía no tiene precio de afiliado cargado", 409);
   }
 }
 
@@ -313,6 +309,9 @@ export function mapPostgresError(message: string | undefined): AppError {
       return new ValidationError("Completá nombre, CI y teléfono");
     case "GUEST_LIMIT_EXCEEDED":
       return new ValidationError("Superaste el límite de huéspedes de tu cuenta");
+    // Control de acceso.
+    case "STAY_NOT_FOUND":
+      return new NotFoundError("Estadía no encontrada");
     case "VALIDATION_ERROR":
       return new ValidationError();
     default:

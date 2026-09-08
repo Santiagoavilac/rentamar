@@ -86,3 +86,17 @@ claro una sola vez, comparado en tiempo constante. Ver `bookings.md`.
 
 Rate limit distribuido, verificación de firma de webhooks de pago, rotación de
 secretos, auditoría de accesos, mTLS/IP fija para el proveedor de pagos.
+
+## Guardias y control de acceso
+
+El rol `guard` tiene su propio login (`/guardias/login`, usuario → email interno
+derivado) y una sola pantalla, de solo lectura. No lee ninguna tabla directamente:
+`guard_accounts` le muestra únicamente su propia fila, `access_approvals` es de
+staff, y todo lo que ve pasa por `list_access_entries`, que filtra las columnas
+sensibles antes de devolverlas y corta con `FORBIDDEN` si el que llama no es
+guardia ni staff.
+
+Escribir (aprobar, quitar la aprobación, cargar acompañantes) es exclusivo del
+panel: `approve_access` y `revoke_access` solo tienen `execute` para
+`service_role`, y las server actions revalidan `access.review` con
+`assertAdminAction` antes de llamarlas.

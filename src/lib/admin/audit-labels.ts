@@ -50,6 +50,13 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   "cleaner.account.password": "Contraseña de limpieza cambiada",
   "cleaner.account.active": "Cuenta de limpieza activada o desactivada",
   "cleaner.account.delete": "Cuenta de limpieza eliminada",
+  "guard.account.create": "Cuenta de guardia creada",
+  "guard.account.password": "Contraseña de guardia cambiada",
+  "guard.account.active": "Cuenta de guardia activada o desactivada",
+  "guard.account.delete": "Cuenta de guardia eliminada",
+  "access.approve": "Ingreso aprobado",
+  "access.revoke": "Aprobación de ingreso retirada",
+  "access.companions": "Acompañantes del ingreso actualizados",
 };
 
 export function describeAction(action: string): string {
@@ -70,6 +77,9 @@ export const ENTITY_LABELS: Record<string, string> = {
   user: "Usuario",
   setting: "Ajuste",
   co_owner_account: "Cuenta de copropietario",
+  cleaner_account: "Cuenta de limpieza",
+  guard_account: "Cuenta de guardia",
+  co_owner_stay: "Estadía de copropietario",
 };
 
 export function describeEntityType(entityType: string): string {
@@ -91,7 +101,11 @@ export function entityHref(entityType: string, entityId: string | null): string 
     case "user":
       return "/admin/users";
     case "co_owner_account":
+    case "cleaner_account":
+    case "guard_account":
       return "/admin/users";
+    case "co_owner_stay":
+      return `/admin/copropietarios/registros/${entityId}`;
     default:
       return null;
   }

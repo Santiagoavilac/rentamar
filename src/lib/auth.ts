@@ -132,3 +132,41 @@ export async function requireCleaner(): Promise<CleanerSession> {
   if (!session) redirect("/limpieza/login");
   return session;
 }
+
+export type GuardSession = {
+  userId: string;
+  username: string;
+  fullName: string;
+};
+
+// Sesión del guardia de portería: rol guard en profiles + cuenta activa. Vía separada del
+// resto, igual que limpieza: un guardia nunca llega al panel ni ve el módulo de nadie más.
+export async function getGuardSession(): Promise<GuardSession | null> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (profile?.role !== "guard") return null;
+
+  const { data: account } = await supabase
+    .from("guard_accounts")
+    .select("username, full_name, is_active")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (!account?.is_active) return null;
+
+  return { userId: user.id, username: account.username, fullName: account.full_name };
+}
+
+export async function requireGuard(): Promise<GuardSession> {
+  const session = await getGuardSession();
+  if (!session) redirect("/guardias/login");
+  return session;
+}

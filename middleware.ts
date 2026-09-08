@@ -8,5 +8,5 @@ export async function middleware(request: NextRequest) {
 // Solo corre sobre las áreas autenticadas (excluye assets estáticos). El landing público
 // y el catálogo quedan intactos.
 export const config = {
-  matcher: ["/admin/:path*", "/copropietarios/:path*", "/limpieza/:path*"],
+  matcher: ["/admin/:path*", "/copropietarios/:path*", "/limpieza/:path*", "/guardias/:path*"],
 };

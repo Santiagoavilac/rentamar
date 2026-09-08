@@ -30,6 +30,10 @@ export type AdminAction =
   | "affiliate.review"
   | "coowner.manage"
   | "cleaning.manage"
+  // Aprobar el ingreso (declaración, garantía y manillas) es trabajo de recepción, no solo
+  // de un administrador: por eso queda fuera de ADMIN_ONLY.
+  | "access.review"
+  | "guard.manage"
   // Fuera de ADMIN_ONLY a propósito: recepción necesita imprimir la declaración, y ya ve
   // los mismos datos del huésped en la reserva.
   | "declaration.read";
@@ -43,6 +47,7 @@ const ADMIN_ONLY: ReadonlySet<AdminAction> = new Set<AdminAction>([
   "affiliate.manage",
   "coowner.manage",
   "cleaning.manage",
+  "guard.manage",
 ]);
 
 // Matriz de permisos central. Devuelve true si el rol puede ejecutar la acción.
