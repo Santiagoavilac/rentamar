@@ -6,7 +6,7 @@ import { Bath, BedDouble, Check, DoorOpen, MapPin, Users } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { PropertyGallery } from "@/components/property-gallery";
-import { PropertyBookingPanel } from "@/components/property-booking-panel";
+import { PropertyReserveCta } from "@/components/booking/property-cta";
 import { getPropertyBySlug } from "@/lib/queries";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -169,16 +169,13 @@ export default async function PropertyPage({ params }: Props) {
           </div>
 
           {bookingConfigured ? (
-            <PropertyBookingPanel
-              propertyId={property.id}
-              propertyName={property.name}
-              maxGuests={property.maxGuests}
-              minimumNights={property.minimumNights}
+            <PropertyReserveCta
+              slug={property.slug}
               basePriceMinor={property.basePriceMinor}
               currency={property.currency}
+              minimumNights={property.minimumNights}
               checkInTime={property.checkInTime}
               checkOutTime={property.checkOutTime}
-              bookedRanges={property.bookedRanges}
               stayPrices={property.durationPricingEnabled ? property.stayPrices : []}
             />
           ) : (

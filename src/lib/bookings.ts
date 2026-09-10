@@ -82,7 +82,10 @@ export async function createBooking(input: CreateBookingInput): Promise<CreatedB
   // Antes de tocar el calendario: si el titular está vetado, no tiene sentido crear la
   // reserva y bloquear las fechas para después frenarlo. El trigger de la base sigue siendo
   // la autoridad; esto solo evita dejar basura por el camino.
-  await assertGuestsNotBanned([input.guest.documentId]);
+  await assertGuestsNotBanned([
+    input.guest.documentId,
+    ...input.companions.map((companion) => companion.documentId),
+  ]);
 
   const { token, hash } = generateAccessToken();
 
@@ -118,6 +121,22 @@ export async function createBooking(input: CreateBookingInput): Promise<CreatedB
   // vence solo a los 30 minutos y libera las fechas. Cancelarla acá exigiría un actor que
   // en el camino público no existe.
   if (updateError) throw mapPostgresError(updateError.message);
+
+  // Los acompañantes se escriben acá por el mismo motivo que el carnet del titular: sumar
+  // un parámetro a `create_booking_with_hold` obligaría a recrear una función `security
+  // definer` grande y en producción. El trigger de vetados corre igual sobre este insert.
+  if (input.companions.length) {
+    const { error: companionsError } = await supabase.from("booking_companions").insert(
+      input.companions.map((companion, index) => ({
+        booking_id: result.bookingId,
+        full_name: companion.fullName,
+        document_id: companion.documentId.toUpperCase(),
+        phone: companion.phone || null,
+        sort_order: index,
+      })),
+    );
+    if (companionsError) throw mapPostgresError(companionsError.message);
+  }
 
   return { ...result, accessToken: token };
 }

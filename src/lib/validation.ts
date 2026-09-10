@@ -30,6 +30,12 @@ export const guestSchema = z.object({
   city: z.string().trim().min(2).max(80),
 });
 
+export const companionSchema = z.object({
+  fullName: z.string().trim().min(2).max(120),
+  documentId: z.string().trim().min(4).max(40),
+  phone: z.string().trim().min(6).max(30).optional().or(z.literal("")),
+});
+
 export const createBookingSchema = z
   .object({
     propertyId: z.uuid(),
@@ -37,10 +43,17 @@ export const createBookingSchema = z
     checkOut: isoDate,
     guestCount: z.number().int().min(1).max(50),
     guest: guestSchema,
+    // El canal directo no los pedía y era el único: el de afiliados y el de copropietarios
+    // sí. Van opcionales para no romper a quien todavía llame sin ellos.
+    companions: z.array(companionSchema).max(20).default([]),
   })
   .refine((d) => d.checkIn < d.checkOut, {
     message: "checkOut debe ser posterior a checkIn",
     path: ["checkOut"],
+  })
+  .refine((d) => d.companions.length < d.guestCount, {
+    message: "Los acompañantes no pueden superar la cantidad de huéspedes",
+    path: ["companions"],
   });
 
 // ---------- Fase 4 — canal de afiliados ----------
@@ -48,12 +61,6 @@ export const createBookingSchema = z
 // es la única barrera antes de la RPC (que además revalida del lado SQL).
 
 export const affiliateQuoteSchema = quoteSchema;
-
-export const companionSchema = z.object({
-  fullName: z.string().trim().min(2).max(120),
-  documentId: z.string().trim().min(4).max(40),
-  phone: z.string().trim().min(6).max(30).optional().or(z.literal("")),
-});
 
 export const createAffiliateRequestSchema = z
   .object({
