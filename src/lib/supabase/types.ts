@@ -8,6 +8,63 @@ export type Database = {
   };
   public: {
     Tables: {
+      access_checkins: {
+        Row: {
+          booking_id: string | null;
+          checked_in_at: string;
+          checked_in_by: string;
+          created_at: string;
+          id: string;
+          person_document_id: string | null;
+          person_kind: string;
+          person_name: string;
+          person_ref: string | null;
+          stay_id: string | null;
+          wristband_delivered: boolean;
+        };
+        Insert: {
+          booking_id?: string | null;
+          checked_in_at?: string;
+          checked_in_by: string;
+          created_at?: string;
+          id?: string;
+          person_document_id?: string | null;
+          person_kind: string;
+          person_name: string;
+          person_ref?: string | null;
+          stay_id?: string | null;
+          wristband_delivered?: boolean;
+        };
+        Update: {
+          booking_id?: string | null;
+          checked_in_at?: string;
+          checked_in_by?: string;
+          created_at?: string;
+          id?: string;
+          person_document_id?: string | null;
+          person_kind?: string;
+          person_name?: string;
+          person_ref?: string | null;
+          stay_id?: string | null;
+          wristband_delivered?: boolean;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "access_checkins_booking_id_fkey";
+            columns: ["booking_id"];
+            isOneToOne: false;
+            referencedRelation: "bookings";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "access_checkins_stay_id_fkey";
+            columns: ["stay_id"];
+            isOneToOne: false;
+            referencedRelation: "co_owner_stays";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       access_approvals: {
         Row: {
           approved_at: string;
@@ -1803,7 +1860,41 @@ export type Database = {
           people: Json;
           source: string;
           titular: string;
+          titular_checked_in: boolean;
+          checked_in_count: number;
         }[];
+      };
+      list_office_checkins: {
+        Args: { p_from?: string | null; p_to?: string | null };
+        Returns: {
+          source: string;
+          entry_id: string;
+          checked_in_at: string;
+          titular: string;
+          // Ajuste manual: el copropietario siempre carga teléfono, el huésped directo no.
+          phone: string | null;
+          check_out: string;
+          lugar: string;
+          people_checked_in: number;
+          guest_count: number;
+        }[];
+      };
+      check_in_person: {
+        Args: {
+          p_actor_id: string;
+          p_booking_id: string | null;
+          p_person_document_id: string | null;
+          p_person_kind: string;
+          p_person_name: string;
+          p_person_ref: string | null;
+          p_stay_id: string | null;
+          p_wristband: boolean;
+        };
+        Returns: Json;
+      };
+      undo_check_in: {
+        Args: { p_booking_id: string | null; p_person_ref: string | null; p_stay_id: string | null };
+        Returns: Json;
       };
       mark_booking_manual_review: {
         Args: {

@@ -13,6 +13,9 @@ import { DeclarationPanel } from "@/components/admin/declaration-cell";
 import { affiliateRequestAction } from "@/lib/admin/actions";
 import { getAffiliateRequestDetail } from "@/lib/admin/affiliates";
 import { listBookingEvents } from "@/lib/admin/bookings";
+import { listCheckins, isAccessApproved } from "@/lib/admin/access";
+import { CheckinPanel } from "@/components/access/checkin-forms";
+import { checkInPersonAction, undoCheckInAction } from "@/lib/admin/access-actions";
 import { listIdDocuments } from "@/lib/id-documents";
 import { IdPhotosPanel } from "@/components/admin/id-photos-panel";
 import {
@@ -30,11 +33,21 @@ export default async function AffiliateRequestPage({
   const session = await requireStaff();
   assertAdminAction(session.role, "affiliate.review");
   const { bookingId } = await params;
-  const [{ booking, companions, property }, events, idDocuments, declaration] = await Promise.all([
+  const target = { bookingId, stayId: null };
+  const [
+    { booking, companions, property },
+    events,
+    idDocuments,
+    declaration,
+    checkins,
+    accessApproved,
+  ] = await Promise.all([
     getAffiliateRequestDetail(bookingId),
     listBookingEvents(bookingId),
     listIdDocuments({ kind: "booking", bookingId }),
     getDeclarationForBooking(bookingId),
+    listCheckins(target),
+    isAccessApproved(target),
   ]);
   const open = booking.status === "pending_payment";
 
@@ -48,6 +61,15 @@ export default async function AffiliateRequestPage({
       documentId: companion.document_id,
     })),
   ];
+  const checkinPeople = people.map((person) => {
+    const checkin = checkins.find((row) => row.personRef === person.ref);
+    return {
+      ...person,
+      checkedIn: Boolean(checkin),
+      wristbandDelivered: checkin?.wristbandDelivered ?? false,
+      checkedInAt: checkin?.checkedInAt ?? null,
+    };
+  });
 
   return (
     <>
@@ -89,6 +111,16 @@ export default async function AffiliateRequestPage({
                 <Money amount={booking.total_minor} currency={booking.currency} />
               </KeyValue>
             </dl>
+          </Panel>
+          <Panel>
+            <PanelHeading helpKey="registro.checkin">Registro de ingreso</PanelHeading>
+            <CheckinPanel
+              target={{ bookingId }}
+              people={checkinPeople}
+              approved={accessApproved}
+              checkInAction={checkInPersonAction}
+              undoAction={undoCheckInAction}
+            />
           </Panel>
           <Panel>
             <PanelHeading helpKey="registro.fotos.carnet">Subir fotos de carnet</PanelHeading>

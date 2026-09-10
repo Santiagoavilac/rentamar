@@ -6,7 +6,13 @@ import { AppError } from "@/lib/errors";
 import { writeAudit } from "@/lib/audit";
 import { buildAuditContext, assertSameOrigin } from "./context";
 import * as access from "./access";
-import { accessApprovalSchema, accessCompanionsSchema, accessRevokeSchema } from "@/lib/validation";
+import {
+  accessApprovalSchema,
+  accessCompanionsSchema,
+  accessRevokeSchema,
+  checkinPersonSchema,
+  undoCheckinSchema,
+} from "@/lib/validation";
 import type { ActionResult } from "./actions";
 
 // Aprobar y desaprobar el ingreso. Misma cadena que el resto del panel:
@@ -128,5 +134,102 @@ export async function setAccessCompanionsAction(
     return fail(error);
   }
   revalidatePath(PANEL_PATH);
+  return OK;
+}
+
+// ---------- Registro de ingreso, persona por persona ----------
+// Aprobar es el permiso del grupo; esto es el hecho físico de cada persona en el mostrador.
+// Va con el mismo permiso `access.review`: lo hace recepción, no un administrador.
+
+// Cada detalle de registro tiene su propia pantalla; se revalidan todas las que muestran el
+// verde/rojo para que el cambio se vea sin recargar a mano.
+function revalidateCheckinViews(bookingId: string | null, stayId: string | null) {
+  revalidatePath(PANEL_PATH);
+  revalidatePath("/admin/ingresos");
+  if (bookingId) {
+    revalidatePath(`/admin/bookings/${bookingId}`);
+    revalidatePath(`/admin/affiliates/${bookingId}`);
+    revalidatePath("/admin/registros/huespedes");
+    revalidatePath("/admin/registros/afiliados");
+  }
+  if (stayId) {
+    revalidatePath(`/admin/copropietarios/registros/${stayId}`);
+    revalidatePath("/admin/copropietarios/registros");
+  }
+}
+
+export async function checkInPersonAction(
+  _state: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  let target = { bookingId: null as string | null, stayId: null as string | null };
+  try {
+    const session = await authorize();
+    const parsed = checkinPersonSchema.parse({
+      ...readTarget(formData),
+      personKind: (formData.get("personKind") as string) || "titular",
+      personRef: (formData.get("personRef") as string) || null,
+      personName: formData.get("personName"),
+      personDocumentId: (formData.get("personDocumentId") as string) || null,
+      wristbandDelivered: formData.get("wristbandDelivered") === "on",
+    });
+    target = { bookingId: parsed.bookingId, stayId: parsed.stayId };
+    await access.checkInPerson(
+      {
+        bookingId: parsed.bookingId,
+        stayId: parsed.stayId,
+        personKind: parsed.personKind,
+        personRef: parsed.personRef,
+        personName: parsed.personName,
+        personDocumentId: parsed.personDocumentId,
+        wristbandDelivered: parsed.wristbandDelivered,
+      },
+      session.userId,
+    );
+    await writeAudit({
+      ...(await buildAuditContext(session)),
+      action: "access.checkin",
+      entityType: parsed.bookingId ? "booking" : "co_owner_stay",
+      entityId: parsed.bookingId ?? parsed.stayId ?? "",
+      after: {
+        person_ref: parsed.personRef,
+        person_name: parsed.personName,
+        wristband_delivered: parsed.wristbandDelivered,
+      },
+    });
+  } catch (error) {
+    return fail(error);
+  }
+  revalidateCheckinViews(target.bookingId, target.stayId);
+  return OK;
+}
+
+export async function undoCheckInAction(
+  _state: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  let target = { bookingId: null as string | null, stayId: null as string | null };
+  try {
+    const session = await authorize();
+    const parsed = undoCheckinSchema.parse({
+      ...readTarget(formData),
+      personRef: (formData.get("personRef") as string) || null,
+    });
+    target = { bookingId: parsed.bookingId, stayId: parsed.stayId };
+    await access.undoCheckIn(
+      { bookingId: parsed.bookingId, stayId: parsed.stayId },
+      parsed.personRef,
+    );
+    await writeAudit({
+      ...(await buildAuditContext(session)),
+      action: "access.checkin_undo",
+      entityType: parsed.bookingId ? "booking" : "co_owner_stay",
+      entityId: parsed.bookingId ?? parsed.stayId ?? "",
+      before: { person_ref: parsed.personRef },
+    });
+  } catch (error) {
+    return fail(error);
+  }
+  revalidateCheckinViews(target.bookingId, target.stayId);
   return OK;
 }

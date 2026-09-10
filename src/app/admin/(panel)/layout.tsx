@@ -15,6 +15,7 @@ const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
       { href: "/admin/calendar", label: "Disponibilidad" },
       { href: "/admin/bookings", label: "Reservas" },
       { href: "/admin/accesos", label: "Control de acceso", requires: "access.review" },
+      { href: "/admin/ingresos", label: "Ingresos", requires: "access.review" },
       { href: "/admin/limpieza", label: "Limpieza", requires: "cleaning.manage" },
       { href: "/admin/affiliates", label: "Afiliados", requires: "affiliate.review" },
       { href: "/admin/payments", label: "Pagos", requires: "payment.review" },

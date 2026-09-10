@@ -625,6 +625,27 @@ export const idDocumentUploadSchema = z
 
 export const idDocumentDeleteSchema = z.object({ documentId: z.uuid() });
 
+// Registro de ingreso de una persona. Mismo par excluyente reserva/estadía; el titular no
+// tiene fila propia en ninguna tabla de acompañantes, así que va sin ref.
+export const checkinPersonSchema = z
+  .object({
+    ...accessTargetShape,
+    personKind: z.enum(["titular", "acompanante"]),
+    personRef: z.uuid().nullable().default(null),
+    personName: z.string().trim().min(2, "Ingresá el nombre completo").max(160),
+    personDocumentId: z.string().trim().max(40).nullable().default(null),
+    wristbandDelivered: z.boolean().default(false),
+  })
+  .refine(oneTarget, targetMessage)
+  .refine((value) => (value.personKind === "titular") === (value.personRef === null), {
+    message: "Indicá de qué persona es el registro",
+    path: ["personRef"],
+  });
+
+export const undoCheckinSchema = z
+  .object({ ...accessTargetShape, personRef: z.uuid().nullable().default(null) })
+  .refine(oneTarget, targetMessage);
+
 // Acompañantes que recepción carga para un alquiler del canal directo. Los mínimos son los
 // mismos que la tabla booking_companions exige en la base.
 export const accessCompanionsSchema = z.object({

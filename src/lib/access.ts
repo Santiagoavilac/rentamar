@@ -9,7 +9,14 @@ import { mapPostgresError } from "./errors";
 // La lectura usa el cliente de sesión: la RPC decide con is_staff()/is_guard() y así el
 // guardia puede usar exactamente la misma función sin ver nada de más.
 
-export type AccessPerson = { nombre: string; carnet: string };
+export type AccessPerson = {
+  nombre: string;
+  carnet: string;
+  /** Se presentó en la oficina y quedó registrado. */
+  registrado: boolean;
+  /** Ya retiró su manilla. */
+  manilla: boolean;
+};
 
 export type AccessEntry = {
   /** "alquiler" | "afiliado" | "copropietario" */
@@ -26,6 +33,10 @@ export type AccessEntry = {
   approved: boolean;
   approvedAt: string | null;
   people: AccessPerson[];
+  /** El titular pasó por el mostrador. */
+  titularCheckedIn: boolean;
+  /** Cuántas personas del grupo se registraron, titular incluido. */
+  checkedInCount: number;
 };
 
 export type AccessTarget = { bookingId: string | null; stayId: string | null };
@@ -44,7 +55,14 @@ function toPeople(value: unknown): AccessPerson[] {
     const person = item as Record<string, unknown>;
     const nombre = typeof person.nombre === "string" ? person.nombre : "";
     if (!nombre) return [];
-    return [{ nombre, carnet: typeof person.carnet === "string" ? person.carnet : "" }];
+    return [
+      {
+        nombre,
+        carnet: typeof person.carnet === "string" ? person.carnet : "",
+        registrado: person.registrado === true,
+        manilla: person.manilla === true,
+      },
+    ];
   });
 }
 
@@ -72,5 +90,8 @@ export async function listAccessEntries(params: {
     approved: row.approved,
     approvedAt: row.approved_at,
     people: toPeople(row.people),
+    titularCheckedIn: row.titular_checked_in,
+    checkedInCount: row.checked_in_count,
   }));
 }
+

@@ -15,6 +15,8 @@ export type BookingListRow = {
   check_in: string;
   check_out: string;
   guest_name: string;
+  // Personas declaradas: es el denominador del verde/ámbar/rojo de registro de ingreso.
+  guests: number;
   total_minor: number;
   currency: string;
   created_at: string;
@@ -36,7 +38,7 @@ export async function listBookings(params: {
   let query = supabase
     .from("bookings")
     .select(
-      "id, booking_code, status, payment_status, check_in, check_out, guest_name, total_minor, currency, created_at",
+      "id, booking_code, status, payment_status, check_in, check_out, guest_name, guests, total_minor, currency, created_at",
       { count: "exact" },
     )
     .order("created_at", { ascending: false })

@@ -3,6 +3,7 @@ import { requireStaff } from "@/lib/auth";
 import { assertAdminAction } from "@/lib/permissions";
 import { listBookings } from "@/lib/admin/bookings";
 import { listDeclarationsByBooking } from "@/lib/admin/declarations";
+import { countCheckinsByTarget } from "@/lib/admin/access";
 import {
   AdminPageHeader,
   AdminResponsiveTable,
@@ -11,6 +12,7 @@ import {
   Pager,
   Panel,
   StatusBadge,
+  CheckinBadge,
   formatDateTime,
 } from "@/components/admin/ui";
 import { DeclarationCell } from "@/components/admin/declaration-cell";
@@ -48,7 +50,11 @@ export default async function GuestRecordsPage({
     search: p.search || undefined,
     excludeAffiliates: true,
   });
-  const declarations = await listDeclarationsByBooking(result.rows.map((row) => row.id));
+  const bookingIds = result.rows.map((row) => row.id);
+  const [declarations, checkins] = await Promise.all([
+    listDeclarationsByBooking(bookingIds),
+    countCheckinsByTarget({ bookingIds }),
+  ]);
 
   const basePath = `/admin/registros/huespedes?status=${encodeURIComponent(
     p.status ?? "",
@@ -95,6 +101,7 @@ export default async function GuestRecordsPage({
                   <th>Entrada</th>
                   <th>Salida</th>
                   <th>Estado</th>
+                  <th>Ingreso</th>
                   <th>Total</th>
                   <th>Declaración</th>
                 </tr>
@@ -118,6 +125,9 @@ export default async function GuestRecordsPage({
                     <td data-label="Salida">{row.check_out}</td>
                     <td data-label="Estado">
                       <StatusBadge value={row.status} />
+                    </td>
+                    <td data-label="Ingreso">
+                      <CheckinBadge checkedIn={checkins.get(row.id) ?? 0} total={row.guests} />
                     </td>
                     <td data-label="Total">
                       <Money amount={row.total_minor} currency={row.currency} />

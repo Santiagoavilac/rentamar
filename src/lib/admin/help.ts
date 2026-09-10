@@ -1044,6 +1044,53 @@ export const HELP = {
       },
     ],
   },
+  "ingresos.page": {
+    title: "Ingresos",
+    short: "Quién acaba de entrar al complejo, en tiempo real.",
+    long: [
+      {
+        tipo: "parrafo",
+        texto:
+          "Cada vez que recepción registra el ingreso de un grupo, aparece acá una fila con la hora, el titular, su teléfono y el día de salida. Sirve para ver el movimiento del día sin entrar registro por registro.",
+      },
+      { tipo: "subtitulo", texto: "Cómo se usa" },
+      {
+        tipo: "lista",
+        items: [
+          "Mientras mirás el día de hoy, la pantalla se actualiza sola cada 30 segundos.",
+          "Cambiando el rango de fechas se ve cualquier período anterior.",
+          "Descargar CSV baja exactamente lo que está en pantalla, listo para abrir en Excel.",
+        ],
+      },
+      {
+        tipo: "aviso",
+        texto:
+          "La hora es la del primer huésped del grupo que se presentó. Es un hecho registrado: no cambia si después se corrige una casilla.",
+      },
+    ],
+  },
+  "registro.checkin": {
+    title: "Registro de ingreso",
+    short: "Quién del grupo ya se presentó en la oficina y retiró su manilla.",
+    long: [
+      {
+        tipo: "parrafo",
+        texto:
+          "Aprobar el ingreso en Control de acceso es el permiso del grupo. Esto es otra cosa: el hecho de que una persona concreta se presentó en el mostrador, a qué hora, y si se llevó su manilla.",
+      },
+      { tipo: "subtitulo", texto: "Por qué es por persona" },
+      {
+        tipo: "parrafo",
+        texto:
+          "Un grupo aprobado casi nunca llega junto. Marcando de a uno se ve quién falta, y el guardia lo ve al instante en su pantalla.",
+      },
+      {
+        tipo: "aviso",
+        texto:
+          "No se puede registrar a nadie de un grupo sin ingreso aprobado. Si marcaste a la persona equivocada, Deshacer registro lo revierte; volver a marcar a alguien actualiza la manilla pero no cambia la hora original.",
+      },
+    ],
+  },
   "registro.fotos.carnet": {
     title: "Fotos de carnet",
     short: "La foto del documento de cada persona del registro, para constancia de la oficina.",

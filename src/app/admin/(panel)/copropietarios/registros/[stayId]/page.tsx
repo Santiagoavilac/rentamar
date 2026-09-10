@@ -6,6 +6,9 @@ import { getCoOwnerStay } from "@/lib/admin/co-owners";
 import { getDeclarationForStay } from "@/lib/admin/declarations";
 import { DeclarationPanel } from "@/components/admin/declaration-cell";
 import { IdPhotosPanel } from "@/components/admin/id-photos-panel";
+import { CheckinPanel } from "@/components/access/checkin-forms";
+import { listCheckins, isAccessApproved } from "@/lib/admin/access";
+import { checkInPersonAction, undoCheckInAction } from "@/lib/admin/access-actions";
 import { listIdDocuments } from "@/lib/id-documents";
 import {
   uploadIdDocumentAction,
@@ -40,9 +43,12 @@ export default async function CoOwnerStayDetailPage({
     throw error;
   }
 
-  const [declaration, idDocuments] = await Promise.all([
+  const target = { bookingId: null, stayId };
+  const [declaration, idDocuments, checkins, accessApproved] = await Promise.all([
     getDeclarationForStay(stayId),
     listIdDocuments({ kind: "stay", stayId }),
+    listCheckins(target),
+    isAccessApproved(target),
   ]);
 
   // El titular firma la declaración y no tiene fila propia en co_owner_stay_guests: va
@@ -55,6 +61,15 @@ export default async function CoOwnerStayDetailPage({
       documentId: guest.document_id,
     })),
   ];
+  const checkinPeople = people.map((person) => {
+    const checkin = checkins.find((row) => row.personRef === person.ref);
+    return {
+      ...person,
+      checkedIn: Boolean(checkin),
+      wristbandDelivered: checkin?.wristbandDelivered ?? false,
+      checkedInAt: checkin?.checkedInAt ?? null,
+    };
+  });
 
   return (
     <>
@@ -92,6 +107,19 @@ export default async function CoOwnerStayDetailPage({
           Declaración jurada
         </PanelHeading>
         <DeclarationPanel declaration={declaration} target={{ kind: "stay", stayId }} />
+      </Panel>
+
+      <Panel>
+        <PanelHeading helpKey="registro.checkin" className="mb-4 text-sm font-bold">
+          Registro de ingreso
+        </PanelHeading>
+        <CheckinPanel
+          target={{ stayId }}
+          people={checkinPeople}
+          approved={accessApproved}
+          checkInAction={checkInPersonAction}
+          undoAction={undoCheckInAction}
+        />
       </Panel>
 
       <Panel>
