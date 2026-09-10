@@ -34,6 +34,9 @@ export type AdminAction =
   // de un administrador: por eso queda fuera de ADMIN_ONLY.
   | "access.review"
   | "guard.manage"
+  // Vetar a una persona la deja afuera del complejo por los tres canales: es una decisión
+  // de administración, no de mostrador.
+  | "banned.manage"
   // Fuera de ADMIN_ONLY a propósito: recepción necesita imprimir la declaración, y ya ve
   // los mismos datos del huésped en la reserva.
   | "declaration.read";
@@ -48,6 +51,7 @@ const ADMIN_ONLY: ReadonlySet<AdminAction> = new Set<AdminAction>([
   "coowner.manage",
   "cleaning.manage",
   "guard.manage",
+  "banned.manage",
 ]);
 
 // Matriz de permisos central. Devuelve true si el rol puede ejecutar la acción.

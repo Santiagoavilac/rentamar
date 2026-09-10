@@ -7,7 +7,8 @@ import {
   listAmenities,
 } from "@/lib/admin/properties";
 import { listRates, listPriceHistory } from "@/lib/admin/rates";
-import { savePropertyAction } from "@/lib/admin/actions";
+import { savePropertyAction, setPropertyAmenitiesAction } from "@/lib/admin/actions";
+import { AmenitiesPicker } from "@/components/admin/amenities-picker";
 import { AdminPageHeader, KeyValue, Money, Panel, StatusBadge } from "@/components/admin/ui";
 import { PanelHeading } from "@/components/admin/help";
 import { PropertyEditor } from "@/components/admin/property-editor";
@@ -22,7 +23,7 @@ export default async function PropertyDetailPage({
 }) {
   const { propertyId } = await params;
   const session = await requireStaff();
-  const [property, images, amenityIds, amenities, rates, history, towers, weekend] =
+  const [property, images, selectedAmenities, amenities, rates, history, towers, weekend] =
     await Promise.all([
       getProperty(propertyId),
       getPropertyImages(propertyId),
@@ -69,10 +70,20 @@ export default async function PropertyDetailPage({
                 <Money amount={property.base_price_minor} currency={property.currency} />
               </KeyValue>
               <KeyValue label="Imágenes">{images.length}</KeyValue>
-              <KeyValue label="Amenities">
-                {amenityIds.length} de {amenities.length}
+              <KeyValue label="Comodidades">
+                {selectedAmenities.length} de {amenities.length}
               </KeyValue>
             </dl>
+          </Panel>
+          <Panel>
+            <PanelHeading helpKey="properties.detail.amenities" className="mb-1 font-bold">
+              Comodidades
+            </PanelHeading>
+            <AmenitiesPicker
+              action={setPropertyAmenitiesAction.bind(null, propertyId)}
+              amenities={amenities}
+              selected={selectedAmenities}
+            />
           </Panel>
           <Panel>
             <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">

@@ -20,6 +20,19 @@ function shortDate(value: string): string {
 
 // El color nunca es el único indicador: siempre va acompañado del texto, para que se entienda
 // de noche, con poca luz o en una pantalla gastada.
+// Quién del grupo ya pasó por el mostrador. El guardia lo necesita para no dejar entrar a
+// alguien que todavía no retiró su manilla, aunque el grupo esté aprobado.
+function WristbandMark({ checkedIn, manilla }: { checkedIn: boolean; manilla?: boolean }) {
+  if (!checkedIn) {
+    return <span className="ml-1 text-xs font-semibold text-rose-700">· sin registrar</span>;
+  }
+  return (
+    <span className="ml-1 text-xs font-semibold text-emerald-700">
+      · registrado{manilla === false ? ", sin manilla" : ""}
+    </span>
+  );
+}
+
 function EntryCard({ entry }: { entry: AccessEntry }) {
   const tone = entry.approved ? "border-emerald-500 bg-emerald-50" : "border-rose-500 bg-rose-50";
   const badge = entry.approved ? "bg-emerald-600 text-white" : "bg-rose-600 text-white";
@@ -57,11 +70,13 @@ function EntryCard({ entry }: { entry: AccessEntry }) {
           <li className="font-medium">
             {entry.titular}
             {entry.documentId ? ` · CI ${entry.documentId}` : ""}
+            <WristbandMark checkedIn={entry.titularCheckedIn} />
           </li>
           {entry.people.map((person, index) => (
             <li key={`${entry.entryId}-${index}`}>
               {person.nombre}
               {person.carnet ? ` · CI ${person.carnet}` : ""}
+              <WristbandMark checkedIn={person.registrado} manilla={person.manilla} />
             </li>
           ))}
         </ul>

@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight, BedDouble, Users } from "lucide-react";
 import type { Property } from "@/lib/properties";
+import { propertyClassLabel } from "@/lib/property-classes";
 
 export default function PropertyCard({
   property,
@@ -30,6 +31,13 @@ export default function PropertyCard({
         {property.zone ? (
           <span className="absolute right-3 top-3 rounded-full bg-deep/70 px-3 py-1 text-xs text-cream/90 backdrop-blur-sm">
             {property.zone}
+          </span>
+        ) : null}
+        {/* Sello de clase. Las sin clasificar no muestran nada: es mejor que no diga nada a
+            que diga algo que nadie decidió. */}
+        {propertyClassLabel(property.propertyClass) ? (
+          <span className="absolute left-3 top-3 rounded-full bg-cream/90 px-3 py-1 text-xs font-semibold text-night backdrop-blur-sm">
+            {propertyClassLabel(property.propertyClass)}
           </span>
         ) : null}
       </div>

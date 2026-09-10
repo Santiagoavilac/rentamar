@@ -1,6 +1,7 @@
 import "server-only";
 import { randomBytes, createHash, timingSafeEqual } from "node:crypto";
 import { createAdminClient } from "./supabase/admin";
+import { assertGuestsNotBanned } from "./banned-guests";
 import {
   AppError,
   BookingExpiredError,
@@ -77,6 +78,15 @@ export type CreatedBooking = {
 
 export async function createBooking(input: CreateBookingInput): Promise<CreatedBooking> {
   const supabase = createAdminClient();
+
+  // Antes de tocar el calendario: si el titular está vetado, no tiene sentido crear la
+  // reserva y bloquear las fechas para después frenarlo. El trigger de la base sigue siendo
+  // la autoridad; esto solo evita dejar basura por el camino.
+  await assertGuestsNotBanned([
+    input.guest.documentId,
+    ...input.companions.map((companion) => companion.documentId),
+  ]);
+
   const { token, hash } = generateAccessToken();
 
   const { data, error } = await supabase.rpc("create_booking_with_hold", {
@@ -98,7 +108,7 @@ export async function createBooking(input: CreateBookingInput): Promise<CreatedB
   // Los datos de la declaración jurada se guardan aparte en vez de sumar parámetros a la
   // RPC: recrear una función `security definer` de este tamaño en producción es más
   // riesgoso que un update acotado a la fila que la propia RPC acaba de devolver.
-  await supabase
+  const { error: updateError } = await supabase
     .from("bookings")
     .update({
       guest_document_id: input.guest.documentId,
@@ -106,6 +116,27 @@ export async function createBooking(input: CreateBookingInput): Promise<CreatedB
       guest_city: input.guest.city,
     })
     .eq("id", result.bookingId);
+  // Este update dispara el trigger de vetados, así que su error ya no se puede ignorar. La
+  // reserva queda creada con su hold, pero eso es exactamente para lo que sirve el hold:
+  // vence solo a los 30 minutos y libera las fechas. Cancelarla acá exigiría un actor que
+  // en el camino público no existe.
+  if (updateError) throw mapPostgresError(updateError.message);
+
+  // Los acompañantes se escriben acá por el mismo motivo que el carnet del titular: sumar
+  // un parámetro a `create_booking_with_hold` obligaría a recrear una función `security
+  // definer` grande y en producción. El trigger de vetados corre igual sobre este insert.
+  if (input.companions.length) {
+    const { error: companionsError } = await supabase.from("booking_companions").insert(
+      input.companions.map((companion, index) => ({
+        booking_id: result.bookingId,
+        full_name: companion.fullName,
+        document_id: companion.documentId.toUpperCase(),
+        phone: companion.phone || null,
+        sort_order: index,
+      })),
+    );
+    if (companionsError) throw mapPostgresError(companionsError.message);
+  }
 
   return { ...result, accessToken: token };
 }

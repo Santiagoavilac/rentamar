@@ -30,6 +30,12 @@ export const guestSchema = z.object({
   city: z.string().trim().min(2).max(80),
 });
 
+export const companionSchema = z.object({
+  fullName: z.string().trim().min(2).max(120),
+  documentId: z.string().trim().min(4).max(40),
+  phone: z.string().trim().min(6).max(30).optional().or(z.literal("")),
+});
+
 export const createBookingSchema = z
   .object({
     propertyId: z.uuid(),
@@ -37,10 +43,17 @@ export const createBookingSchema = z
     checkOut: isoDate,
     guestCount: z.number().int().min(1).max(50),
     guest: guestSchema,
+    // El canal directo no los pedía y era el único: el de afiliados y el de copropietarios
+    // sí. Van opcionales para no romper a quien todavía llame sin ellos.
+    companions: z.array(companionSchema).max(20).default([]),
   })
   .refine((d) => d.checkIn < d.checkOut, {
     message: "checkOut debe ser posterior a checkIn",
     path: ["checkOut"],
+  })
+  .refine((d) => d.companions.length < d.guestCount, {
+    message: "Los acompañantes no pueden superar la cantidad de huéspedes",
+    path: ["companions"],
   });
 
 // ---------- Fase 4 — canal de afiliados ----------
@@ -48,12 +61,6 @@ export const createBookingSchema = z
 // es la única barrera antes de la RPC (que además revalida del lado SQL).
 
 export const affiliateQuoteSchema = quoteSchema;
-
-export const companionSchema = z.object({
-  fullName: z.string().trim().min(2).max(120),
-  documentId: z.string().trim().min(4).max(40),
-  phone: z.string().trim().min(6).max(30).optional().or(z.literal("")),
-});
 
 export const createAffiliateRequestSchema = z
   .object({
@@ -90,6 +97,8 @@ export const propertiesQuerySchema = z.object({
     .transform((v) => (v === undefined ? undefined : v === "true")),
   guests: z.coerce.number().int().min(1).max(50).optional(),
   type: z.string().trim().max(60).optional(),
+  // Un valor que no sea una clase válida se ignora en vez de romper el catálogo.
+  clase: z.enum(["lujo", "a", "b", "c"]).optional().catch(undefined),
   checkIn: isoDate.optional(),
   checkOut: isoDate.optional(),
 });
@@ -153,6 +162,9 @@ export const propertyInputSchema = z.object({
   rules: z.string().trim().max(6000).optional().or(z.literal("")),
   locationReference: z.string().trim().max(1000).optional().or(z.literal("")),
   propertyType: z.string().trim().max(60).optional().or(z.literal("")),
+  // Vacío = todavía sin clasificar. La portada la deja fuera de los grupos con nombre en
+  // vez de inventarle una clase.
+  propertyClass: z.enum(["lujo", "a", "b", "c"]).nullable().default(null),
   zone: z.string().trim().max(120).optional().or(z.literal("")),
   towerId: z.uuid().nullable(),
   status: propertyStatusSchema,
@@ -606,6 +618,66 @@ export const accessApprovalSchema = z
   .refine(oneTarget, targetMessage);
 
 export const accessRevokeSchema = z.object(accessTargetShape).refine(oneTarget, targetMessage);
+
+// Foto de carnet que carga la oficina. Apunta al mismo par excluyente reserva/estadía y,
+// dentro de él, a una persona: el titular (sin ref) o un acompañante concreto.
+export const idDocumentUploadSchema = z
+  .object({
+    ...accessTargetShape,
+    personKind: z.enum(["titular", "acompanante"]),
+    personRef: z.uuid().nullable().default(null),
+    personName: z.string().trim().max(160).nullable().default(null),
+    side: z.enum(["front", "back"]),
+  })
+  .refine(oneTarget, targetMessage)
+  .refine((value) => (value.personKind === "titular") === (value.personRef === null), {
+    message: "Indicá de qué persona es la foto",
+    path: ["personRef"],
+  });
+
+export const idDocumentDeleteSchema = z.object({ documentId: z.uuid() });
+
+// Registro de ingreso de una persona. Mismo par excluyente reserva/estadía; el titular no
+// tiene fila propia en ninguna tabla de acompañantes, así que va sin ref.
+export const checkinPersonSchema = z
+  .object({
+    ...accessTargetShape,
+    personKind: z.enum(["titular", "acompanante"]),
+    personRef: z.uuid().nullable().default(null),
+    personName: z.string().trim().min(2, "Ingresá el nombre completo").max(160),
+    personDocumentId: z.string().trim().max(40).nullable().default(null),
+    wristbandDelivered: z.boolean().default(false),
+  })
+  .refine(oneTarget, targetMessage)
+  .refine((value) => (value.personKind === "titular") === (value.personRef === null), {
+    message: "Indicá de qué persona es el registro",
+    path: ["personRef"],
+  });
+
+// Alta en la lista de vetados. Los mínimos son los mismos que la tabla exige.
+// Comodidades de una propiedad, con la cantidad cuando corresponde ("cuántas teles").
+export const propertyAmenitiesSchema = z.object({
+  amenities: z
+    .array(
+      z.object({
+        amenityId: z.uuid(),
+        quantity: z.number().int().min(1).max(99).nullable().default(null),
+      }),
+    )
+    .max(100),
+});
+
+export const bannedGuestSchema = z.object({
+  fullName: z.string().trim().min(2, "Ingresá el nombre completo").max(160),
+  documentId: z.string().trim().min(4, "Ingresá el documento").max(40),
+  reason: z.string().trim().max(500).nullable().default(null),
+});
+
+export const bannedGuestRevokeSchema = z.object({ id: z.uuid() });
+
+export const undoCheckinSchema = z
+  .object({ ...accessTargetShape, personRef: z.uuid().nullable().default(null) })
+  .refine(oneTarget, targetMessage);
 
 // Acompañantes que recepción carga para un alquiler del canal directo. Los mínimos son los
 // mismos que la tabla booking_companions exige en la base.

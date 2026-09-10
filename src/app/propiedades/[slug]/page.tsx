@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { propertyClassLabel } from "@/lib/property-classes";
 import { notFound } from "next/navigation";
 import { Bath, BedDouble, Check, DoorOpen, MapPin, Users } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { PropertyGallery } from "@/components/property-gallery";
-import { PropertyBookingPanel } from "@/components/property-booking-panel";
+import { PropertyReserveCta } from "@/components/booking/property-cta";
 import { getPropertyBySlug } from "@/lib/queries";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -63,8 +64,13 @@ export default async function PropertyPage({ params }: Props) {
           <div className="mt-5 flex flex-col justify-between gap-4 md:flex-row md:items-end">
             <div>
               <p className="eyebrow text-cyan-700">{property.propertyType || "Alojamiento"}</p>
-              <h1 className="mt-2 text-4xl font-bold tracking-tight sm:text-5xl">
+              <h1 className="mt-2 flex flex-wrap items-center gap-3 text-4xl font-bold tracking-tight sm:text-5xl">
                 {property.name}
+                {propertyClassLabel(property.propertyClass) ? (
+                  <span className="rounded-full bg-deep px-3 py-1 text-sm font-semibold text-cream">
+                    {propertyClassLabel(property.propertyClass)}
+                  </span>
+                ) : null}
               </h1>
               {property.zone || property.locationReference ? (
                 <p className="mt-3 flex items-center gap-2 text-night/60">
@@ -126,6 +132,13 @@ export default async function PropertyPage({ params }: Props) {
                         <Check size={17} />
                       </span>
                       {amenity.name}
+                      {/* La cantidad solo aparece donde se cargó: "3 Televisor" tiene
+                          sentido, "1 WiFi" no. */}
+                      {amenity.quantity ? (
+                        <span className="ml-auto rounded-full bg-cyan-50 px-2 py-0.5 text-xs font-semibold text-cyan-700">
+                          {amenity.quantity}
+                        </span>
+                      ) : null}
                     </li>
                   ))}
                 </ul>
@@ -156,16 +169,13 @@ export default async function PropertyPage({ params }: Props) {
           </div>
 
           {bookingConfigured ? (
-            <PropertyBookingPanel
-              propertyId={property.id}
-              propertyName={property.name}
-              maxGuests={property.maxGuests}
-              minimumNights={property.minimumNights}
+            <PropertyReserveCta
+              slug={property.slug}
               basePriceMinor={property.basePriceMinor}
               currency={property.currency}
+              minimumNights={property.minimumNights}
               checkInTime={property.checkInTime}
               checkOutTime={property.checkOutTime}
-              bookedRanges={property.bookedRanges}
               stayPrices={property.durationPricingEnabled ? property.stayPrices : []}
             />
           ) : (

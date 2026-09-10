@@ -26,9 +26,15 @@ export function rateLimit(
   return { ok: true, retryAfterSeconds: 0 };
 }
 
+// IP aparente del cliente según los headers del proxy. No confiar como identidad: sirve
+// para agrupar (rate limit) y para dejar un rastro hasheado, nada más.
+export function clientIp(headers: Headers): string {
+  return (
+    headers.get("x-forwarded-for")?.split(",")[0]?.trim() || headers.get("x-real-ip") || "unknown"
+  );
+}
+
 // Deriva una clave de cliente desde headers de proxy. No confiar como identidad.
 export function clientKey(headers: Headers, scope: string): string {
-  const ip =
-    headers.get("x-forwarded-for")?.split(",")[0]?.trim() || headers.get("x-real-ip") || "unknown";
-  return `${scope}:${ip}`;
+  return `${scope}:${clientIp(headers)}`;
 }

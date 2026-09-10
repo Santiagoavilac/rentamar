@@ -115,6 +115,56 @@ BNB real, webhooks, reembolsos, cron productivo para `expire_stale_payments` /
 `expire_stale_holds`, tarifas y disponibilidad administradas por panel, histórico
 de precios. Ver `payments.md`.
 
+## Fotos de carnet
+
+`id_documents` guarda el anverso y el reverso del documento de cada persona. Nació
+para el carnet que sube el afiliado desde el formulario público y ahora también lo
+carga la oficina desde el panel, para los tres orígenes. Apunta a una reserva **o**
+a una estadía (`num_nonnulls = 1`, igual que `declarations`) y, dentro de ella, al
+titular (`person_ref` nulo) o a un acompañante. La unicidad es "un anverso y un
+reverso por persona", no por registro. Bucket `id-documents`, privado.
+
+## Registro de ingreso
+
+`access_checkins` es el hecho físico, una fila por persona: quién se presentó en el
+mostrador, a qué hora y si retiró su manilla. No confundir con `access_approvals`,
+que es el permiso del grupo. Un grupo aprobado puede entrar en tandas, y de ahí
+salen los tres colores de las listas de Registros: sin filas rojo, algunas ámbar,
+todas verde.
+
+| Función                              | Seguridad | Expuesta a                  |
+| ------------------------------------ | --------- | --------------------------- |
+| `check_in_person(...)`               | DEFINER   | **solo service_role**       |
+| `undo_check_in(booking, stay, ref)`  | DEFINER   | **solo service_role**       |
+| `list_office_checkins(desde, hasta)` | DEFINER   | authenticated, service_role |
+
+`check_in_person` exige que el grupo tenga aprobación vigente y no reescribe la hora
+al volver a marcar a la misma persona: corregir una casilla no cambia un hecho.
+`list_office_checkins` alimenta `/admin/ingresos` y su CSV; devuelve el teléfono, y
+por eso es **solo `is_staff()`** y va aparte de `list_access_entries`, que se
+comparte con el guardia.
+
+## Huéspedes vetados
+
+`banned_guests` es la lista; `banned_guest_attempts`, los intentos que frenó. El
+bloqueo NO vive en las RPC de alta sino en triggers `before insert or update` sobre
+`bookings`, `booking_companions`, `co_owner_stays`, `co_owner_stay_guests` y
+`access_approvals`. Recrear `create_booking_with_hold`,
+`create_affiliate_booking_request` y `register_co_owner_stay` para meterles la
+llamada era más riesgoso, y el trigger además cubre al titular y a los acompañantes
+por igual y cualquier camino futuro.
+
+La comparación es por `document_normalized` (columna generada:
+`normalize_document()` deja solo alfanuméricos en mayúscula), con índice único
+parcial sobre los no revocados. Los intentos los escribe la aplicación al atrapar
+`GUEST_BANNED`, no el trigger: la excepción hace rollback de su propia transacción.
+
+## Clase y comodidades
+
+`properties.property_class` (`property_class`: `lujo | a | b | c`, nullable) agrupa y
+ordena el catálogo público. `property_amenities.quantity` responde "cuántas teles";
+`null` significa que la comodidad está pero no se cuenta.
+
 ## Control de acceso
 
 `access_approvals` espeja a `declarations`: apunta a `booking_id` **o** a

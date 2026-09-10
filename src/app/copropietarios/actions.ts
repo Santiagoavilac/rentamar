@@ -7,6 +7,11 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { assertSameOrigin } from "@/lib/admin/context";
 import { AppError, mapPostgresError } from "@/lib/errors";
+import {
+  assertGuestsNotBanned,
+  isBannedGuestError,
+  recordBannedAttempt,
+} from "@/lib/banned-guests";
 import { coOwnerStaySchema } from "@/lib/validation";
 
 export type StayFormState = { ok: boolean; error: string | null; stayId: string | null };
@@ -64,6 +69,30 @@ export async function registerStayAction(
         } además del titular.`,
         stayId: null,
       };
+    }
+
+    // Antes de registrar nada: el titular y los huéspedes se guardan en pasos distintos, así
+    // que si uno de los huéspedes está vetado y solo lo frenara el trigger, la estadía ya
+    // habría quedado creada. El trigger sigue siendo la autoridad; esto evita el a medias.
+    try {
+      await assertGuestsNotBanned([
+        parsed.documentId,
+        ...parsed.guests.map((guest) => guest.documentId),
+      ]);
+    } catch (error) {
+      if (isBannedGuestError(error)) {
+        await recordBannedAttempt({
+          channel: "copropietario",
+          submitted: [
+            { nombre: parsed.fullName, carnet: parsed.documentId },
+            ...parsed.guests.map((guest) => ({
+              nombre: guest.fullName,
+              carnet: guest.documentId,
+            })),
+          ],
+        });
+      }
+      throw error;
     }
 
     const supabase = await createClient();

@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import type { ActionResult } from "@/lib/admin/actions";
 import { formatCurrency } from "@/lib/money";
+import { PROPERTY_CLASS_OPTIONS } from "@/lib/property-classes";
 
 type FormAction = (state: ActionResult, formData: FormData) => Promise<ActionResult>;
 const initial: ActionResult = { ok: false, error: null };
@@ -315,6 +316,23 @@ export function PropertyFields({
           defaultValue={v("property_type")}
           className="mt-1 w-full rounded border p-2"
         />
+      </label>
+      <label className="text-sm">
+        Clase
+        <select
+          name="propertyClass"
+          defaultValue={v("property_class")}
+          className="mt-1 w-full rounded border p-2"
+        >
+          {/* Sin clasificar es una opción real: la portada la deja fuera de los grupos con
+              nombre en vez de inventarle una clase. */}
+          <option value="">Sin clasificar</option>
+          {PROPERTY_CLASS_OPTIONS.map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </select>
       </label>
       <label className="text-sm">
         Torre

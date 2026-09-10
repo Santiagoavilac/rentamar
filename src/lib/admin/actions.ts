@@ -40,6 +40,7 @@ import {
   reasonSchema,
   imageMetaSchema,
   imageIdsSchema,
+  propertyAmenitiesSchema,
 } from "@/lib/validation";
 
 export type ActionResult = {
@@ -92,6 +93,7 @@ function parsePropertyForm(formData: FormData, canManageAffiliates: boolean) {
     rules: str(formData.get("rules")),
     locationReference: str(formData.get("locationReference")),
     propertyType: str(formData.get("propertyType")),
+    propertyClass: str(formData.get("propertyClass")) || null,
     zone: str(formData.get("zone")),
     towerId: str(formData.get("towerId")) || null,
     status: str(formData.get("status")),
@@ -237,27 +239,40 @@ export async function savePropertyAction(
   return OK;
 }
 
+// Llega como FormData desde el selector de comodidades: un checkbox `amenityId` por cada
+// una tildada y un `quantity_<id>` opcional al lado.
 export async function setPropertyAmenitiesAction(
   propertyId: string,
-  amenityIds: string[],
+  _prev: ActionResult,
+  formData: FormData,
 ): Promise<ActionResult> {
   try {
     const session = await requireStaff();
     await assertSameOrigin();
     assertAdminAction(session.role, "property.manage");
-    await properties.setPropertyAmenities(propertyId, amenityIds);
+
+    const parsed = propertyAmenitiesSchema.parse({
+      amenities: formData.getAll("amenityId").map((value) => {
+        const amenityId = String(value);
+        const quantity = str(formData.get(`quantity_${amenityId}`));
+        return { amenityId, quantity: quantity ? Number(quantity) : null };
+      }),
+    });
+
+    await properties.setPropertyAmenities(propertyId, parsed.amenities);
     const ctx = await buildAuditContext(session);
     await writeAudit({
       ...ctx,
       action: "property.amenities",
       entityType: "property",
       entityId: propertyId,
-      after: { amenityIds },
+      after: { amenities: parsed.amenities.length },
     });
   } catch (error) {
     return fail(error);
   }
   revalidatePath(`/admin/properties/${propertyId}`);
+  revalidatePath(`/propiedades/${propertyId}`);
   return OK;
 }
 

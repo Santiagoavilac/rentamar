@@ -7,6 +7,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { assertIdDocumentsValid, uploadBookingIdDocuments } from "@/lib/id-documents";
 import { AppError } from "@/lib/errors";
 import { createAffiliateRequestSchema } from "@/lib/validation";
+import { isBannedGuestError, recordBannedAttempt } from "@/lib/banned-guests";
 import { clientKey, rateLimit } from "@/lib/rate-limit";
 
 export type AffiliateRequestState = {
@@ -71,7 +72,29 @@ export async function createAffiliateRequestAction(
       .eq("id", parsed.data.propertyId)
       .maybeSingle();
 
-    const result = await createAffiliateRequest(parsed.data);
+    let result;
+    try {
+      result = await createAffiliateRequest(parsed.data);
+    } catch (error) {
+      // El intento se registra desde acá y no desde el trigger: la excepción del trigger
+      // hace rollback de su propia transacción, así que la fila se perdería.
+      if (isBannedGuestError(error)) {
+        await recordBannedAttempt({
+          channel: "afiliado",
+          submitted: [
+            {
+              nombre: parsed.data.affiliate.fullName,
+              carnet: parsed.data.affiliate.documentId,
+            },
+            ...parsed.data.companions.map((companion) => ({
+              nombre: companion.fullName,
+              carnet: companion.documentId,
+            })),
+          ],
+        });
+      }
+      throw error;
+    }
 
     // Las fechas ya quedaron bloqueadas: si el carnet falla al subir, la reserva no se
     // pierde, pero el error se propaga para que el afiliado reintente.

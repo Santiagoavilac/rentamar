@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { formatCurrency } from "@/lib/money";
 import { ADMIN_TIME_ZONE } from "@/lib/admin/planner-query";
+import { checkinLabel, checkinState } from "@/lib/checkin-state";
 import { HelpButton } from "./help";
 import type { HelpKey } from "@/lib/admin/help";
 
@@ -42,6 +43,25 @@ export function StatusBadge({ value }: { value: string | null | undefined }) {
   return (
     <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${tone}`}>
       {normalized.replaceAll("_", " ")}
+    </span>
+  );
+}
+
+// Verde / ámbar / rojo del registro de ingreso. Lo pide recepción para ver de un vistazo,
+// en la lista, a quién falta registrar. El ámbar lleva el conteo porque "faltan algunos" sin
+// decir cuántos obliga a entrar al detalle igual.
+export function CheckinBadge({ checkedIn, total }: { checkedIn: number; total: number }) {
+  const state = checkinState(checkedIn, total);
+  const tone =
+    state === "ninguno"
+      ? "bg-rose-100 text-rose-800"
+      : state === "completo"
+        ? "bg-emerald-100 text-emerald-800"
+        : "bg-amber-100 text-amber-800";
+  const label = checkinLabel(checkedIn, total);
+  return (
+    <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${tone}`}>
+      {label}
     </span>
   );
 }

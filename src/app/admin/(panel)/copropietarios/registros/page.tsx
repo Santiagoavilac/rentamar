@@ -12,10 +12,12 @@ import {
   EmptyState,
   Pager,
   Panel,
+  CheckinBadge,
   formatDateTime,
 } from "@/components/admin/ui";
 import { DeclarationCell } from "@/components/admin/declaration-cell";
 import { listDeclarationsByStay } from "@/lib/admin/declarations";
+import { countCheckinsByTarget } from "@/lib/admin/access";
 
 export const dynamic = "force-dynamic";
 
@@ -50,7 +52,11 @@ export default async function CoOwnerStaysPage({
     listCoOwnerPropertyNames(),
     listCoOwnerAccounts(),
   ]);
-  const declarations = await listDeclarationsByStay(result.rows.map((row) => row.id));
+  const stayIds = result.rows.map((row) => row.id);
+  const [declarations, checkins] = await Promise.all([
+    listDeclarationsByStay(stayIds),
+    countCheckinsByTarget({ stayIds }),
+  ]);
 
   const basePath = `/admin/copropietarios/registros?propertyName=${encodeURIComponent(
     p.propertyName ?? "",
@@ -118,6 +124,7 @@ export default async function CoOwnerStaysPage({
                   <th>Entrada</th>
                   <th>Salida</th>
                   <th>Personas</th>
+                  <th>Ingreso</th>
                   <th>Declaración</th>
                 </tr>
               </thead>
@@ -148,6 +155,12 @@ export default async function CoOwnerStaysPage({
                       <span className="block text-xs text-slate-500">
                         {row.minors} menores de 2 años
                       </span>
+                    </td>
+                    <td data-label="Ingreso">
+                      <CheckinBadge
+                        checkedIn={checkins.get(row.id) ?? 0}
+                        total={row.adults + row.minors}
+                      />
                     </td>
                     <td data-label="Declaración" data-mobile-full="true">
                       <DeclarationCell

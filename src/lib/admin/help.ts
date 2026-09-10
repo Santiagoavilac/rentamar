@@ -1044,6 +1044,127 @@ export const HELP = {
       },
     ],
   },
+  "properties.detail.amenities": {
+    title: "Comodidades",
+    short: "Lo que la propiedad tiene, para que el huésped lo vea en la ficha.",
+    long: [
+      {
+        tipo: "parrafo",
+        texto:
+          "Tildá lo que hay. Donde tiene sentido contar —televisores, por ejemplo— escribí cuántos; donde no (wifi, parrilla, seguridad) dejá la cantidad vacía y la ficha muestra solo el nombre.",
+      },
+      {
+        tipo: "aviso",
+        texto:
+          "Guardar reemplaza la lista entera: queda exactamente lo tildado. El catálogo se administra en la base, así que sumar una comodidad nueva no requiere tocar el código.",
+      },
+    ],
+  },
+  "vetados.page": {
+    title: "Huéspedes vetados",
+    short: "Personas que no pueden ser registradas por ningún canal.",
+    long: [
+      {
+        tipo: "parrafo",
+        texto:
+          "Alcanza con el nombre completo y el documento. Desde que se agrega, cualquier intento de registrarla falla: da igual que la cargue RentaMar, un afiliado o un copropietario, y da igual que sea el titular o un acompañante.",
+      },
+      { tipo: "subtitulo", texto: "Cómo se compara" },
+      {
+        tipo: "parrafo",
+        texto:
+          "Por documento, no por nombre. Se ignoran mayúsculas, espacios, puntos y guiones, así que 1234567-1B y 1234567 1b son la misma persona.",
+      },
+      {
+        tipo: "aviso",
+        texto:
+          "Quitar de la lista no borra nada: queda el registro de quién la vetó y hasta cuándo. Solo un administrador puede agregar o quitar. A quien intenta el registro nunca se le dice que la persona está vetada.",
+      },
+    ],
+  },
+  "vetados.intentos": {
+    title: "Intentos bloqueados",
+    short: "Registros que el sistema frenó porque alguien de la lista aparecía en ellos.",
+    long: [
+      {
+        tipo: "parrafo",
+        texto:
+          "Se muestran los nombres y documentos tal como los tipearon, sin señalar cuál de ellos disparó el bloqueo. Sirve para saber que alguien lo está intentando y por qué canal.",
+      },
+    ],
+  },
+  "ingresos.page": {
+    title: "Ingresos",
+    short: "Quién acaba de entrar al complejo, en tiempo real.",
+    long: [
+      {
+        tipo: "parrafo",
+        texto:
+          "Cada vez que recepción registra el ingreso de un grupo, aparece acá una fila con la hora, el titular, su teléfono y el día de salida. Sirve para ver el movimiento del día sin entrar registro por registro.",
+      },
+      { tipo: "subtitulo", texto: "Cómo se usa" },
+      {
+        tipo: "lista",
+        items: [
+          "Mientras mirás el día de hoy, la pantalla se actualiza sola cada 30 segundos.",
+          "Cambiando el rango de fechas se ve cualquier período anterior.",
+          "Descargar CSV baja exactamente lo que está en pantalla, listo para abrir en Excel.",
+        ],
+      },
+      {
+        tipo: "aviso",
+        texto:
+          "La hora es la del primer huésped del grupo que se presentó. Es un hecho registrado: no cambia si después se corrige una casilla.",
+      },
+    ],
+  },
+  "registro.checkin": {
+    title: "Registro de ingreso",
+    short: "Quién del grupo ya se presentó en la oficina y retiró su manilla.",
+    long: [
+      {
+        tipo: "parrafo",
+        texto:
+          "Aprobar el ingreso en Control de acceso es el permiso del grupo. Esto es otra cosa: el hecho de que una persona concreta se presentó en el mostrador, a qué hora, y si se llevó su manilla.",
+      },
+      { tipo: "subtitulo", texto: "Por qué es por persona" },
+      {
+        tipo: "parrafo",
+        texto:
+          "Un grupo aprobado casi nunca llega junto. Marcando de a uno se ve quién falta, y el guardia lo ve al instante en su pantalla.",
+      },
+      {
+        tipo: "aviso",
+        texto:
+          "No se puede registrar a nadie de un grupo sin ingreso aprobado. Si marcaste a la persona equivocada, Deshacer registro lo revierte; volver a marcar a alguien actualiza la manilla pero no cambia la hora original.",
+      },
+    ],
+  },
+  "registro.fotos.carnet": {
+    title: "Fotos de carnet",
+    short: "La foto del documento de cada persona del registro, para constancia de la oficina.",
+    long: [
+      {
+        tipo: "parrafo",
+        texto:
+          "Recepción valida el carnet en la mano; acá queda la evidencia visual. Se carga el anverso y el reverso de cada persona: el titular y cada acompañante.",
+      },
+      { tipo: "subtitulo", texto: "Cómo se usa" },
+      {
+        tipo: "pasos",
+        items: [
+          "Elegí la persona y el lado (anverso o reverso).",
+          "Sacá la foto o elegí el archivo. Desde el celular se abre la cámara directamente.",
+          "Si la foto salió movida, volvé a subir: reemplaza la anterior.",
+        ],
+      },
+      {
+        tipo: "aviso",
+        texto:
+          "JPG, PNG o PDF de hasta 8 MB. Son datos personales: se guardan en un depósito privado, solo las ve el personal de RentaMar y el enlace vence a los 10 minutos. Borrar una foto es exclusivo de administradores.",
+      },
+    ],
+  },
   "coowners.detail.guests": {
     title: "Huéspedes adicionales",
     short: "Las personas que el copropietario declaró que se alojan con él.",

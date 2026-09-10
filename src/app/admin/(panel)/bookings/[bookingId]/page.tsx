@@ -13,17 +13,58 @@ import {
 } from "@/components/admin/ui";
 import { PanelHeading } from "@/components/admin/help";
 import { ReasonActionForm } from "@/components/admin/forms";
+import { IdPhotosPanel } from "@/components/admin/id-photos-panel";
+import { listIdDocuments } from "@/lib/id-documents";
+import { listBookingCompanions, listCheckins, isAccessApproved } from "@/lib/admin/access";
+import { CheckinPanel } from "@/components/access/checkin-forms";
+import { checkInPersonAction, undoCheckInAction } from "@/lib/admin/access-actions";
+import { uploadIdDocumentAction, deleteIdDocumentAction } from "@/lib/admin/id-document-actions";
+import { requireStaff } from "@/lib/auth";
 export default async function BookingDetailPage({
   params,
 }: {
   params: Promise<{ bookingId: string }>;
 }) {
+  const session = await requireStaff();
   const { bookingId } = await params;
-  const [{ booking, items, property }, events, declaration] = await Promise.all([
+  const target = { bookingId, stayId: null };
+  const [
+    { booking, items, property },
+    events,
+    declaration,
+    idDocuments,
+    companions,
+    checkins,
+    accessApproved,
+  ] = await Promise.all([
     getBookingDetail(bookingId),
     listBookingEvents(bookingId),
     getDeclarationForBooking(bookingId),
+    listIdDocuments({ kind: "booking", bookingId }),
+    listBookingCompanions(bookingId),
+    listCheckins(target),
+    isAccessApproved(target),
   ]);
+
+  // El alquiler directo solo guarda el titular; los acompañantes los carga recepción desde
+  // Control de acceso. Los que ya estén cargados aparecen acá para poder fotografiar su CI.
+  const people = [
+    { ref: null, name: booking.guest_name, documentId: booking.guest_document_id },
+    ...companions.map((companion) => ({
+      ref: companion.id,
+      name: companion.full_name,
+      documentId: companion.document_id,
+    })),
+  ];
+  const checkinPeople = people.map((person) => {
+    const checkin = checkins.find((row) => row.personRef === person.ref);
+    return {
+      ...person,
+      checkedIn: Boolean(checkin),
+      wristbandDelivered: checkin?.wristbandDelivered ?? false,
+      checkedInAt: checkin?.checkedInAt ?? null,
+    };
+  });
   const controls: Array<["cancel" | "expire" | "manual_review" | "confirm_manual", string]> = [
     ["manual_review", "Enviar a revisión"],
     ["cancel", "Cancelar reserva"],
@@ -95,6 +136,27 @@ export default async function BookingDetailPage({
                 }
               />
             ))}
+          </Panel>
+          <Panel>
+            <PanelHeading helpKey="registro.checkin">Registro de ingreso</PanelHeading>
+            <CheckinPanel
+              target={{ bookingId }}
+              people={checkinPeople}
+              approved={accessApproved}
+              checkInAction={checkInPersonAction}
+              undoAction={undoCheckInAction}
+            />
+          </Panel>
+          <Panel>
+            <PanelHeading helpKey="registro.fotos.carnet">Subir fotos de carnet</PanelHeading>
+            <IdPhotosPanel
+              target={{ bookingId }}
+              people={people}
+              documents={idDocuments}
+              uploadAction={uploadIdDocumentAction}
+              deleteAction={deleteIdDocumentAction}
+              canDelete={session.role === "admin"}
+            />
           </Panel>
           <Panel>
             <PanelHeading helpKey="declaration.panel">Declaración jurada</PanelHeading>

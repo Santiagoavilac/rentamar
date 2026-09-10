@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { createClient } from "./supabase/server";
 import type { Property } from "./properties";
+import type { PropertyClass } from "./property-classes";
 
 // DTO de la ficha de propiedad (detalle público).
 export type PropertyDetail = {
@@ -10,6 +11,7 @@ export type PropertyDetail = {
   shortDescription: string | null;
   description: string | null;
   propertyType: string | null;
+  propertyClass: PropertyClass | null;
   zone: string | null;
   maxGuests: number;
   bedrooms: number;
@@ -24,7 +26,8 @@ export type PropertyDetail = {
   locationReference: string | null;
   durationPricingEnabled: boolean;
   images: { url: string; altText: string | null; isCover: boolean; sortOrder: number }[];
-  amenities: { name: string; slug: string; icon: string | null }[];
+  // quantity null = la comodidad está pero no se cuenta (wifi, parrilla).
+  amenities: { name: string; slug: string; icon: string | null; quantity: number | null }[];
   rates: { startDate: string; endDate: string; nightlyPriceMinor: number; label: string | null }[];
   stayPrices: { nights: number; totalPriceMinor: number }[];
   bookedRanges: string[];
@@ -34,6 +37,7 @@ type ListFilters = {
   featured?: boolean;
   guests?: number;
   propertyType?: string;
+  propertyClass?: PropertyClass;
   checkIn?: string;
   checkOut?: string;
 };
@@ -85,15 +89,19 @@ export async function getPublishedProperties(filters: ListFilters = {}): Promise
   let query = supabase
     .from("properties")
     .select(
-      "id, name, slug, zone, max_guests, bedrooms, base_price_minor, property_images(url, alt_text, is_cover, sort_order)",
+      "id, name, slug, zone, max_guests, bedrooms, base_price_minor, property_class, property_images(url, alt_text, is_cover, sort_order)",
     )
     .eq("status", "published")
     .order("featured", { ascending: false })
+    // Dentro de cada clase, de la más económica a la más cara: es el orden en que la gente
+    // compara. El agrupamiento por clase lo hace la portada con propertyClassRank.
+    .order("base_price_minor", { ascending: true })
     .order("created_at", { ascending: true });
 
   if (filters.featured !== undefined) query = query.eq("featured", filters.featured);
   if (filters.guests !== undefined) query = query.gte("max_guests", filters.guests);
   if (filters.propertyType) query = query.ilike("property_type", filters.propertyType);
+  if (filters.propertyClass) query = query.eq("property_class", filters.propertyClass);
 
   const { data, error } = await query;
   if (error) throw error;
@@ -123,6 +131,7 @@ export async function getPublishedProperties(filters: ListFilters = {}): Promise
       id: p.slug,
       name: p.name,
       zone: p.zone ?? "",
+      propertyClass: p.property_class,
       guests: p.base_price_minor > 0 ? p.max_guests : undefined,
       bedrooms: p.bedrooms,
       priceFrom: p.base_price_minor > 0 ? Math.round(p.base_price_minor / 100) : undefined,
@@ -138,7 +147,7 @@ export const getPropertyBySlug = cache(async (slug: string): Promise<PropertyDet
   const { data: p, error } = await supabase
     .from("properties")
     .select(
-      "id, name, slug, short_description, description, rules, location_reference, property_type, zone, max_guests, bedrooms, beds, bathrooms, base_price_minor, currency, minimum_nights, check_in_time, check_out_time, duration_pricing_enabled, status, property_images(url, alt_text, is_cover, sort_order), property_amenities(amenities(name, slug, icon)), property_rates(start_date, end_date, nightly_price_minor, label), property_stay_prices(nights, total_price_minor)",
+      "id, name, slug, short_description, description, rules, location_reference, property_type, property_class, zone, max_guests, bedrooms, beds, bathrooms, base_price_minor, currency, minimum_nights, check_in_time, check_out_time, duration_pricing_enabled, status, property_images(url, alt_text, is_cover, sort_order), property_amenities(quantity, amenities(name, slug, icon)), property_rates(start_date, end_date, nightly_price_minor, label), property_stay_prices(nights, total_price_minor)",
     )
     .eq("slug", slug)
     .eq("status", "published")
@@ -161,11 +170,14 @@ export const getPropertyBySlug = cache(async (slug: string): Promise<PropertyDet
         })
       : { data: [] };
 
+  // La cantidad vive en la tabla puente, no en el catálogo: dos propiedades comparten la
+  // comodidad "Televisor" pero cada una tiene los suyos.
   const amenities = (
-    (p.property_amenities ?? []) as { amenities: PropertyDetail["amenities"][number] | null }[]
-  )
-    .map((row) => row.amenities)
-    .filter((a): a is PropertyDetail["amenities"][number] => a !== null);
+    (p.property_amenities ?? []) as {
+      quantity: number | null;
+      amenities: { name: string; slug: string; icon: string | null } | null;
+    }[]
+  ).flatMap((row) => (row.amenities ? [{ ...row.amenities, quantity: row.quantity }] : []));
 
   return {
     id: p.id,
@@ -174,6 +186,7 @@ export const getPropertyBySlug = cache(async (slug: string): Promise<PropertyDet
     shortDescription: p.short_description,
     description: p.description,
     propertyType: p.property_type,
+    propertyClass: p.property_class,
     zone: p.zone,
     maxGuests: p.max_guests,
     bedrooms: p.bedrooms,

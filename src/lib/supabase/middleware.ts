@@ -10,6 +10,7 @@ const AREAS = [
   { prefix: "/copropietarios", login: "/copropietarios/login", home: "/copropietarios" },
   { prefix: "/limpieza", login: "/limpieza/login", home: "/limpieza" },
   { prefix: "/admin", login: "/admin/login", home: "/admin" },
+  { prefix: "/guardias", login: "/guardias/login", home: "/guardias" },
 ];
 
 // Refresca la sesión de Supabase en cookies (patrón estándar @supabase/ssr) y protege

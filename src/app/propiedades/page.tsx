@@ -7,6 +7,11 @@ import { getPublishedProperties } from "@/lib/queries";
 import { propertiesQuerySchema } from "@/lib/validation";
 import type { z } from "zod";
 import type { Property } from "@/lib/properties";
+import {
+  PROPERTY_CLASSES,
+  PROPERTY_CLASS_LABELS,
+  type PropertyClass,
+} from "@/lib/property-classes";
 
 export const metadata: Metadata = {
   title: "Propiedades | RentaMar",
@@ -20,9 +25,7 @@ export default async function PropertiesPage({
 }) {
   const params = await searchParams;
   const parsed = propertiesQuerySchema.safeParse(params);
-  const filters: Partial<z.infer<typeof propertiesQuerySchema>> = parsed.success
-    ? parsed.data
-    : {};
+  const filters: Partial<z.infer<typeof propertiesQuerySchema>> = parsed.success ? parsed.data : {};
 
   // Un rango invertido se ignora en vez de romper la página; el buscador ya avisa.
   const rangeOk = Boolean(
@@ -32,8 +35,16 @@ export default async function PropertiesPage({
   const properties = await getPublishedProperties({
     guests: filters.guests,
     propertyType: filters.type,
+    propertyClass: filters.clase,
     checkIn: rangeOk ? filters.checkIn : undefined,
     checkOut: rangeOk ? filters.checkOut : undefined,
+  });
+
+  // Agrupadas por clase, de Lujo a C, y las sin clasificar al final. Dentro de cada grupo el
+  // orden ya viene por precio desde la consulta.
+  const groups = [...PROPERTY_CLASSES, null].flatMap((propertyClass) => {
+    const items = properties.filter((property) => property.propertyClass === propertyClass);
+    return items.length ? [{ propertyClass, items }] : [];
   });
 
   return (
@@ -62,10 +73,27 @@ export default async function PropertiesPage({
         </h1>
         <p className="mt-4 max-w-2xl leading-7 text-night/70">{describe(filters, rangeOk)}</p>
 
+        <ClassFilter active={filters.clase} params={params} />
+
         {properties.length ? (
-          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {properties.map((property: Property, index: number) => (
-              <PropertyCard key={property.id} property={property} priority={index < 4} />
+          <div className="mt-10 grid gap-12">
+            {groups.map((group, groupIndex) => (
+              <section key={group.propertyClass ?? "sin-clase"}>
+                <h2 className="text-2xl font-semibold tracking-tight">
+                  {group.propertyClass
+                    ? PROPERTY_CLASS_LABELS[group.propertyClass]
+                    : "Otras propiedades"}
+                </h2>
+                <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {group.items.map((property: Property, index: number) => (
+                    <PropertyCard
+                      key={property.id}
+                      property={property}
+                      priority={groupIndex === 0 && index < 4}
+                    />
+                  ))}
+                </div>
+              </section>
             ))}
           </div>
         ) : (
@@ -79,8 +107,53 @@ export default async function PropertiesPage({
   );
 }
 
+// Filtro por clase. Son links y no un select: así el estado vive en la URL y se puede
+// compartir o volver atrás, igual que el resto de los filtros del catálogo.
+function ClassFilter({
+  active,
+  params,
+}: {
+  active: PropertyClass | undefined;
+  params: Record<string, string | string[] | undefined>;
+}) {
+  const href = (value: PropertyClass | null) => {
+    const next = new URLSearchParams();
+    for (const [key, raw] of Object.entries(params)) {
+      const val = Array.isArray(raw) ? raw[0] : raw;
+      if (val && key !== "clase") next.set(key, val);
+    }
+    if (value) next.set("clase", value);
+    const query = next.toString();
+    return query ? `/propiedades?${query}` : "/propiedades";
+  };
+
+  const chip = (selected: boolean) =>
+    `rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
+      selected ? "bg-deep text-cream" : "bg-white text-night/70 hover:text-night"
+    }`;
+
+  return (
+    <div className="mt-8 flex flex-wrap gap-2">
+      <a href={href(null)} className={chip(active === undefined)}>
+        Todas
+      </a>
+      {PROPERTY_CLASSES.map((value) => (
+        <a key={value} href={href(value)} className={chip(active === value)}>
+          {PROPERTY_CLASS_LABELS[value]}
+        </a>
+      ))}
+    </div>
+  );
+}
+
 function describe(
-  filters: { guests?: number; type?: string; checkIn?: string; checkOut?: string },
+  filters: {
+    guests?: number;
+    type?: string;
+    clase?: PropertyClass;
+    checkIn?: string;
+    checkOut?: string;
+  },
   rangeOk: boolean,
 ): string {
   const parts: string[] = [];
@@ -89,6 +162,7 @@ function describe(
     parts.push(`para ${filters.guests} ${filters.guests === 1 ? "huésped" : "huéspedes"}`);
   }
   if (filters.type) parts.push(`tipo ${filters.type.toLowerCase()}`);
+  if (filters.clase) parts.push(`clase ${PROPERTY_CLASS_LABELS[filters.clase].toLowerCase()}`);
   return parts.length ? `Búsqueda ${parts.join(", ")}.` : "Todas las propiedades publicadas.";
 }
 
