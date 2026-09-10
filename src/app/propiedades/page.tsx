@@ -25,9 +25,7 @@ export default async function PropertiesPage({
 }) {
   const params = await searchParams;
   const parsed = propertiesQuerySchema.safeParse(params);
-  const filters: Partial<z.infer<typeof propertiesQuerySchema>> = parsed.success
-    ? parsed.data
-    : {};
+  const filters: Partial<z.infer<typeof propertiesQuerySchema>> = parsed.success ? parsed.data : {};
 
   // Un rango invertido se ignora en vez de romper la página; el buscador ya avisa.
   const rangeOk = Boolean(

@@ -47,9 +47,7 @@ function TargetFields({ target }: { target: CheckinTarget }) {
 function ActionButton({ label, tone }: { label: string; tone: "green" | "plain" }) {
   const { pending } = useFormStatus();
   const styles =
-    tone === "green"
-      ? "bg-emerald-600 text-white"
-      : "border border-slate-300 text-slate-700";
+    tone === "green" ? "bg-emerald-600 text-white" : "border border-slate-300 text-slate-700";
   return (
     <button
       className={`rounded-lg px-3 py-1.5 text-xs font-semibold disabled:opacity-50 ${styles}`}
@@ -164,8 +162,8 @@ export function CheckinPanel({
     <div className="mt-3 grid gap-3">
       {approved ? (
         <p className="text-sm text-slate-600">
-          Marcá a cada persona cuando se presente en el mostrador. La hora del primer registro
-          es la que aparece en Ingresos.
+          Marcá a cada persona cuando se presente en el mostrador. La hora del primer registro es la
+          que aparece en Ingresos.
         </p>
       ) : (
         <p className="rounded border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">

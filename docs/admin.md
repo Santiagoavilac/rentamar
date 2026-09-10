@@ -56,3 +56,28 @@ se cargan a mano y no cambia nada de esos flujos de alta.
 El guardia **solo consulta**: ve el listado del día, puede buscar por nombre o
 carnet y no tiene ningún botón de edición. Su cuenta se crea en
 `/admin/users?tab=guardias` (permiso `guard.manage`, solo admin).
+
+## Fotos de carnet
+
+Cada detalle de registro —reserva de huésped, solicitud de afiliado y estadía de
+copropietario— tiene "Subir fotos de carnet": anverso y reverso del titular y de cada
+acompañante. Desde el celular el campo abre la cámara directamente. Volver a subir
+reemplaza la foto anterior. Sube recepción (`declaration.read`); borrar es de
+administrador.
+
+## Registro de ingreso
+
+En el mismo detalle, un botón por persona. La lista de cada sección muestra el
+resultado en una columna: rojo sin nadie registrado, ámbar "2 de 5", verde con todos.
+El guardia ve lo mismo en su pantalla, sin teléfonos.
+
+## Huéspedes vetados (`/admin/vetados`)
+
+Solo administradores (`banned.manage`). Ver `operations.md`.
+
+## Clase y comodidades de una propiedad
+
+En el detalle de la propiedad: la clase (Lujo, A, B, C o sin clasificar) sale del
+formulario principal y define cómo se agrupa el catálogo público. Las comodidades
+tienen su propio selector, con cantidad opcional donde tiene sentido contar. El
+catálogo de comodidades vive en la base: sumar una nueva no requiere tocar el código.

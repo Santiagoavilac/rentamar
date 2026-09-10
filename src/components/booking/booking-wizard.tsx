@@ -183,8 +183,8 @@ export function BookingWizard({
           <section>
             <h2 className="text-2xl font-bold">¿Qué días te quedás?</h2>
             <p className="mt-2 text-sm text-night/65">
-              Elegí la fecha de entrada y la de salida. Abajo te mostramos el precio final,
-              sin sorpresas.
+              Elegí la fecha de entrada y la de salida. Abajo te mostramos el precio final, sin
+              sorpresas.
             </p>
             <div className="mt-5">
               <BookingCalendar stay={stay} minimumNights={minimumNights} />
@@ -235,8 +235,8 @@ export function BookingWizard({
           <section>
             <h2 className="text-2xl font-bold">¿Quién reserva?</h2>
             <p className="mt-2 text-sm text-night/65">
-              Son los datos del titular. Se usan para la Declaración Jurada de Responsabilidad
-              que exige la urbanización.
+              Son los datos del titular. Se usan para la Declaración Jurada de Responsabilidad que
+              exige la urbanización.
             </p>
             <div className="mt-5 grid gap-3">
               <label className="text-sm font-semibold">
@@ -360,16 +360,14 @@ export function BookingWizard({
           <section>
             <h2 className="text-2xl font-bold">¿Está todo listo?</h2>
             <p className="mt-2 text-sm text-night/65">
-              Revisá los datos. Al confirmar bloqueamos las fechas 30 minutos para que puedas
-              pagar.
+              Revisá los datos. Al confirmar bloqueamos las fechas 30 minutos para que puedas pagar.
             </p>
 
             <div className="mt-5 grid gap-4">
               <div className="rounded-2xl border border-night/10 p-4">
                 <p className="text-sm font-bold">{propertyName}</p>
                 <p className="mt-1 text-sm text-night/65">
-                  Del {checkIn} al {checkOut} · {guests}{" "}
-                  {guests === 1 ? "huésped" : "huéspedes"}
+                  Del {checkIn} al {checkOut} · {guests} {guests === 1 ? "huésped" : "huéspedes"}
                 </p>
               </div>
 
@@ -452,8 +450,8 @@ export function BookingWizard({
 
         {step === 0 && !quote ? (
           <p className="mt-3 text-right text-xs text-night/55">
-            Elegí las fechas para continuar. Desde{" "}
-            {formatCurrency(basePriceMinor, currency)} por noche.
+            Elegí las fechas para continuar. Desde {formatCurrency(basePriceMinor, currency)} por
+            noche.
           </p>
         ) : null}
       </div>

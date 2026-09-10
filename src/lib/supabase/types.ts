@@ -1957,7 +1957,11 @@ export type Database = {
         Returns: Json;
       };
       undo_check_in: {
-        Args: { p_booking_id: string | null; p_person_ref: string | null; p_stay_id: string | null };
+        Args: {
+          p_booking_id: string | null;
+          p_person_ref: string | null;
+          p_stay_id: string | null;
+        };
         Returns: Json;
       };
       mark_booking_manual_review: {

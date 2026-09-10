@@ -71,11 +71,7 @@ export function AmenitiesPicker({
     <form action={formAction} className="mt-3">
       <ul className="grid gap-2 sm:grid-cols-2">
         {amenities.map((amenity) => (
-          <AmenityRow
-            key={amenity.id}
-            amenity={amenity}
-            initialSelection={byId.get(amenity.id)}
-          />
+          <AmenityRow key={amenity.id} amenity={amenity} initialSelection={byId.get(amenity.id)} />
         ))}
       </ul>
       <p className="mt-3 text-xs text-slate-500">

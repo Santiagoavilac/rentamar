@@ -18,10 +18,7 @@ import { listIdDocuments } from "@/lib/id-documents";
 import { listBookingCompanions, listCheckins, isAccessApproved } from "@/lib/admin/access";
 import { CheckinPanel } from "@/components/access/checkin-forms";
 import { checkInPersonAction, undoCheckInAction } from "@/lib/admin/access-actions";
-import {
-  uploadIdDocumentAction,
-  deleteIdDocumentAction,
-} from "@/lib/admin/id-document-actions";
+import { uploadIdDocumentAction, deleteIdDocumentAction } from "@/lib/admin/id-document-actions";
 import { requireStaff } from "@/lib/auth";
 export default async function BookingDetailPage({
   params,

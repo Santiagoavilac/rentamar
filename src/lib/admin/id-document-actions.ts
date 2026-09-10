@@ -5,11 +5,7 @@ import { requireStaff, requireAdmin, assertAdminAction } from "@/lib/auth";
 import { AppError } from "@/lib/errors";
 import { writeAudit } from "@/lib/audit";
 import { buildAuditContext, assertSameOrigin } from "./context";
-import {
-  uploadIdDocument,
-  deleteIdDocument,
-  type IdDocumentTarget,
-} from "@/lib/id-documents";
+import { uploadIdDocument, deleteIdDocument, type IdDocumentTarget } from "@/lib/id-documents";
 import { idDocumentDeleteSchema, idDocumentUploadSchema } from "@/lib/validation";
 import type { ActionResult } from "./actions";
 
@@ -105,11 +101,7 @@ export async function deleteIdDocumentAction(
     const parsed = idDocumentDeleteSchema.parse({ documentId: formData.get("documentId") });
     const bookingId = (formData.get("bookingId") as string) || null;
     const stayId = (formData.get("stayId") as string) || null;
-    target = bookingId
-      ? { kind: "booking", bookingId }
-      : stayId
-        ? { kind: "stay", stayId }
-        : null;
+    target = bookingId ? { kind: "booking", bookingId } : stayId ? { kind: "stay", stayId } : null;
 
     await deleteIdDocument(parsed.documentId);
     await writeAudit({

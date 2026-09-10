@@ -3,10 +3,7 @@
 import { useActionState, useEffect, useState } from "react";
 import { CalendarDays, Loader2, MessageCircle } from "lucide-react";
 import { formatCurrency } from "@/lib/money";
-import {
-  createAffiliateRequestAction,
-  type AffiliateRequestState,
-} from "@/app/afiliados/actions";
+import { createAffiliateRequestAction, type AffiliateRequestState } from "@/app/afiliados/actions";
 import type { AffiliateQuote } from "@/lib/affiliates";
 import { useStayRange } from "./booking/use-stay-range";
 import { useQuote } from "./booking/use-quote";
@@ -257,16 +254,12 @@ export function AffiliateBookingPanel({
           disabled={!canSubmit}
           className="flex items-center justify-center gap-2 rounded-2xl bg-turquoise px-5 py-3.5 font-bold text-deep transition hover:bg-turquoise-soft disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {pending ? (
-            <Loader2 size={18} className="animate-spin" />
-          ) : (
-            <MessageCircle size={18} />
-          )}{" "}
+          {pending ? <Loader2 size={18} className="animate-spin" /> : <MessageCircle size={18} />}{" "}
           {pending ? "Registrando solicitud…" : "Continuar reserva por WhatsApp"}
         </button>
         <p className="text-center text-xs text-night/50">
-          Al enviar, las fechas de {propertyName} quedan bloqueadas hasta que confirmemos la
-          reserva por WhatsApp.
+          Al enviar, las fechas de {propertyName} quedan bloqueadas hasta que confirmemos la reserva
+          por WhatsApp.
         </p>
       </form>
     </aside>

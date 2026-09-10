@@ -10,10 +10,7 @@ import { CheckinPanel } from "@/components/access/checkin-forms";
 import { listCheckins, isAccessApproved } from "@/lib/admin/access";
 import { checkInPersonAction, undoCheckInAction } from "@/lib/admin/access-actions";
 import { listIdDocuments } from "@/lib/id-documents";
-import {
-  uploadIdDocumentAction,
-  deleteIdDocumentAction,
-} from "@/lib/admin/id-document-actions";
+import { uploadIdDocumentAction, deleteIdDocumentAction } from "@/lib/admin/id-document-actions";
 import { AppError } from "@/lib/errors";
 import {
   AdminPageHeader,

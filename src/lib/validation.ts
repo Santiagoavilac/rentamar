@@ -630,10 +630,10 @@ export const idDocumentUploadSchema = z
     side: z.enum(["front", "back"]),
   })
   .refine(oneTarget, targetMessage)
-  .refine(
-    (value) => (value.personKind === "titular") === (value.personRef === null),
-    { message: "Indicá de qué persona es la foto", path: ["personRef"] },
-  );
+  .refine((value) => (value.personKind === "titular") === (value.personRef === null), {
+    message: "Indicá de qué persona es la foto",
+    path: ["personRef"],
+  });
 
 export const idDocumentDeleteSchema = z.object({ documentId: z.uuid() });
 

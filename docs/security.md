@@ -100,3 +100,22 @@ Escribir (aprobar, quitar la aprobación, cargar acompañantes) es exclusivo del
 panel: `approve_access` y `revoke_access` solo tienen `execute` para
 `service_role`, y las server actions revalidan `access.review` con
 `assertAdminAction` antes de llamarlas.
+
+## Fotos de carnet, ingresos y vetados
+
+- **`id-documents`** sigue siendo un bucket privado sin políticas de escritura: sube
+  siempre el servidor con service_role, y al panel se le entregan URLs firmadas de
+  10 minutos. Subir requiere `declaration.read` (recepción tiene el carnet en la
+  mano); **borrar es admin-only**, porque destruye evidencia.
+- **`access_checkins`**: `select` solo `is_staff()`, sin políticas de escritura. El
+  guardia no lee esta tabla — lo que necesita saber le llega dentro de
+  `list_access_entries`, que sigue sin devolver teléfonos, correos, montos ni
+  tokens. El teléfono lo devuelve `list_office_checkins`, que corta con `FORBIDDEN`
+  si el que llama no es staff y no está expuesta al rol `guard`.
+- **`banned_guests` / `banned_guest_attempts`**: `select` solo `is_staff()`.
+  `assert_not_banned` y `normalize_document` tienen `EXECUTE` revocado a `anon` y
+  `authenticated`: expuestas serían un oráculo para averiguar quién está en la lista.
+  Al público nunca se le dice que una persona está vetada ni por qué; recibe un
+  mensaje genérico y el detalle queda en el panel.
+- Los intentos guardan la IP **hasheada** con `AUDIT_IP_SALT`, nunca en claro, igual
+  que la bitácora.

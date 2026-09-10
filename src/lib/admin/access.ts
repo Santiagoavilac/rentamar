@@ -100,10 +100,7 @@ export async function checkInPerson(input: CheckinPersonInput, actorId: string):
   if (error) throw mapPostgresError(error.message);
 }
 
-export async function undoCheckIn(
-  target: AccessTarget,
-  personRef: string | null,
-): Promise<void> {
+export async function undoCheckIn(target: AccessTarget, personRef: string | null): Promise<void> {
   const supabase = createAdminClient();
   const { error } = await supabase.rpc("undo_check_in", {
     p_booking_id: target.bookingId,

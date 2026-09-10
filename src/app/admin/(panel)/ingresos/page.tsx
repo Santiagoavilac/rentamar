@@ -2,17 +2,8 @@ import Link from "next/link";
 import { requireStaff } from "@/lib/auth";
 import { assertAdminAction } from "@/lib/permissions";
 import { listOfficeCheckins } from "@/lib/admin/access";
-import {
-  boliviaDayRange,
-  formatCheckinMoment,
-  todayInBolivia,
-} from "@/lib/admin/checkins-export";
-import {
-  AdminPageHeader,
-  AdminResponsiveTable,
-  EmptyState,
-  Panel,
-} from "@/components/admin/ui";
+import { boliviaDayRange, formatCheckinMoment, todayInBolivia } from "@/lib/admin/checkins-export";
+import { AdminPageHeader, AdminResponsiveTable, EmptyState, Panel } from "@/components/admin/ui";
 import { PanelHeading } from "@/components/admin/help";
 import { SOURCE_LABELS } from "@/lib/access";
 import { AutoRefresh } from "@/components/admin/auto-refresh";

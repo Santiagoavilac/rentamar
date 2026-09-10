@@ -17,7 +17,8 @@ export type IdDocumentSide = "front" | "back";
 
 // Una foto de carnet cuelga de una reserva o de una estadía de copropietario, nunca de
 // las dos. Espeja el objetivo de `declarations` y `access_approvals`.
-export type IdDocumentTarget = { kind: "booking"; bookingId: string } | { kind: "stay"; stayId: string };
+export type IdDocumentTarget =
+  { kind: "booking"; bookingId: string } | { kind: "stay"; stayId: string };
 
 // Dentro del registro, la foto es del titular o de un acompañante concreto.
 export type IdDocumentPerson = {
@@ -100,7 +101,11 @@ export async function uploadIdDocument(params: {
   if (previous) await removeRow(previous.id, previous.file_path);
 }
 
-async function findExisting(target: IdDocumentTarget, personRef: string | null, side: IdDocumentSide) {
+async function findExisting(
+  target: IdDocumentTarget,
+  personRef: string | null,
+  side: IdDocumentSide,
+) {
   const supabase = createAdminClient();
   let query = supabase.from("id_documents").select("id, file_path").eq("side", side);
   query =

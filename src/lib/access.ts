@@ -94,4 +94,3 @@ export async function listAccessEntries(params: {
     checkedInCount: row.checked_in_count,
   }));
 }
-

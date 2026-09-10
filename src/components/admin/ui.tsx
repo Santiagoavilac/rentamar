@@ -50,13 +50,7 @@ export function StatusBadge({ value }: { value: string | null | undefined }) {
 // Verde / ámbar / rojo del registro de ingreso. Lo pide recepción para ver de un vistazo,
 // en la lista, a quién falta registrar. El ámbar lleva el conteo porque "faltan algunos" sin
 // decir cuántos obliga a entrar al detalle igual.
-export function CheckinBadge({
-  checkedIn,
-  total,
-}: {
-  checkedIn: number;
-  total: number;
-}) {
+export function CheckinBadge({ checkedIn, total }: { checkedIn: number; total: number }) {
   const state = checkinState(checkedIn, total);
   const tone =
     state === "ninguno"

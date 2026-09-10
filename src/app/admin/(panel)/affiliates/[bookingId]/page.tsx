@@ -18,10 +18,7 @@ import { CheckinPanel } from "@/components/access/checkin-forms";
 import { checkInPersonAction, undoCheckInAction } from "@/lib/admin/access-actions";
 import { listIdDocuments } from "@/lib/id-documents";
 import { IdPhotosPanel } from "@/components/admin/id-photos-panel";
-import {
-  uploadIdDocumentAction,
-  deleteIdDocumentAction,
-} from "@/lib/admin/id-document-actions";
+import { uploadIdDocumentAction, deleteIdDocumentAction } from "@/lib/admin/id-document-actions";
 import { getDeclarationForBooking } from "@/lib/admin/declarations";
 import { assertAdminAction, requireStaff } from "@/lib/auth";
 

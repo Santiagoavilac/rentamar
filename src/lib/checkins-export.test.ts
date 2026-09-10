@@ -52,8 +52,6 @@ describe("CSV de ingresos", () => {
 
   it("el nombre del archivo dice el día, o el rango cuando son varios", () => {
     expect(checkinsFilename("2026-09-10", "2026-09-10")).toBe("ingresos-2026-09-10.csv");
-    expect(checkinsFilename("2026-09-01", "2026-09-10")).toBe(
-      "ingresos-2026-09-01_2026-09-10.csv",
-    );
+    expect(checkinsFilename("2026-09-01", "2026-09-10")).toBe("ingresos-2026-09-01_2026-09-10.csv");
   });
 });

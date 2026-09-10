@@ -158,8 +158,8 @@ export function IdPhotosPanel({
   return (
     <div className="mt-3 grid gap-5">
       <p className="text-sm text-slate-600">
-        Foto del carnet de cada persona, anverso y reverso. JPG, PNG o PDF de hasta 8 MB. Solo la
-        ve el personal de RentaMar.
+        Foto del carnet de cada persona, anverso y reverso. JPG, PNG o PDF de hasta 8 MB. Solo la ve
+        el personal de RentaMar.
       </p>
       {people.map((person) => (
         <div key={person.ref ?? "titular"}>
