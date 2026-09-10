@@ -83,14 +83,18 @@ export async function getPropertyImages(propertyId: string) {
   return data ?? [];
 }
 
-export async function getPropertyAmenities(propertyId: string) {
+export type PropertyAmenitySelection = { amenityId: string; quantity: number | null };
+
+export async function getPropertyAmenities(
+  propertyId: string,
+): Promise<PropertyAmenitySelection[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("property_amenities")
-    .select("amenity_id")
+    .select("amenity_id, quantity")
     .eq("property_id", propertyId);
   if (error) throw new AppError("INTERNAL_ERROR", "Error interno", 500);
-  return (data ?? []).map((r) => r.amenity_id);
+  return (data ?? []).map((r) => ({ amenityId: r.amenity_id, quantity: r.quantity }));
 }
 
 export async function listAmenities() {
@@ -113,6 +117,7 @@ function toRow(input: PropertyInput) {
     rules: input.rules || null,
     location_reference: input.locationReference || null,
     property_type: input.propertyType || null,
+    property_class: input.propertyClass,
     zone: input.zone || null,
     tower_id: input.towerId,
     status: input.status,
@@ -352,13 +357,22 @@ export async function deletePropertyImage(propertyId: string, imageId: string) {
   }
 }
 
-export async function setPropertyAmenities(propertyId: string, amenityIds: string[]) {
+// Se reemplaza el conjunto entero en vez de calcular altas y bajas: la PK compuesta hace
+// que un borrado y un insert sean triviales, y así lo guardado es exactamente lo tildado.
+export async function setPropertyAmenities(
+  propertyId: string,
+  selections: PropertyAmenitySelection[],
+) {
   const supabase = createAdminClient();
   await supabase.from("property_amenities").delete().eq("property_id", propertyId);
-  if (amenityIds.length > 0) {
-    const { error } = await supabase
-      .from("property_amenities")
-      .insert(amenityIds.map((amenity_id) => ({ property_id: propertyId, amenity_id })));
+  if (selections.length > 0) {
+    const { error } = await supabase.from("property_amenities").insert(
+      selections.map((selection) => ({
+        property_id: propertyId,
+        amenity_id: selection.amenityId,
+        quantity: selection.quantity,
+      })),
+    );
     if (error) throw new AppError("INTERNAL_ERROR", "Error interno", 500);
   }
 }

@@ -90,6 +90,8 @@ export const propertiesQuerySchema = z.object({
     .transform((v) => (v === undefined ? undefined : v === "true")),
   guests: z.coerce.number().int().min(1).max(50).optional(),
   type: z.string().trim().max(60).optional(),
+  // Un valor que no sea una clase válida se ignora en vez de romper el catálogo.
+  clase: z.enum(["lujo", "a", "b", "c"]).optional().catch(undefined),
   checkIn: isoDate.optional(),
   checkOut: isoDate.optional(),
 });
@@ -153,6 +155,9 @@ export const propertyInputSchema = z.object({
   rules: z.string().trim().max(6000).optional().or(z.literal("")),
   locationReference: z.string().trim().max(1000).optional().or(z.literal("")),
   propertyType: z.string().trim().max(60).optional().or(z.literal("")),
+  // Vacío = todavía sin clasificar. La portada la deja fuera de los grupos con nombre en
+  // vez de inventarle una clase.
+  propertyClass: z.enum(["lujo", "a", "b", "c"]).nullable().default(null),
   zone: z.string().trim().max(120).optional().or(z.literal("")),
   towerId: z.uuid().nullable(),
   status: propertyStatusSchema,
@@ -643,6 +648,18 @@ export const checkinPersonSchema = z
   });
 
 // Alta en la lista de vetados. Los mínimos son los mismos que la tabla exige.
+// Comodidades de una propiedad, con la cantidad cuando corresponde ("cuántas teles").
+export const propertyAmenitiesSchema = z.object({
+  amenities: z
+    .array(
+      z.object({
+        amenityId: z.uuid(),
+        quantity: z.number().int().min(1).max(99).nullable().default(null),
+      }),
+    )
+    .max(100),
+});
+
 export const bannedGuestSchema = z.object({
   fullName: z.string().trim().min(2, "Ingresá el nombre completo").max(160),
   documentId: z.string().trim().min(4, "Ingresá el documento").max(40),

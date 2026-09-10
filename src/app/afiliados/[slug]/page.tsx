@@ -120,6 +120,13 @@ export default async function AffiliatePropertyPage({ params }: Props) {
                         <Check size={17} />
                       </span>
                       {amenity.name}
+                      {/* La cantidad solo aparece donde se cargó: "3 Televisor" tiene
+                          sentido, "1 WiFi" no. */}
+                      {amenity.quantity ? (
+                        <span className="ml-auto rounded-full bg-cyan-50 px-2 py-0.5 text-xs font-semibold text-cyan-700">
+                          {amenity.quantity}
+                        </span>
+                      ) : null}
                     </li>
                   ))}
                 </ul>

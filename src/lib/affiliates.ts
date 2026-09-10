@@ -45,10 +45,11 @@ export async function listAffiliateProperties(): Promise<Property[]> {
   const { data, error } = await supabase
     .from("properties")
     .select(
-      "id, name, slug, zone, max_guests, bedrooms, affiliate_nightly_price_minor, property_images(url, alt_text, is_cover, sort_order)",
+      "id, name, slug, zone, max_guests, bedrooms, property_class, affiliate_nightly_price_minor, property_images(url, alt_text, is_cover, sort_order)",
     )
     .eq("status", "published")
     .order("featured", { ascending: false })
+    .order("affiliate_nightly_price_minor", { ascending: true, nullsFirst: false })
     .order("created_at", { ascending: true });
 
   if (error) throw error;
@@ -63,6 +64,7 @@ export async function listAffiliateProperties(): Promise<Property[]> {
       id: p.slug,
       name: p.name,
       zone: p.zone ?? "",
+      propertyClass: p.property_class,
       guests: p.max_guests,
       bedrooms: p.bedrooms,
       priceFrom: nightly > 0 ? Math.round(nightly / 100) : undefined,
@@ -79,7 +81,7 @@ export const getAffiliatePropertyBySlug = cache(
     const { data: p, error } = await supabase
       .from("properties")
       .select(
-        "id, name, slug, short_description, description, rules, location_reference, property_type, zone, max_guests, bedrooms, beds, bathrooms, base_price_minor, currency, minimum_nights, check_in_time, check_out_time, duration_pricing_enabled, affiliate_nightly_price_minor, property_images(url, alt_text, is_cover, sort_order), property_amenities(amenities(name, slug, icon))",
+        "id, name, slug, short_description, description, rules, location_reference, property_type, property_class, zone, max_guests, bedrooms, beds, bathrooms, base_price_minor, currency, minimum_nights, check_in_time, check_out_time, duration_pricing_enabled, affiliate_nightly_price_minor, property_images(url, alt_text, is_cover, sort_order), property_amenities(quantity, amenities(name, slug, icon))",
       )
       .eq("slug", slug)
       .eq("status", "published")
@@ -99,9 +101,9 @@ export const getAffiliatePropertyBySlug = cache(
       p_to: fmt(to),
     });
 
-    const amenities = (p.property_amenities ?? [])
-      .map((row) => row.amenities)
-      .filter((a): a is NonNullable<typeof a> => a !== null);
+    const amenities = (p.property_amenities ?? []).flatMap((row) =>
+      row.amenities ? [{ ...row.amenities, quantity: row.quantity }] : [],
+    );
 
     return {
       id: p.id,
@@ -110,6 +112,7 @@ export const getAffiliatePropertyBySlug = cache(
       shortDescription: p.short_description,
       description: p.description,
       propertyType: p.property_type,
+      propertyClass: p.property_class,
       zone: p.zone,
       maxGuests: p.max_guests,
       bedrooms: p.bedrooms,

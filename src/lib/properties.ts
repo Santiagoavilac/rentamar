@@ -1,7 +1,11 @@
+import type { PropertyClass } from "./property-classes";
+
 export type Property = {
   id: string;
   name: string;
   zone: string;
+  /** null = todavía sin clasificar. */
+  propertyClass: PropertyClass | null;
   guests?: number;
   bedrooms: number;
   priceFrom?: number;

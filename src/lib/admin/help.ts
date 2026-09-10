@@ -1044,6 +1044,22 @@ export const HELP = {
       },
     ],
   },
+  "properties.detail.amenities": {
+    title: "Comodidades",
+    short: "Lo que la propiedad tiene, para que el huésped lo vea en la ficha.",
+    long: [
+      {
+        tipo: "parrafo",
+        texto:
+          "Tildá lo que hay. Donde tiene sentido contar —televisores, por ejemplo— escribí cuántos; donde no (wifi, parrilla, seguridad) dejá la cantidad vacía y la ficha muestra solo el nombre.",
+      },
+      {
+        tipo: "aviso",
+        texto:
+          "Guardar reemplaza la lista entera: queda exactamente lo tildado. El catálogo se administra en la base, así que sumar una comodidad nueva no requiere tocar el código.",
+      },
+    ],
+  },
   "vetados.page": {
     title: "Huéspedes vetados",
     short: "Personas que no pueden ser registradas por ningún canal.",

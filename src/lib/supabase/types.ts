@@ -1439,6 +1439,7 @@ export type Database = {
           max_guests: number;
           minimum_nights: number;
           name: string;
+          property_class: Database["public"]["Enums"]["property_class"] | null;
           property_type: string | null;
           rules: string | null;
           short_description: string | null;
@@ -1466,6 +1467,7 @@ export type Database = {
           max_guests?: number;
           minimum_nights?: number;
           name: string;
+          property_class?: Database["public"]["Enums"]["property_class"] | null;
           property_type?: string | null;
           rules?: string | null;
           short_description?: string | null;
@@ -1493,6 +1495,7 @@ export type Database = {
           max_guests?: number;
           minimum_nights?: number;
           name?: string;
+          property_class?: Database["public"]["Enums"]["property_class"] | null;
           property_type?: string | null;
           rules?: string | null;
           short_description?: string | null;
@@ -1516,14 +1519,17 @@ export type Database = {
         Row: {
           amenity_id: string;
           property_id: string;
+          quantity: number | null;
         };
         Insert: {
           amenity_id: string;
           property_id: string;
+          quantity?: number | null;
         };
         Update: {
           amenity_id?: string;
           property_id?: string;
+          quantity?: number | null;
         };
         Relationships: [
           {
@@ -2137,6 +2143,7 @@ export type Database = {
         | "duration_pricing_update"
         | "affiliate_price";
       price_item_type: "nightly_rate" | "cleaning_fee" | "service_fee" | "discount";
+      property_class: "lujo" | "a" | "b" | "c";
       property_status: "draft" | "published" | "paused" | "archived";
       user_role: "guest" | "admin" | "operator" | "co_owner" | "cleaner" | "guard";
     };
@@ -2346,6 +2353,7 @@ export const Constants = {
         "affiliate_price",
       ],
       price_item_type: ["nightly_rate", "cleaning_fee", "service_fee", "discount"],
+      property_class: ["lujo", "a", "b", "c"],
       property_status: ["draft", "published", "paused", "archived"],
       user_role: ["guest", "admin", "operator", "co_owner", "cleaner", "guard"],
     },
