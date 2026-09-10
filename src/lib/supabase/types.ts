@@ -800,31 +800,43 @@ export type Database = {
       };
       id_documents: {
         Row: {
-          booking_id: string;
+          booking_id: string | null;
           created_at: string;
           file_path: string;
           id: string;
           mime_type: string;
+          person_kind: string;
+          person_name: string | null;
+          person_ref: string | null;
           side: string;
           size_bytes: number;
+          stay_id: string | null;
         };
         Insert: {
-          booking_id: string;
+          booking_id?: string | null;
           created_at?: string;
           file_path: string;
           id?: string;
           mime_type: string;
+          person_kind?: string;
+          person_name?: string | null;
+          person_ref?: string | null;
           side: string;
           size_bytes: number;
+          stay_id?: string | null;
         };
         Update: {
-          booking_id?: string;
+          booking_id?: string | null;
           created_at?: string;
           file_path?: string;
           id?: string;
           mime_type?: string;
+          person_kind?: string;
+          person_name?: string | null;
+          person_ref?: string | null;
           side?: string;
           size_bytes?: number;
+          stay_id?: string | null;
         };
         Relationships: [
           {
@@ -832,6 +844,13 @@ export type Database = {
             columns: ["booking_id"];
             isOneToOne: false;
             referencedRelation: "bookings";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "id_documents_stay_id_fkey";
+            columns: ["stay_id"];
+            isOneToOne: false;
+            referencedRelation: "co_owner_stays";
             referencedColumns: ["id"];
           },
         ];

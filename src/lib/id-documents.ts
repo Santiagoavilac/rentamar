@@ -15,6 +15,20 @@ const ALLOWED: Record<string, string> = {
 
 export type IdDocumentSide = "front" | "back";
 
+// Una foto de carnet cuelga de una reserva o de una estadía de copropietario, nunca de
+// las dos. Espeja el objetivo de `declarations` y `access_approvals`.
+export type IdDocumentTarget = { kind: "booking"; bookingId: string } | { kind: "stay"; stayId: string };
+
+// Dentro del registro, la foto es del titular o de un acompañante concreto.
+export type IdDocumentPerson = {
+  kind: "titular" | "acompanante";
+  // id de la fila en booking_companions / co_owner_stay_guests. Null para el titular.
+  ref?: string | null;
+  name?: string | null;
+};
+
+const TITULAR: IdDocumentPerson = { kind: "titular", ref: null, name: null };
+
 function validate(file: File, side: IdDocumentSide) {
   const extension = ALLOWED[file.type];
   if (!extension || file.size <= 0 || file.size > MAX_BYTES) {
@@ -34,60 +48,147 @@ export function assertIdDocumentsValid(front: File, back: File) {
   validate(back, "back");
 }
 
-async function uploadOne(bookingId: string, side: IdDocumentSide, file: File) {
-  const extension = validate(file, side);
-  const supabase = createAdminClient();
-  const path = `${bookingId}/${side}-${crypto.randomUUID()}.${extension}`;
+function targetColumns(target: IdDocumentTarget) {
+  return target.kind === "booking"
+    ? { booking_id: target.bookingId, stay_id: null }
+    : { booking_id: null, stay_id: target.stayId };
+}
 
-  const { error: uploadError } = await supabase.storage.from(BUCKET).upload(path, file, {
-    contentType: file.type,
+function targetId(target: IdDocumentTarget) {
+  return target.kind === "booking" ? target.bookingId : target.stayId;
+}
+
+// Sube un archivo y registra la fila. Reemplaza la foto anterior de esa persona y ese lado
+// si ya existía: la oficina rehace la toma cuando sale movida, y el índice único no deja
+// dos anversos de la misma persona.
+export async function uploadIdDocument(params: {
+  target: IdDocumentTarget;
+  person?: IdDocumentPerson;
+  side: IdDocumentSide;
+  file: File;
+}): Promise<void> {
+  const person = params.person ?? TITULAR;
+  const extension = validate(params.file, params.side);
+  const supabase = createAdminClient();
+  const path = `${params.target.kind}/${targetId(params.target)}/${person.ref ?? "titular"}/${params.side}-${crypto.randomUUID()}.${extension}`;
+
+  const { error: uploadError } = await supabase.storage.from(BUCKET).upload(path, params.file, {
+    contentType: params.file.type,
     upsert: false,
   });
   if (uploadError) throw new AppError("INTERNAL_ERROR", "No se pudo subir el carnet", 500);
 
+  const previous = await findExisting(params.target, person.ref ?? null, params.side);
+
   const { error: insertError } = await supabase.from("id_documents").insert({
-    booking_id: bookingId,
-    side,
+    ...targetColumns(params.target),
+    person_kind: person.kind,
+    person_ref: person.ref ?? null,
+    person_name: person.name ?? null,
+    side: params.side,
     file_path: path,
-    mime_type: file.type,
-    size_bytes: file.size,
+    mime_type: params.file.type,
+    size_bytes: params.file.size,
   });
   if (insertError) {
     // Evita dejar un objeto huérfano en el bucket si falla el registro.
     await supabase.storage.from(BUCKET).remove([path]);
     throw new AppError("INTERNAL_ERROR", "No se pudo registrar el carnet", 500);
   }
+
+  // Recién acá se borra la anterior: si algo falla arriba, la foto vieja sigue estando.
+  if (previous) await removeRow(previous.id, previous.file_path);
 }
 
-// Sube anverso y reverso de una reserva. Los dos son obligatorios en el flujo de afiliados.
+async function findExisting(target: IdDocumentTarget, personRef: string | null, side: IdDocumentSide) {
+  const supabase = createAdminClient();
+  let query = supabase.from("id_documents").select("id, file_path").eq("side", side);
+  query =
+    target.kind === "booking"
+      ? query.eq("booking_id", target.bookingId)
+      : query.eq("stay_id", target.stayId);
+  query = personRef ? query.eq("person_ref", personRef) : query.is("person_ref", null);
+  const { data } = await query.maybeSingle();
+  return data ?? null;
+}
+
+async function removeRow(id: string, filePath: string) {
+  const supabase = createAdminClient();
+  await supabase.from("id_documents").delete().eq("id", id);
+  await supabase.storage.from(BUCKET).remove([filePath]);
+}
+
+// Borra una foto puntual. La usa el panel para corregir una carga equivocada.
+export async function deleteIdDocument(documentId: string): Promise<void> {
+  const supabase = createAdminClient();
+  const { data } = await supabase
+    .from("id_documents")
+    .select("id, file_path")
+    .eq("id", documentId)
+    .maybeSingle();
+  if (!data) throw new AppError("NOT_FOUND", "La foto ya no existe", 404);
+  await removeRow(data.id, data.file_path);
+}
+
+// Sube anverso y reverso del titular de una reserva. Los dos son obligatorios en el flujo
+// de afiliados; se mantiene la firma para no tocar `src/app/afiliados/actions.ts`.
 export async function uploadBookingIdDocuments(params: {
   bookingId: string;
   front: File;
   back: File;
 }): Promise<void> {
-  await uploadOne(params.bookingId, "front", params.front);
-  await uploadOne(params.bookingId, "back", params.back);
+  const target: IdDocumentTarget = { kind: "booking", bookingId: params.bookingId };
+  await uploadIdDocument({ target, side: "front", file: params.front });
+  await uploadIdDocument({ target, side: "back", file: params.back });
 }
 
-// URL firmada de corta duración para que el staff vea el carnet en el panel.
-export async function listBookingIdDocuments(
-  bookingId: string,
-): Promise<{ side: IdDocumentSide; url: string; mimeType: string }[]> {
-  const supabase = createAdminClient();
-  const { data } = await supabase
-    .from("id_documents")
-    .select("side, file_path, mime_type")
-    .eq("booking_id", bookingId);
+export type IdDocument = {
+  id: string;
+  side: IdDocumentSide;
+  url: string;
+  mimeType: string;
+  personKind: "titular" | "acompanante";
+  personRef: string | null;
+  personName: string | null;
+};
 
-  const rows = data ?? [];
-  const out: { side: IdDocumentSide; url: string; mimeType: string }[] = [];
-  for (const row of rows) {
+// URLs firmadas de corta duración para que el staff vea los carnets en el panel.
+export async function listIdDocuments(target: IdDocumentTarget): Promise<IdDocument[]> {
+  const supabase = createAdminClient();
+  let query = supabase
+    .from("id_documents")
+    .select("id, side, file_path, mime_type, person_kind, person_ref, person_name");
+  query =
+    target.kind === "booking"
+      ? query.eq("booking_id", target.bookingId)
+      : query.eq("stay_id", target.stayId);
+  const { data } = await query;
+
+  const out: IdDocument[] = [];
+  for (const row of data ?? []) {
     const { data: signed } = await supabase.storage
       .from(BUCKET)
       .createSignedUrl(row.file_path, 60 * 10);
-    if (signed?.signedUrl) {
-      out.push({ side: row.side as IdDocumentSide, url: signed.signedUrl, mimeType: row.mime_type });
-    }
+    if (!signed?.signedUrl) continue;
+    out.push({
+      id: row.id,
+      side: row.side as IdDocumentSide,
+      url: signed.signedUrl,
+      mimeType: row.mime_type,
+      personKind: (row.person_kind ?? "titular") as "titular" | "acompanante",
+      personRef: row.person_ref ?? null,
+      personName: row.person_name ?? null,
+    });
   }
   return out;
+}
+
+// Compatibilidad con los llamadores que solo miran el carnet del titular de una reserva.
+export async function listBookingIdDocuments(
+  bookingId: string,
+): Promise<{ side: IdDocumentSide; url: string; mimeType: string }[]> {
+  const all = await listIdDocuments({ kind: "booking", bookingId });
+  return all
+    .filter((doc) => doc.personKind === "titular")
+    .map((doc) => ({ side: doc.side, url: doc.url, mimeType: doc.mimeType }));
 }

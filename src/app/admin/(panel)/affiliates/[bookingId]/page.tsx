@@ -13,7 +13,12 @@ import { DeclarationPanel } from "@/components/admin/declaration-cell";
 import { affiliateRequestAction } from "@/lib/admin/actions";
 import { getAffiliateRequestDetail } from "@/lib/admin/affiliates";
 import { listBookingEvents } from "@/lib/admin/bookings";
-import { listBookingIdDocuments } from "@/lib/id-documents";
+import { listIdDocuments } from "@/lib/id-documents";
+import { IdPhotosPanel } from "@/components/admin/id-photos-panel";
+import {
+  uploadIdDocumentAction,
+  deleteIdDocumentAction,
+} from "@/lib/admin/id-document-actions";
 import { getDeclarationForBooking } from "@/lib/admin/declarations";
 import { assertAdminAction, requireStaff } from "@/lib/auth";
 
@@ -28,12 +33,21 @@ export default async function AffiliateRequestPage({
   const [{ booking, companions, property }, events, idDocuments, declaration] = await Promise.all([
     getAffiliateRequestDetail(bookingId),
     listBookingEvents(bookingId),
-    listBookingIdDocuments(bookingId),
+    listIdDocuments({ kind: "booking", bookingId }),
     getDeclarationForBooking(bookingId),
   ]);
-  const idFront = idDocuments.find((doc) => doc.side === "front");
-  const idBack = idDocuments.find((doc) => doc.side === "back");
   const open = booking.status === "pending_payment";
+
+  // El afiliado sube su propio carnet desde el formulario público; la oficina completa lo
+  // que falte y carga el de los acompañantes, que el flujo público no pide.
+  const people = [
+    { ref: null, name: booking.guest_name, documentId: booking.affiliate_document_id },
+    ...companions.map((companion) => ({
+      ref: companion.id,
+      name: companion.full_name,
+      documentId: companion.document_id,
+    })),
+  ];
 
   return (
     <>
@@ -77,50 +91,15 @@ export default async function AffiliateRequestPage({
             </dl>
           </Panel>
           <Panel>
-            <PanelHeading helpKey="affiliates.detail.id">Carnet de identidad</PanelHeading>
-            {idFront || idBack ? (
-              <div className="mt-3 grid gap-4 sm:grid-cols-2">
-                {(["front", "back"] as const).map((side) => {
-                  const doc = side === "front" ? idFront : idBack;
-                  const label = side === "front" ? "Anverso" : "Reverso";
-                  if (!doc) {
-                    return (
-                      <div
-                        key={side}
-                        className="rounded border border-dashed border-slate-300 p-3 text-sm text-slate-500"
-                      >
-                        {label}: sin cargar
-                      </div>
-                    );
-                  }
-                  return (
-                    <a
-                      key={side}
-                      href={doc.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block rounded border border-slate-200 p-2 text-sm font-semibold text-cyan-700"
-                    >
-                      <span className="mb-1 block">{label}</span>
-                      {doc.mimeType.startsWith("image/") ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={doc.url}
-                          alt={`Carnet ${label.toLowerCase()}`}
-                          className="h-40 w-full rounded object-cover"
-                        />
-                      ) : (
-                        <span className="block rounded bg-slate-50 py-8 text-center text-slate-500">
-                          Ver PDF
-                        </span>
-                      )}
-                    </a>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="mt-2 text-sm text-slate-600">El afiliado no cargó el carnet.</p>
-            )}
+            <PanelHeading helpKey="registro.fotos.carnet">Subir fotos de carnet</PanelHeading>
+            <IdPhotosPanel
+              target={{ bookingId }}
+              people={people}
+              documents={idDocuments}
+              uploadAction={uploadIdDocumentAction}
+              deleteAction={deleteIdDocumentAction}
+              canDelete={session.role === "admin"}
+            />
           </Panel>
           <Panel>
             <PanelHeading helpKey="affiliates.detail.companions">Acompañantes</PanelHeading>

@@ -607,6 +607,24 @@ export const accessApprovalSchema = z
 
 export const accessRevokeSchema = z.object(accessTargetShape).refine(oneTarget, targetMessage);
 
+// Foto de carnet que carga la oficina. Apunta al mismo par excluyente reserva/estadía y,
+// dentro de él, a una persona: el titular (sin ref) o un acompañante concreto.
+export const idDocumentUploadSchema = z
+  .object({
+    ...accessTargetShape,
+    personKind: z.enum(["titular", "acompanante"]),
+    personRef: z.uuid().nullable().default(null),
+    personName: z.string().trim().max(160).nullable().default(null),
+    side: z.enum(["front", "back"]),
+  })
+  .refine(oneTarget, targetMessage)
+  .refine(
+    (value) => (value.personKind === "titular") === (value.personRef === null),
+    { message: "Indicá de qué persona es la foto", path: ["personRef"] },
+  );
+
+export const idDocumentDeleteSchema = z.object({ documentId: z.uuid() });
+
 // Acompañantes que recepción carga para un alquiler del canal directo. Los mínimos son los
 // mismos que la tabla booking_companions exige en la base.
 export const accessCompanionsSchema = z.object({

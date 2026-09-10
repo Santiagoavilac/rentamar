@@ -50,3 +50,24 @@ export async function setAccessCompanions(
   });
   if (error) throw mapPostgresError(error.message);
 }
+
+export type BookingCompanionRow = {
+  id: string;
+  full_name: string;
+  document_id: string;
+  phone: string | null;
+  sort_order: number;
+};
+
+// Acompañantes de una reserva, sin importar el canal. La ficha de afiliados ya los leía por
+// su cuenta; esto lo deja disponible también para el alquiler directo, donde recepción los
+// carga a mano con setAccessCompanions.
+export async function listBookingCompanions(bookingId: string): Promise<BookingCompanionRow[]> {
+  const supabase = createAdminClient();
+  const { data } = await supabase
+    .from("booking_companions")
+    .select("id, full_name, document_id, phone, sort_order")
+    .eq("booking_id", bookingId)
+    .order("sort_order", { ascending: true });
+  return (data ?? []) as BookingCompanionRow[];
+}

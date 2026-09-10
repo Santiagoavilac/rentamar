@@ -232,6 +232,7 @@ export type CoOwnerStayRow = {
 // Huéspedes del 2 en adelante. El 1 son las columnas full_name/document_id/phone de la
 // propia estadía, porque es quien la registra y firma la declaración jurada.
 export type CoOwnerStayGuestRow = {
+  id: string;
   full_name: string;
   document_id: string;
   birth_date: string;
@@ -287,7 +288,7 @@ export async function getCoOwnerStay(
 
   const { data: guests, error: guestsError } = await supabase
     .from("co_owner_stay_guests")
-    .select("full_name, document_id, birth_date")
+    .select("id, full_name, document_id, birth_date")
     .eq("stay_id", id)
     .order("sort_order");
   if (guestsError) throw internal();

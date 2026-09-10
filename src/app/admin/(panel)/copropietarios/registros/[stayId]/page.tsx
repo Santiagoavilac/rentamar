@@ -5,6 +5,12 @@ import { assertAdminAction } from "@/lib/permissions";
 import { getCoOwnerStay } from "@/lib/admin/co-owners";
 import { getDeclarationForStay } from "@/lib/admin/declarations";
 import { DeclarationPanel } from "@/components/admin/declaration-cell";
+import { IdPhotosPanel } from "@/components/admin/id-photos-panel";
+import { listIdDocuments } from "@/lib/id-documents";
+import {
+  uploadIdDocumentAction,
+  deleteIdDocumentAction,
+} from "@/lib/admin/id-document-actions";
 import { AppError } from "@/lib/errors";
 import {
   AdminPageHeader,
@@ -34,7 +40,21 @@ export default async function CoOwnerStayDetailPage({
     throw error;
   }
 
-  const declaration = await getDeclarationForStay(stayId);
+  const [declaration, idDocuments] = await Promise.all([
+    getDeclarationForStay(stayId),
+    listIdDocuments({ kind: "stay", stayId }),
+  ]);
+
+  // El titular firma la declaración y no tiene fila propia en co_owner_stay_guests: va
+  // primero y sin ref. Los huéspedes adicionales siguen su sort_order.
+  const people = [
+    { ref: null, name: stay.full_name, documentId: stay.document_id },
+    ...stay.guests.map((guest) => ({
+      ref: guest.id,
+      name: guest.full_name,
+      documentId: guest.document_id,
+    })),
+  ];
 
   return (
     <>
@@ -72,6 +92,20 @@ export default async function CoOwnerStayDetailPage({
           Declaración jurada
         </PanelHeading>
         <DeclarationPanel declaration={declaration} target={{ kind: "stay", stayId }} />
+      </Panel>
+
+      <Panel>
+        <PanelHeading helpKey="registro.fotos.carnet" className="mb-4 text-sm font-bold">
+          Subir fotos de carnet
+        </PanelHeading>
+        <IdPhotosPanel
+          target={{ stayId }}
+          people={people}
+          documents={idDocuments}
+          uploadAction={uploadIdDocumentAction}
+          deleteAction={deleteIdDocumentAction}
+          canDelete={session.role === "admin"}
+        />
       </Panel>
 
       <Panel>

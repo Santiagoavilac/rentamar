@@ -1044,6 +1044,31 @@ export const HELP = {
       },
     ],
   },
+  "registro.fotos.carnet": {
+    title: "Fotos de carnet",
+    short: "La foto del documento de cada persona del registro, para constancia de la oficina.",
+    long: [
+      {
+        tipo: "parrafo",
+        texto:
+          "Recepción valida el carnet en la mano; acá queda la evidencia visual. Se carga el anverso y el reverso de cada persona: el titular y cada acompañante.",
+      },
+      { tipo: "subtitulo", texto: "Cómo se usa" },
+      {
+        tipo: "pasos",
+        items: [
+          "Elegí la persona y el lado (anverso o reverso).",
+          "Sacá la foto o elegí el archivo. Desde el celular se abre la cámara directamente.",
+          "Si la foto salió movida, volvé a subir: reemplaza la anterior.",
+        ],
+      },
+      {
+        tipo: "aviso",
+        texto:
+          "JPG, PNG o PDF de hasta 8 MB. Son datos personales: se guardan en un depósito privado, solo las ve el personal de RentaMar y el enlace vence a los 10 minutos. Borrar una foto es exclusivo de administradores.",
+      },
+    ],
+  },
   "coowners.detail.guests": {
     title: "Huéspedes adicionales",
     short: "Las personas que el copropietario declaró que se alojan con él.",

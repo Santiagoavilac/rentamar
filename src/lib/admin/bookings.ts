@@ -5,7 +5,7 @@ import { AppError, NotFoundError, mapPostgresError } from "@/lib/errors";
 
 // El detalle de reserva NUNCA expone access_token_hash. Solo columnas de negocio.
 const BOOKING_DETAIL_COLUMNS =
-  "id, booking_code, status, payment_status, property_id, check_in, check_out, guests, nights, currency, subtotal_minor, cleaning_fee_minor, service_fee_minor, discount_minor, total_minor, guest_name, guest_email, guest_phone, hold_expires_at, confirmed_at, cancelled_at, completed_at, created_at";
+  "id, booking_code, status, payment_status, property_id, check_in, check_out, guests, nights, currency, subtotal_minor, cleaning_fee_minor, service_fee_minor, discount_minor, total_minor, guest_name, guest_email, guest_phone, hold_expires_at, confirmed_at, cancelled_at, completed_at, created_at, guest_document_id";
 
 export type BookingListRow = {
   id: string;
