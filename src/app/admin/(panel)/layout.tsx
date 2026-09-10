@@ -45,6 +45,7 @@ const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
   {
     title: "Sistema",
     items: [
+      { href: "/admin/vetados", label: "Huéspedes vetados", requires: "banned.manage" },
       { href: "/admin/users", label: "Usuarios", requires: "user.manage" },
       { href: "/admin/audit", label: "Auditoría", requires: "audit.read" },
     ],

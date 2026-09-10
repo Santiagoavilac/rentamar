@@ -642,6 +642,15 @@ export const checkinPersonSchema = z
     path: ["personRef"],
   });
 
+// Alta en la lista de vetados. Los mínimos son los mismos que la tabla exige.
+export const bannedGuestSchema = z.object({
+  fullName: z.string().trim().min(2, "Ingresá el nombre completo").max(160),
+  documentId: z.string().trim().min(4, "Ingresá el documento").max(40),
+  reason: z.string().trim().max(500).nullable().default(null),
+});
+
+export const bannedGuestRevokeSchema = z.object({ id: z.uuid() });
+
 export const undoCheckinSchema = z
   .object({ ...accessTargetShape, personRef: z.uuid().nullable().default(null) })
   .refine(oneTarget, targetMessage);

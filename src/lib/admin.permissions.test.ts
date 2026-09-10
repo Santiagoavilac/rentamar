@@ -26,4 +26,10 @@ describe("permisos del módulo de disponibilidad", () => {
     expect(canPerformAdminAction("operator", "guard.manage")).toBe(false);
     expect(canPerformAdminAction("admin", "guard.manage")).toBe(true);
   });
+
+  // Vetar deja a una persona afuera por los tres canales a la vez: no es del mostrador.
+  it("reserva la lista de vetados para admin", () => {
+    expect(canPerformAdminAction("operator", "banned.manage")).toBe(false);
+    expect(canPerformAdminAction("admin", "banned.manage")).toBe(true);
+  });
 });

@@ -241,6 +241,15 @@ export function mapPostgresError(message: string | undefined): AppError {
       return new ValidationError("Fechas inválidas");
     case "BOOKING_NOT_FOUND":
       return new UnauthorizedBookingAccessError();
+    // Lo levanta el trigger de vetados sobre bookings, booking_companions, co_owner_stays,
+    // co_owner_stay_guests y access_approvals. El mensaje al público no dice que la persona
+    // está vetada ni por qué: confirmárselo a quien la intenta registrar no ayuda a nadie.
+    case "GUEST_BANNED":
+      return new AppError(
+        "GUEST_BANNED",
+        "No podemos completar este registro. Comunicate con la administración de RentaMar.",
+        409,
+      );
     case "PAYMENT_NOT_FOUND":
       return new PaymentNotFoundError();
     case "PAYMENT_ALREADY_PAID":

@@ -65,6 +65,64 @@ export type Database = {
           },
         ];
       };
+      banned_guests: {
+        Row: {
+          created_at: string;
+          created_by: string;
+          document_id: string;
+          document_normalized: string | null;
+          full_name: string;
+          id: string;
+          reason: string | null;
+          revoked_at: string | null;
+          revoked_by: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          created_by: string;
+          document_id: string;
+          full_name: string;
+          id?: string;
+          reason?: string | null;
+          revoked_at?: string | null;
+          revoked_by?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string;
+          document_id?: string;
+          full_name?: string;
+          id?: string;
+          reason?: string | null;
+          revoked_at?: string | null;
+          revoked_by?: string | null;
+        };
+        Relationships: [];
+      };
+      banned_guest_attempts: {
+        Row: {
+          channel: string;
+          created_at: string;
+          id: string;
+          ip_hash: string | null;
+          submitted: Json;
+        };
+        Insert: {
+          channel: string;
+          created_at?: string;
+          id?: string;
+          ip_hash?: string | null;
+          submitted?: Json;
+        };
+        Update: {
+          channel?: string;
+          created_at?: string;
+          id?: string;
+          ip_hash?: string | null;
+          submitted?: Json;
+        };
+        Relationships: [];
+      };
       access_approvals: {
         Row: {
           approved_at: string;

@@ -1044,6 +1044,39 @@ export const HELP = {
       },
     ],
   },
+  "vetados.page": {
+    title: "Huéspedes vetados",
+    short: "Personas que no pueden ser registradas por ningún canal.",
+    long: [
+      {
+        tipo: "parrafo",
+        texto:
+          "Alcanza con el nombre completo y el documento. Desde que se agrega, cualquier intento de registrarla falla: da igual que la cargue RentaMar, un afiliado o un copropietario, y da igual que sea el titular o un acompañante.",
+      },
+      { tipo: "subtitulo", texto: "Cómo se compara" },
+      {
+        tipo: "parrafo",
+        texto:
+          "Por documento, no por nombre. Se ignoran mayúsculas, espacios, puntos y guiones, así que 1234567-1B y 1234567 1b son la misma persona.",
+      },
+      {
+        tipo: "aviso",
+        texto:
+          "Quitar de la lista no borra nada: queda el registro de quién la vetó y hasta cuándo. Solo un administrador puede agregar o quitar. A quien intenta el registro nunca se le dice que la persona está vetada.",
+      },
+    ],
+  },
+  "vetados.intentos": {
+    title: "Intentos bloqueados",
+    short: "Registros que el sistema frenó porque alguien de la lista aparecía en ellos.",
+    long: [
+      {
+        tipo: "parrafo",
+        texto:
+          "Se muestran los nombres y documentos tal como los tipearon, sin señalar cuál de ellos disparó el bloqueo. Sirve para saber que alguien lo está intentando y por qué canal.",
+      },
+    ],
+  },
   "ingresos.page": {
     title: "Ingresos",
     short: "Quién acaba de entrar al complejo, en tiempo real.",
