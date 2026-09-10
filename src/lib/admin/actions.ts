@@ -315,27 +315,55 @@ export async function uploadPropertyImageAction(
     const session = await requireStaff();
     await assertSameOrigin();
     assertAdminAction(session.role, "property.manage");
-    const file = formData.get("image");
-    if (!(file instanceof File))
-      throw new AppError("VALIDATION_ERROR", "Seleccioná una imagen", 422);
+    // Se sube la galería entera de una vez: elegir foto por foto era el cuello de botella.
+    const files = formData.getAll("image").filter((item): item is File => item instanceof File);
+    if (!files.length)
+      throw new AppError("VALIDATION_ERROR", "Seleccioná al menos una imagen", 422);
     const meta = imageMetaSchema.parse({
       altText: str(formData.get("altText")),
       isCover: bool(formData.get("isCover")),
     });
-    const result = await properties.uploadPropertyImage({
-      propertyId,
-      file,
-      altText: meta.altText || null,
-      isCover: Boolean(meta.isCover),
-    });
-    const ctx = await buildAuditContext(session);
-    await writeAudit({
-      ...ctx,
-      action: "property.image.upload",
-      entityType: "property",
-      entityId: propertyId,
-      after: { imageId: result.id, isCover: Boolean(meta.isCover) },
-    });
+
+    // Una imagen pesada o de formato raro no puede tirar abajo el resto del lote. Se sube
+    // en orden para que el sort_order respete el orden en que las eligieron.
+    let subidas = 0;
+    for (const file of files) {
+      try {
+        const result = await properties.uploadPropertyImage({
+          propertyId,
+          file,
+          altText: meta.altText || null,
+          // La portada la define el primer lugar de la galería, que se ordena arrastrando.
+          isCover: false,
+        });
+        subidas += 1;
+        await writeAudit({
+          ...(await buildAuditContext(session)),
+          action: "property.image.upload",
+          entityType: "property",
+          entityId: propertyId,
+          after: { imageId: result.id },
+        });
+      } catch {
+        // Se cuenta como fallida más abajo.
+      }
+    }
+
+    if (!subidas) {
+      throw new AppError(
+        "VALIDATION_ERROR",
+        "Ninguna imagen se pudo subir. Tienen que ser JPG, PNG o WebP de hasta 8 MB.",
+        422,
+      );
+    }
+    if (subidas < files.length) {
+      revalidatePath(`/admin/properties/${propertyId}/images`);
+      revalidatePath(`/admin/properties/${propertyId}`);
+      return {
+        ok: true,
+        error: `Se subieron ${subidas} de ${files.length}. El resto quedó afuera por formato o peso.`,
+      };
+    }
   } catch (error) {
     return fail(error);
   }

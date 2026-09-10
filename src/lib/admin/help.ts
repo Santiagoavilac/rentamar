@@ -740,15 +740,16 @@ export const HELP = {
     ],
   },
   "properties.images.upload": {
-    title: "Subir imagen",
-    short: "Cargá una foto JPG, PNG o WebP de hasta 8 MB. Se agrega al final de la galería.",
+    title: "Subir imágenes",
+    short: "Arrastrá varias fotos de una vez. Se agregan al final de la galería.",
     long: [
       {
         tipo: "lista",
         items: [
+          "Podés soltar los archivos sobre la caja, o hacer clic para elegirlos. Varios a la vez.",
           "Formatos aceptados: JPG, PNG y WebP. Hasta 8 MB por archivo.",
-          "La foto nueva se agrega al final; si querés que sea portada, arrastrala al primer lugar.",
-          "El texto alternativo describe la imagen para quien no puede verla y ayuda al posicionamiento en buscadores. Es opcional pero conviene completarlo.",
+          "Se agregan al final en el orden en que las elegiste; si querés que una sea portada, arrastrala al primer lugar de la galería.",
+          "El texto alternativo se aplica a todas las del lote. Describe la imagen para quien no puede verla y ayuda al posicionamiento en buscadores.",
         ],
       },
       {
@@ -1142,26 +1143,31 @@ export const HELP = {
   },
   "registro.fotos.carnet": {
     title: "Fotos de carnet",
-    short: "La foto del documento de cada persona del registro, para constancia de la oficina.",
+    short: "La evidencia visual de los documentos del grupo.",
     long: [
       {
         tipo: "parrafo",
         texto:
-          "Recepción valida el carnet en la mano; acá queda la evidencia visual. Se carga el anverso y el reverso de cada persona: el titular y cada acompañante.",
+          "Pensado para cómo se trabaja en el mostrador: se apilan todos los carnets en la mesa, se saca una tanda de fotos del anverso y otra del reverso, y se suben todas juntas.",
       },
       { tipo: "subtitulo", texto: "Cómo se usa" },
       {
         tipo: "pasos",
         items: [
-          "Elegí la persona y el lado (anverso o reverso).",
-          "Sacá la foto o elegí el archivo. Desde el celular se abre la cámara directamente.",
-          "Si la foto salió movida, volvé a subir: reemplaza la anterior.",
+          "Elegí el lado: anverso o reverso.",
+          "Arrastrá las fotos a la caja, o hacé clic para elegirlas. Podés seleccionar varias de una vez.",
+          "Subí. Las fotos se acumulan, no se pisan entre ellas.",
         ],
+      },
+      {
+        tipo: "parrafo",
+        texto:
+          "Asignar la foto a una persona es opcional. Dejalo en Sin asignar salvo que necesites identificar un documento puntual.",
       },
       {
         tipo: "aviso",
         texto:
-          "JPG, PNG o PDF de hasta 8 MB. Son datos personales: se guardan en un depósito privado, solo las ve el personal de RentaMar y el enlace vence a los 10 minutos. Borrar una foto es exclusivo de administradores.",
+          "JPG, PNG o PDF de hasta 8 MB. Son datos personales: se guardan en un depósito privado, solo las ve el personal de RentaMar y el enlace vence a los 10 minutos. Borrar es exclusivo de administradores.",
       },
     ],
   },

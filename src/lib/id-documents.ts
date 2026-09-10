@@ -22,13 +22,15 @@ export type IdDocumentTarget =
 
 // Dentro del registro, la foto es del titular o de un acompañante concreto.
 export type IdDocumentPerson = {
-  kind: "titular" | "acompanante";
-  // id de la fila en booking_companions / co_owner_stay_guests. Null para el titular.
+  kind: "titular" | "acompanante" | "sin_asignar";
+  // id de la fila en booking_companions / co_owner_stay_guests. Null salvo acompañante.
   ref?: string | null;
   name?: string | null;
 };
 
-const TITULAR: IdDocumentPerson = { kind: "titular", ref: null, name: null };
+// En el mostrador apilan todos los carnets y sacan una tanda de fotos. Pedir de quién es
+// cada una antes de subirla era lo que demoraba, así que sin asignar es el caso normal.
+const SIN_ASIGNAR: IdDocumentPerson = { kind: "sin_asignar", ref: null, name: null };
 
 function validate(file: File, side: IdDocumentSide) {
   const extension = ALLOWED[file.type];
@@ -59,16 +61,15 @@ function targetId(target: IdDocumentTarget) {
   return target.kind === "booking" ? target.bookingId : target.stayId;
 }
 
-// Sube un archivo y registra la fila. Reemplaza la foto anterior de esa persona y ese lado
-// si ya existía: la oficina rehace la toma cuando sale movida, y el índice único no deja
-// dos anversos de la misma persona.
+// Sube un archivo y registra la fila. Las fotos se acumulan: una tanda trae varias del
+// mismo lado, y una sola foto puede tener varios carnets sobre la mesa.
 export async function uploadIdDocument(params: {
   target: IdDocumentTarget;
   person?: IdDocumentPerson;
   side: IdDocumentSide;
   file: File;
 }): Promise<void> {
-  const person = params.person ?? TITULAR;
+  const person = params.person ?? SIN_ASIGNAR;
   const extension = validate(params.file, params.side);
   const supabase = createAdminClient();
   const path = `${params.target.kind}/${targetId(params.target)}/${person.ref ?? "titular"}/${params.side}-${crypto.randomUUID()}.${extension}`;
@@ -78,8 +79,6 @@ export async function uploadIdDocument(params: {
     upsert: false,
   });
   if (uploadError) throw new AppError("INTERNAL_ERROR", "No se pudo subir el carnet", 500);
-
-  const previous = await findExisting(params.target, person.ref ?? null, params.side);
 
   const { error: insertError } = await supabase.from("id_documents").insert({
     ...targetColumns(params.target),
@@ -96,25 +95,32 @@ export async function uploadIdDocument(params: {
     await supabase.storage.from(BUCKET).remove([path]);
     throw new AppError("INTERNAL_ERROR", "No se pudo registrar el carnet", 500);
   }
-
-  // Recién acá se borra la anterior: si algo falla arriba, la foto vieja sigue estando.
-  if (previous) await removeRow(previous.id, previous.file_path);
 }
 
-async function findExisting(
-  target: IdDocumentTarget,
-  personRef: string | null,
-  side: IdDocumentSide,
-) {
-  const supabase = createAdminClient();
-  let query = supabase.from("id_documents").select("id, file_path").eq("side", side);
-  query =
-    target.kind === "booking"
-      ? query.eq("booking_id", target.bookingId)
-      : query.eq("stay_id", target.stayId);
-  query = personRef ? query.eq("person_ref", personRef) : query.is("person_ref", null);
-  const { data } = await query.maybeSingle();
-  return data ?? null;
+// Sube una tanda entera. Sigue de largo con las que fallen para no perder el resto del
+// lote por una sola foto pesada, y devuelve el conteo para poder avisar qué pasó.
+export async function uploadIdDocuments(params: {
+  target: IdDocumentTarget;
+  person?: IdDocumentPerson;
+  side: IdDocumentSide;
+  files: File[];
+}): Promise<{ subidas: number; fallidas: number }> {
+  let subidas = 0;
+  let fallidas = 0;
+  for (const file of params.files) {
+    try {
+      await uploadIdDocument({
+        target: params.target,
+        person: params.person,
+        side: params.side,
+        file,
+      });
+      subidas += 1;
+    } catch {
+      fallidas += 1;
+    }
+  }
+  return { subidas, fallidas };
 }
 
 async function removeRow(id: string, filePath: string) {
@@ -143,8 +149,10 @@ export async function uploadBookingIdDocuments(params: {
   back: File;
 }): Promise<void> {
   const target: IdDocumentTarget = { kind: "booking", bookingId: params.bookingId };
-  await uploadIdDocument({ target, side: "front", file: params.front });
-  await uploadIdDocument({ target, side: "back", file: params.back });
+  // El afiliado sube su propio carnet desde el formulario público: ahí sí se sabe de quién es.
+  const person: IdDocumentPerson = { kind: "titular", ref: null, name: null };
+  await uploadIdDocument({ target, person, side: "front", file: params.front });
+  await uploadIdDocument({ target, person, side: "back", file: params.back });
 }
 
 export type IdDocument = {
@@ -152,7 +160,7 @@ export type IdDocument = {
   side: IdDocumentSide;
   url: string;
   mimeType: string;
-  personKind: "titular" | "acompanante";
+  personKind: "titular" | "acompanante" | "sin_asignar";
   personRef: string | null;
   personName: string | null;
 };
@@ -180,7 +188,7 @@ export async function listIdDocuments(target: IdDocumentTarget): Promise<IdDocum
       side: row.side as IdDocumentSide,
       url: signed.signedUrl,
       mimeType: row.mime_type,
-      personKind: (row.person_kind ?? "titular") as "titular" | "acompanante",
+      personKind: (row.person_kind ?? "sin_asignar") as IdDocument["personKind"],
       personRef: row.person_ref ?? null,
       personName: row.person_name ?? null,
     });

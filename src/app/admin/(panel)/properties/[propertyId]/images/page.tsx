@@ -40,7 +40,7 @@ export default async function PropertyImagesPage({
       />
       <Panel>
         <PanelHeading helpKey="properties.images.upload" className="mb-3 font-bold">
-          Subir imagen
+          Subir imágenes
         </PanelHeading>
         <ImageUploadForm action={uploadPropertyImageAction.bind(null, propertyId)} />
       </Panel>

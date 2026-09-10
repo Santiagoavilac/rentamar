@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import type { ActionResult } from "@/lib/admin/actions";
 import { formatCurrency } from "@/lib/money";
@@ -29,6 +29,14 @@ export function Submit({
   );
 }
 function Feedback({ error, ok }: ActionResult) {
+  // Un lote parcial vuelve con ok y un texto: es aviso, no error.
+  if (ok && error) {
+    return (
+      <p role="status" className="mt-3 text-sm text-amber-700">
+        {error}
+      </p>
+    );
+  }
   return error ? (
     <p role="alert" className="mt-3 text-sm text-rose-700">
       {error}
@@ -532,26 +540,67 @@ export function PropertyForm({
   );
 }
 
+// Alta de imágenes de la galería. Se sube el lote entero de una vez y se puede soltar los
+// archivos encima: elegirlos de a uno era lo que hacía largo cargar una propiedad nueva.
 export function ImageUploadForm({ action }: { action: FormAction }) {
   const [state, formAction] = useActionState(action, initial);
+  const [count, setCount] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Soltar equivale a elegir: los archivos se meten en el mismo input, así el formulario
+  // los manda igual y no hay una segunda ruta de subida que mantener.
+  function drop(event: React.DragEvent) {
+    event.preventDefault();
+    setDragging(false);
+    if (!inputRef.current || !event.dataTransfer.files.length) return;
+    inputRef.current.files = event.dataTransfer.files;
+    setCount(event.dataTransfer.files.length);
+  }
+
   return (
     <form action={formAction} className="grid gap-3">
-      <label className="text-sm">
-        Imagen JPG, PNG o WebP (máximo 8 MB)
+      <div
+        onDragOver={(event) => {
+          event.preventDefault();
+          setDragging(true);
+        }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={drop}
+        onClick={() => inputRef.current?.click()}
+        className={`cursor-pointer rounded-xl border-2 border-dashed p-6 text-center text-sm transition-colors ${
+          dragging ? "border-cyan-600 bg-cyan-50 text-cyan-800" : "border-slate-300 text-slate-600"
+        }`}
+      >
+        <strong className="block">Arrastrá las imágenes acá</strong>
+        <span className="mt-1 block text-xs">
+          O hacé clic para elegirlas. JPG, PNG o WebP de hasta 8 MB cada una.
+        </span>
         <input
+          ref={inputRef}
           required
+          multiple
           name="image"
           type="file"
           accept="image/jpeg,image/png,image/webp"
-          className="mt-1 block w-full text-sm"
+          onChange={(event) => setCount(event.target.files?.length ?? 0)}
+          className="sr-only"
         />
-      </label>
+        {count > 0 ? (
+          <span className="mt-2 block text-xs font-semibold text-cyan-800">
+            {count} {count === 1 ? "imagen lista" : "imágenes listas"} para subir
+          </span>
+        ) : null}
+      </div>
       <label className="text-sm">
-        Texto alternativo
+        Texto alternativo (opcional, se aplica a todas)
         <input name="altText" className="mt-1 w-full rounded border p-2" />
       </label>
       <div>
-        <Submit label="Subir imagen" />
+        <Submit
+          label={count > 1 ? `Subir ${count} imágenes` : "Subir imagen"}
+          disabled={count === 0}
+        />
         <Feedback {...state} />
       </div>
     </form>
