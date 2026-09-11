@@ -4,6 +4,8 @@ import { useActionState, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import type { ActionResult } from "@/lib/admin/actions";
 import { formatCurrency } from "@/lib/money";
+import { describeOutcome, uploadOneByOne } from "@/lib/upload-batch";
+import { useRouter } from "next/navigation";
 import { PROPERTY_CLASS_OPTIONS } from "@/lib/property-classes";
 
 type FormAction = (state: ActionResult, formData: FormData) => Promise<ActionResult>;
@@ -540,13 +542,44 @@ export function PropertyForm({
   );
 }
 
-// Alta de imágenes de la galería. Se sube el lote entero de una vez y se puede soltar los
-// archivos encima: elegirlos de a uno era lo que hacía largo cargar una propiedad nueva.
+// Alta de imágenes de la galería. Se eligen o se sueltan todas de una vez, pero viajan de a
+// una y achicadas (ver upload-batch): el lote entero en un solo envío superaba el límite de
+// Vercel y la pantalla se caía con "Application error".
 export function ImageUploadForm({ action }: { action: FormAction }) {
-  const [state, formAction] = useActionState(action, initial);
+  const router = useRouter();
+  const [state, setState] = useState<ActionResult>(initial);
+  const [progress, setProgress] = useState<number | null>(null);
   const [count, setCount] = useState(0);
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const altRef = useRef<HTMLInputElement>(null);
+
+  async function submit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const files = Array.from(inputRef.current?.files ?? []);
+    if (!files.length || progress !== null) return;
+    const altText = altRef.current?.value ?? "";
+    setState(initial);
+    const outcome = await uploadOneByOne({
+      files,
+      maxEdge: 2000,
+      buildFormData: (file) => {
+        const formData = new FormData();
+        formData.append("image", file);
+        formData.append("altText", altText);
+        return formData;
+      },
+      action,
+      onProgress: setProgress,
+    });
+    setProgress(null);
+    setState(describeOutcome(outcome));
+    if (outcome.subidas) {
+      if (inputRef.current) inputRef.current.value = "";
+      setCount(0);
+      router.refresh();
+    }
+  }
 
   // Soltar equivale a elegir: los archivos se meten en el mismo input, así el formulario
   // los manda igual y no hay una segunda ruta de subida que mantener.
@@ -559,7 +592,7 @@ export function ImageUploadForm({ action }: { action: FormAction }) {
   }
 
   return (
-    <form action={formAction} className="grid gap-3">
+    <form onSubmit={submit} className="grid gap-3">
       <div
         onDragOver={(event) => {
           event.preventDefault();
@@ -574,7 +607,7 @@ export function ImageUploadForm({ action }: { action: FormAction }) {
       >
         <strong className="block">Arrastrá las imágenes acá</strong>
         <span className="mt-1 block text-xs">
-          O hacé clic para elegirlas. JPG, PNG o WebP de hasta 8 MB cada una.
+          O hacé clic para elegirlas. JPG, PNG o WebP; las pesadas se achican solas.
         </span>
         <input
           ref={inputRef}
@@ -594,13 +627,19 @@ export function ImageUploadForm({ action }: { action: FormAction }) {
       </div>
       <label className="text-sm">
         Texto alternativo (opcional, se aplica a todas)
-        <input name="altText" className="mt-1 w-full rounded border p-2" />
+        <input ref={altRef} name="altText" className="mt-1 w-full rounded border p-2" />
       </label>
       <div>
-        <Submit
-          label={count > 1 ? `Subir ${count} imágenes` : "Subir imagen"}
-          disabled={count === 0}
-        />
+        <button
+          className="rounded-lg bg-deep px-4 py-2 text-sm font-semibold text-cream disabled:opacity-50"
+          disabled={count === 0 || progress !== null}
+        >
+          {progress !== null
+            ? `Subiendo ${Math.min(progress + 1, count)} de ${count}…`
+            : count > 1
+              ? `Subir ${count} imágenes`
+              : "Subir imagen"}
+        </button>
         <Feedback {...state} />
       </div>
     </form>

@@ -1,9 +1,10 @@
 "use client";
 
 import { useActionState, useRef, useState } from "react";
-import { useFormStatus } from "react-dom";
 import type { ActionResult } from "@/lib/admin/actions";
 import type { IdDocument } from "@/lib/id-documents";
+import { describeOutcome, uploadOneByOne } from "@/lib/upload-batch";
+import { useRouter } from "next/navigation";
 
 // "Subir fotos de carnet". En el mostrador apilan todos los carnets en la mesa y sacan una
 // tanda de anversos y otra de reversos: por eso se sube en lote y sin decir de quién es cada
@@ -29,14 +30,25 @@ function TargetFields({ target }: { target: IdPhotosTarget }) {
   );
 }
 
-function Submit({ label, count }: { label: string; count: number }) {
-  const { pending } = useFormStatus();
+function Submit({
+  label,
+  count,
+  progress,
+}: {
+  label: string;
+  count: number;
+  progress: number | null;
+}) {
   return (
     <button
       className="rounded-lg bg-deep px-4 py-2 text-sm font-semibold text-cream disabled:opacity-50"
-      disabled={pending || count === 0}
+      disabled={progress !== null || count === 0}
     >
-      {pending ? "Subiendo…" : count > 0 ? `${label} (${count})` : label}
+      {progress !== null
+        ? `Subiendo ${Math.min(progress + 1, count)} de ${count}…`
+        : count > 0
+          ? `${label} (${count})`
+          : label}
     </button>
   );
 }
@@ -70,12 +82,46 @@ function BatchUploader({
   people: IdPhotoPerson[];
   action: FormAction;
 }) {
-  const [state, formAction] = useActionState(action, initial);
+  const router = useRouter();
+  const [state, setState] = useState<ActionResult>(initial);
+  const [progress, setProgress] = useState<number | null>(null);
   const [count, setCount] = useState(0);
   const [dragging, setDragging] = useState(false);
   // "" = sin asignar, "titular", o el id del acompañante.
   const [persona, setPersona] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Las fotos viajan de a una y achicadas (ver upload-batch): la tanda entera en un solo
+  // envío superaba el límite de Vercel y el panel se caía con "Application error". El resto
+  // de los campos del formulario (lado, persona, registro) acompaña a cada foto.
+  async function submit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const files = Array.from(inputRef.current?.files ?? []);
+    if (!files.length || progress !== null) return;
+    const fields = new FormData(event.currentTarget);
+    fields.delete("photo");
+    setState(initial);
+    const outcome = await uploadOneByOne({
+      files,
+      // Más resolución que la galería: los números del carnet se tienen que poder leer.
+      maxEdge: 2400,
+      buildFormData: (file) => {
+        const formData = new FormData();
+        fields.forEach((value, key) => formData.append(key, value));
+        formData.append("photo", file);
+        return formData;
+      },
+      action,
+      onProgress: setProgress,
+    });
+    setProgress(null);
+    setState(describeOutcome(outcome));
+    if (outcome.subidas) {
+      if (inputRef.current) inputRef.current.value = "";
+      setCount(0);
+      router.refresh();
+    }
+  }
 
   // Soltar archivos sobre la caja equivale a elegirlos: se los mete en el mismo input para
   // que el formulario los mande igual, sin una segunda ruta de subida.
@@ -88,7 +134,7 @@ function BatchUploader({
   }
 
   return (
-    <form action={formAction} className="grid gap-3">
+    <form onSubmit={submit} className="grid gap-3">
       <TargetFields target={target} />
 
       <div className="grid gap-3 sm:grid-cols-2">
@@ -165,7 +211,7 @@ function BatchUploader({
       </div>
 
       <div>
-        <Submit label="Subir fotos" count={count} />
+        <Submit label="Subir fotos" count={count} progress={progress} />
         <Feedback {...state} />
       </div>
     </form>
