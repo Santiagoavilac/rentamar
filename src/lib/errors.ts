@@ -321,6 +321,15 @@ export function mapPostgresError(message: string | undefined): AppError {
     // Control de acceso.
     case "STAY_NOT_FOUND":
       return new NotFoundError("Estadía no encontrada");
+    // check_in_person la lanza si todavía no existe la aprobación (declaración, garantía y
+    // manillas) para esta reserva/estadía. Sin este case caía al genérico "Error interno" y
+    // no había forma de saber, desde el mensaje, qué faltaba hacer.
+    case "ACCESS_NOT_APPROVED":
+      return new AppError(
+        "ACCESS_NOT_APPROVED",
+        "Todavía no está aprobado en Control de acceso. Aprobalo ahí primero (declaración, garantía y manillas) y después registrá el ingreso.",
+        409,
+      );
     case "VALIDATION_ERROR":
       return new ValidationError();
     default:
