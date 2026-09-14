@@ -87,6 +87,7 @@ async function EntryPanel({ entry }: { entry: AccessEntry }) {
             {shortDate(entry.checkIn)} al {shortDate(entry.checkOut)} · {entry.guestCount}{" "}
             {entry.guestCount === 1 ? "persona" : "personas"}
             {entry.documentId ? ` · CI ${entry.documentId}` : ""}
+            {entry.plate ? ` · Placa ${entry.plate}` : ""}
           </p>
         </div>
         <StatusBadge value={entry.approved ? "aprobado" : "sin aprobar"} />

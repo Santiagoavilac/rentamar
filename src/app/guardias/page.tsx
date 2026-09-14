@@ -5,7 +5,9 @@ import { listAccessEntries, getAccessEntryByToken, SOURCE_LABELS, type AccessEnt
 import { listIdDocuments } from "@/lib/id-documents";
 import { todayInLaPaz } from "@/lib/admin/planner-query";
 import { QrScanButton } from "@/components/access/qr-scan-button";
+import { PlateForm } from "@/components/access/plate-form";
 import { signOutGuardAction } from "./login/actions";
+import { setVehiclePlateAction } from "./actions";
 
 export const metadata: Metadata = {
   title: "Portería | RentaMar",
@@ -103,6 +105,12 @@ function EntryCard({ entry, showPhotos = false }: { entry: AccessEntry; showPhot
           {entry.approved ? "Aprobado" : "No aprobado"}
         </span>
       </div>
+
+      <PlateForm
+        action={setVehiclePlateAction}
+        target={entry.isBooking ? { bookingId: entry.entryId } : { stayId: entry.entryId }}
+        currentPlate={entry.plate}
+      />
 
       {entry.approved ? null : (
         <p className="mt-3 rounded-lg bg-rose-600 px-3 py-2 text-sm font-semibold text-white">

@@ -1954,6 +1954,8 @@ export type Database = {
           guest_count: number;
           lugar: string;
           people: Json;
+          // Ajuste manual: sin placa anotada todavía, es NULL.
+          plate: string | null;
           source: string;
           titular: string;
           titular_checked_in: boolean;
@@ -1984,6 +1986,8 @@ export type Database = {
           guest_count: number;
           lugar: string;
           people: Json;
+          // Ajuste manual: sin placa anotada todavía, es NULL.
+          plate: string | null;
           source: string;
           titular: string;
           titular_checked_in: boolean;
@@ -2065,6 +2069,11 @@ export type Database = {
           p_property_id: string;
           p_reason: string;
         };
+        Returns: Json;
+      };
+      set_access_vehicle_plate: {
+        // Ajuste manual: par excluyente reserva/estadía, igual que approve_access.
+        Args: { p_booking_id: string | null; p_stay_id: string | null; p_plate: string };
         Returns: Json;
       };
       set_booking_companions: {

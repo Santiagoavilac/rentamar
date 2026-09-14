@@ -37,6 +37,8 @@ export type AccessEntry = {
   titularCheckedIn: boolean;
   /** Cuántas personas del grupo se registraron, titular incluido. */
   checkedInCount: number;
+  /** Placa del vehículo, si algún guardia o staff la anotó. */
+  plate: string | null;
 };
 
 export type AccessTarget = { bookingId: string | null; stayId: string | null };
@@ -80,6 +82,7 @@ function toEntry(row: {
   people: unknown;
   titular_checked_in: boolean;
   checked_in_count: number;
+  plate: string | null;
 }): AccessEntry {
   return {
     source: row.source,
@@ -96,6 +99,7 @@ function toEntry(row: {
     people: toPeople(row.people),
     titularCheckedIn: row.titular_checked_in,
     checkedInCount: row.checked_in_count,
+    plate: row.plate,
   };
 }
 
@@ -124,4 +128,16 @@ export async function getAccessEntryByToken(token: string): Promise<AccessEntry 
   if (error) throw mapPostgresError(error.message);
   const row = data?.[0];
   return row ? toEntry(row) : null;
+}
+
+// El guardia (o staff) anota la placa del vehículo desde la propia tarjeta, sin pasar por
+// Control de acceso. Una por grupo; volver a anotar la reemplaza.
+export async function setVehiclePlate(target: AccessTarget, plate: string): Promise<void> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_access_vehicle_plate", {
+    p_booking_id: target.bookingId,
+    p_stay_id: target.stayId,
+    p_plate: plate,
+  });
+  if (error) throw mapPostgresError(error.message);
 }
