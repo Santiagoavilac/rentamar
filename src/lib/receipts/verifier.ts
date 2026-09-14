@@ -8,8 +8,11 @@ import "server-only";
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 // Modelo primario y de reserva. Ambos configurables por env sin tocar código: si el
 // primario falla/no está disponible, OpenRouter reintenta con el siguiente (campo `models`).
-const DEFAULT_MODEL = "qwen/qwen3-vl-8b-instruct";
-const DEFAULT_FALLBACK_MODEL = "qwen/qwen3-vl-32b-instruct";
+// El 8B lee bien los datos pero se equivoca comparando fecha/hora contra la ventana de pago
+// (probado con comprobantes reales); el 32B acierta el mismo caso. Va de primario aunque sea
+// más lento/caro: un comprobante mal rechazado le cuesta más caro a RentaMar que la llamada.
+const DEFAULT_MODEL = "qwen/qwen3-vl-32b-instruct";
+const DEFAULT_FALLBACK_MODEL = "qwen/qwen3-vl-8b-instruct";
 const TIMEOUT_MS = 30_000;
 // Un solo reintento ante fallos transitorios del proveedor (429 / 5xx / timeout): sin
 // esto, un hipo de OpenRouter manda un pago bueno a revisión manual sin vuelta atrás.
@@ -67,6 +70,14 @@ function formatAmount(amountMinor: number, currency: string): string {
 
 // Prompt fijo del backend. Incluye la defensa anti prompt-injection: el documento es
 // dato a analizar, nunca instrucciones.
+//
+// Ojo con el nombre del titular receptor: en la mayoría de comprobantes de transferencia
+// interbancaria en Bolivia (BCP, Unión, Ganadero → BNB, etc.) el comprobante muestra la
+// CUENTA y el BANCO de destino, pero NO el nombre del titular de esa cuenta — ese dato lo
+// valida el banco receptor puertas adentro, no aparece impreso. Pedirle a la IA que exija
+// el nombre para aprobar rechazaba comprobantes correctos solo porque el campo no existe en
+// el papel. El monto y la cuenta receptora son los datos confiables; el nombre es un plus
+// cuando está, nunca un motivo de rechazo cuando no está.
 function buildPrompt(expected: ExpectedReceipt): string {
   return [
     "Sos un verificador de comprobantes de transferencia bancaria. Analizá la imagen o PDF adjunto.",
@@ -74,18 +85,29 @@ function buildPrompt(expected: ExpectedReceipt): string {
     "",
     "Datos esperados de la transferencia:",
     `- Monto: ${formatAmount(expected.amountMinor, expected.currency)}`,
-    `- Destinatario: ${expected.recipientName}`,
     `- Cuenta receptora: ${expected.recipientAccount}`,
-    `- Banco: ${expected.bankName}`,
+    `- Banco receptor: ${expected.bankName}`,
     `- Ventana de pago válida (hora de Bolivia): desde ${formatLocal(expected.createdAt)} hasta ${formatLocal(expected.deadlineAt)}`,
     "",
-    "Respondé con UN SOLO dígito, sin texto adicional:",
-    "1 = no se puede confirmar el pago (monto o destinatario no coinciden, o el documento es ilegible).",
-    "2 = el comprobante es válido y coincide con el monto y el destinatario esperados, dentro de la ventana.",
-    "3 = el comprobante es válido pero la fecha/hora de la transferencia está fuera de la ventana de pago.",
-    "4 = no se puede determinar (documento no es un comprobante, error o dudoso).",
+    "Seguí este procedimiento en orden y contestá según el primer paso que aplique:",
     "",
-    "Respuesta (solo el dígito):",
+    "Paso 1 — ¿El documento es legible y es un comprobante de transferencia bancaria?",
+    "  Si no se puede leer o no es un comprobante → respondé 4.",
+    "Paso 2 — ¿El monto que figura coincide con el monto esperado?",
+    "  Si no coincide → respondé 1.",
+    "Paso 3 — ¿La cuenta receptora coincide con la esperada? (si el número de cuenta no se lee",
+    "  con claridad, usá el banco receptor como criterio en su lugar)",
+    "  Si no coincide → respondé 1.",
+    "Paso 4 — ¿La fecha y hora de la transferencia están dentro de la ventana de pago?",
+    "  Si están fuera de esa ventana → respondé 3.",
+    "Si llegaste hasta acá sin haber respondido nada todavía → respondé 2.",
+    "",
+    "El nombre del titular de la cuenta receptora NO es parte de este procedimiento: la mayoría",
+    "de comprobantes de transferencia entre bancos distintos en Bolivia solo imprimen la cuenta",
+    "y el banco de destino, no el nombre de su titular. Nunca respondas 1 por un nombre ausente",
+    "o no verificable; solo el monto, la cuenta/banco receptor y la fecha deciden la respuesta.",
+    "",
+    "Respondé con UN SOLO dígito (1, 2, 3 o 4), sin texto adicional:",
   ].join("\n");
 }
 

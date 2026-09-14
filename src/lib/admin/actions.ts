@@ -41,6 +41,7 @@ import {
   imageMetaSchema,
   imageIdsSchema,
   propertyAmenitiesSchema,
+  propertyStatusSchema,
 } from "@/lib/validation";
 
 export type ActionResult = {
@@ -55,7 +56,9 @@ const OK: ActionResult = { ok: true, error: null };
 // Convierte cualquier excepción en un mensaje seguro para la UI (sin internals).
 function fail(error: unknown): ActionResult {
   if (error instanceof ZodError) {
-    return { ok: false, error: "Revisá los datos ingresados." };
+    // El primer error puntual (con su mensaje en español, ver validation.ts) es más útil
+    // que un "revisá los datos" genérico que no dice qué campo está mal.
+    return { ok: false, error: error.issues[0]?.message ?? "Revisá los datos ingresados." };
   }
   if (error instanceof AppError && error.code !== "INTERNAL_ERROR") {
     return { ok: false, error: error.message };
@@ -236,6 +239,38 @@ export async function savePropertyAction(
   revalidatePath(`/admin/properties/${propertyId}`);
   revalidatePath("/admin/pricing");
   revalidatePath("/afiliados");
+  return OK;
+}
+
+// Publicar/pausar/archivar de un clic, sin pasar por el formulario completo. Vive junto al
+// estado actual en el detalle de la propiedad.
+export async function setPropertyStatusAction(
+  propertyId: string,
+  _prev: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  try {
+    const session = await requireStaff();
+    await assertSameOrigin();
+    assertAdminAction(session.role, "property.manage");
+    const status = propertyStatusSchema.parse(formData.get("status"));
+    const ctx = await buildAuditContext(session);
+    const { before, after } = await properties.setPropertyStatus(propertyId, status);
+    await writeAudit({
+      ...ctx,
+      action: "property.status",
+      entityType: "property",
+      entityId: propertyId,
+      before,
+      after,
+    });
+  } catch (error) {
+    return fail(error);
+  }
+  revalidatePath(`/admin/properties/${propertyId}`);
+  revalidatePath("/admin/properties");
+  revalidatePath("/afiliados");
+  revalidatePath("/propiedades");
   return OK;
 }
 

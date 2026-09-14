@@ -26,16 +26,17 @@ function AmenityRow({
   const [checked, setChecked] = useState(Boolean(initialSelection));
 
   return (
-    <li className="flex items-center gap-2">
-      <label className="flex flex-1 items-center gap-2 text-sm">
+    <li className="flex flex-wrap items-center gap-x-2 gap-y-1">
+      <label className="flex min-w-0 flex-1 items-center gap-2 text-sm">
         <input
           type="checkbox"
           name="amenityId"
           value={amenity.id}
           checked={checked}
           onChange={(event) => setChecked(event.target.checked)}
+          className="shrink-0"
         />
-        {amenity.name}
+        <span className="min-w-0">{amenity.name}</span>
       </label>
       {/* La cantidad solo se manda si la comodidad está tildada: un número suelto de algo
           que la propiedad no tiene no significa nada. */}
@@ -48,7 +49,7 @@ function AmenityRow({
           defaultValue={initialSelection?.quantity ?? ""}
           placeholder="Cant."
           aria-label={`Cantidad de ${amenity.name}`}
-          className="w-20 rounded border p-1 text-sm"
+          className="w-20 shrink-0 rounded border p-1 text-sm"
         />
       ) : null}
     </li>
@@ -69,7 +70,9 @@ export function AmenitiesPicker({
 
   return (
     <form action={formAction} className="mt-3">
-      <ul className="grid gap-2 sm:grid-cols-2">
+      {/* Columnas por ancho disponible, no por el viewport: este panel suele vivir en la
+          columna angosta del detalle de propiedad, mucho más chica que la pantalla. */}
+      <ul className="grid grid-cols-[repeat(auto-fit,minmax(11rem,1fr))] gap-x-3 gap-y-2">
         {amenities.map((amenity) => (
           <AmenityRow key={amenity.id} amenity={amenity} initialSelection={byId.get(amenity.id)} />
         ))}

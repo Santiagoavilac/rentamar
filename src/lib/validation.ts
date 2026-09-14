@@ -155,29 +155,29 @@ export const towerAssignmentSchema = z.object({
 
 // Columnas explícitas: anti mass-assignment. El cliente jamás fija id, created_at, etc.
 export const propertyInputSchema = z.object({
-  name: z.string().trim().min(2).max(160),
+  name: z.string().trim().min(2, "El nombre debe tener al menos 2 caracteres").max(160, "El nombre es demasiado largo"),
   slug: slugSchema,
-  shortDescription: z.string().trim().max(280).optional().or(z.literal("")),
-  description: z.string().trim().max(6000).optional().or(z.literal("")),
-  rules: z.string().trim().max(6000).optional().or(z.literal("")),
-  locationReference: z.string().trim().max(1000).optional().or(z.literal("")),
-  propertyType: z.string().trim().max(60).optional().or(z.literal("")),
+  shortDescription: z.string().trim().max(280, "El resumen es demasiado largo").optional().or(z.literal("")),
+  description: z.string().trim().max(6000, "La descripción es demasiado larga").optional().or(z.literal("")),
+  rules: z.string().trim().max(6000, "Las reglas son demasiado largas").optional().or(z.literal("")),
+  locationReference: z.string().trim().max(1000, "La referencia de ubicación es demasiado larga").optional().or(z.literal("")),
+  propertyType: z.string().trim().max(60, "El tipo es demasiado largo").optional().or(z.literal("")),
   // Vacío = todavía sin clasificar. La portada la deja fuera de los grupos con nombre en
   // vez de inventarle una clase.
   propertyClass: z.enum(["lujo", "a", "b", "c"]).nullable().default(null),
-  zone: z.string().trim().max(120).optional().or(z.literal("")),
-  towerId: z.uuid().nullable(),
+  zone: z.string().trim().max(120, "La zona es demasiado larga").optional().or(z.literal("")),
+  towerId: z.uuid("Torre inválida").nullable(),
   status: propertyStatusSchema,
   featured: z.boolean(),
   basePrice: moneyDecimal,
   // Vacío significa que la propiedad todavía no tiene precio para afiliados:
   // se lista en /afiliados pero no se puede reservar.
   affiliatePrice: moneyDecimal.optional().or(z.literal("")),
-  bedrooms: z.number().int().min(0).max(50),
-  bathrooms: z.number().int().min(0).max(50),
-  beds: z.number().int().min(0).max(100),
-  maxGuests: z.number().int().min(1).max(100),
-  minimumNights: z.number().int().min(1).max(365),
+  bedrooms: z.number("Dormitorios inválido").int().min(0, "Los dormitorios no pueden ser negativos").max(50, "Demasiados dormitorios"),
+  bathrooms: z.number("Baños inválido").int().min(0, "Los baños no pueden ser negativos").max(50, "Demasiados baños"),
+  beds: z.number("Camas inválido").int().min(0, "Las camas no pueden ser negativas").max(100, "Demasiadas camas"),
+  maxGuests: z.number("Máx. huéspedes inválido").int().min(1, "Debe alojar al menos 1 huésped").max(100, "Demasiados huéspedes"),
+  minimumNights: z.number("Mínimo de noches inválido").int().min(1, "El mínimo de noches debe ser al menos 1").max(365, "El mínimo de noches es demasiado alto"),
   checkInTime: timeString,
   checkOutTime: timeString,
 });

@@ -114,6 +114,7 @@ export async function getPaymentDetail(id: string) {
 
 export type ReceiptRow = {
   id: string;
+  paymentId: string;
   attemptNo: number;
   aiResult: number | null;
   aiStatus: string;
@@ -124,35 +125,72 @@ export type ReceiptRow = {
   url: string | null;
 };
 
+function toReceiptRows(
+  supabase: ReturnType<typeof createAdminClient>,
+  rows: {
+    id: string;
+    payment_id: string;
+    attempt_no: number;
+    ai_result: number | null;
+    ai_status: string;
+    sha256: string;
+    mime_type: string;
+    size_bytes: number;
+    file_path: string;
+    created_at: string;
+  }[],
+) {
+  return Promise.all(
+    rows.map(async (row) => {
+      const { data: signed } = await supabase.storage
+        .from(RECEIPTS_BUCKET)
+        .createSignedUrl(row.file_path, 60 * 10);
+      const out: ReceiptRow = {
+        id: row.id,
+        paymentId: row.payment_id,
+        attemptNo: row.attempt_no,
+        aiResult: row.ai_result,
+        aiStatus: row.ai_status,
+        sha256: row.sha256,
+        mimeType: row.mime_type,
+        sizeBytes: row.size_bytes,
+        createdAt: row.created_at,
+        url: signed?.signedUrl ?? null,
+      };
+      return out;
+    }),
+  );
+}
+
 // Comprobantes subidos por el cliente. La URL es firmada de corta duración (bucket
 // privado); solo el staff la ve. El hash y el resultado IA permiten auditar.
 export async function listPaymentReceipts(paymentId: string): Promise<ReceiptRow[]> {
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("payment_receipts")
-    .select("id, attempt_no, ai_result, ai_status, sha256, mime_type, size_bytes, file_path, created_at")
+    .select(
+      "id, payment_id, attempt_no, ai_result, ai_status, sha256, mime_type, size_bytes, file_path, created_at",
+    )
     .eq("payment_id", paymentId)
     .order("attempt_no", { ascending: false });
   if (error) throw new AppError("INTERNAL_ERROR", "Error interno", 500);
+  return toReceiptRows(supabase, data ?? []);
+}
 
-  const out: ReceiptRow[] = [];
-  for (const row of data ?? []) {
-    const { data: signed } = await supabase.storage
-      .from(RECEIPTS_BUCKET)
-      .createSignedUrl(row.file_path, 60 * 10);
-    out.push({
-      id: row.id,
-      attemptNo: row.attempt_no,
-      aiResult: row.ai_result,
-      aiStatus: row.ai_status,
-      sha256: row.sha256,
-      mimeType: row.mime_type,
-      sizeBytes: row.size_bytes,
-      createdAt: row.created_at,
-      url: signed?.signedUrl ?? null,
-    });
-  }
-  return out;
+// Mismo listado, pero por reserva en vez de por intento de pago puntual: una reserva puede
+// haber generado más de un `payment` (hold vencido y reintentado, etc.) y desde la ficha de
+// la reserva se quiere ver todo lo que se subió, sin tener que ir a buscar cada pago.
+export async function listReceiptsForBooking(bookingId: string): Promise<ReceiptRow[]> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("payment_receipts")
+    .select(
+      "id, payment_id, attempt_no, ai_result, ai_status, sha256, mime_type, size_bytes, file_path, created_at",
+    )
+    .eq("booking_id", bookingId)
+    .order("created_at", { ascending: false });
+  if (error) throw new AppError("INTERNAL_ERROR", "Error interno", 500);
+  return toReceiptRows(supabase, data ?? []);
 }
 
 // Bitácora de pago: se omiten error_message crudos largos; se muestra el tipo/estado.

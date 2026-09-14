@@ -33,6 +33,45 @@ export function AdminPageHeader({
   );
 }
 
+// Traducciones de los enums de la base (booking_status, booking_payment_status,
+// payment_status, property_status, user_role) más los literales sueltos que ya se
+// mandan en español desde algunas páginas (esos pasan de largo, sin tocar).
+const STATUS_LABELS: Record<string, string> = {
+  // booking_status / property_status comparten "draft"
+  draft: "Borrador",
+  pending_payment: "Pendiente de pago",
+  confirmed: "Confirmada",
+  expired: "Expirada",
+  cancelled: "Cancelada",
+  completed: "Completada",
+  manual_review: "En revisión",
+  // booking_payment_status
+  unpaid: "Sin pagar",
+  pending: "Pendiente",
+  paid: "Pagado",
+  failed: "Fallido",
+  refunded: "Reembolsado",
+  refund_required: "Requiere reembolso",
+  // payment_status
+  created: "Creado",
+  error: "Error",
+  ai_approved: "Aprobado por IA",
+  // property_status
+  published: "Publicada",
+  paused: "Pausada",
+  archived: "Archivada",
+  // user_role
+  guest: "Huésped",
+  admin: "Administrador",
+  operator: "Operador",
+  co_owner: "Copropietario",
+  cleaner: "Limpieza",
+  guard: "Guardia",
+  // booleanos convertidos a texto en el llamador (cuentas, torres)
+  active: "Activo",
+  inactive: "Inactivo",
+};
+
 export function StatusBadge({ value }: { value: string | null | undefined }) {
   const normalized = value ?? "sin estado";
   const tone = /paid|confirmed|published|active|completed/.test(normalized)
@@ -40,9 +79,10 @@ export function StatusBadge({ value }: { value: string | null | undefined }) {
     : /cancel|expired|error|refund/.test(normalized)
       ? "bg-rose-100 text-rose-800"
       : "bg-amber-100 text-amber-800";
+  const label = STATUS_LABELS[normalized] ?? normalized.replaceAll("_", " ");
   return (
     <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${tone}`}>
-      {normalized.replaceAll("_", " ")}
+      {label}
     </span>
   );
 }

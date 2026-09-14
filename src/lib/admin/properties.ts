@@ -8,7 +8,7 @@ import type { PropertyInput } from "@/lib/validation";
 
 // Columnas explícitas: nunca se hace select("*") ni se aceptan campos arbitrarios.
 const PROPERTY_COLUMNS =
-  "id, name, slug, short_description, description, rules, location_reference, property_type, zone, tower_id, status, featured, base_price_minor, duration_pricing_enabled, currency, bedrooms, bathrooms, beds, max_guests, minimum_nights, check_in_time, check_out_time, affiliate_nightly_price_minor, created_at, updated_at";
+  "id, name, slug, short_description, description, rules, location_reference, property_type, property_class, zone, tower_id, status, featured, base_price_minor, duration_pricing_enabled, currency, bedrooms, bathrooms, beds, max_guests, minimum_nights, check_in_time, check_out_time, affiliate_nightly_price_minor, created_at, updated_at";
 
 export type AdminPropertyRow = {
   id: string;
@@ -180,6 +180,31 @@ export async function updateProperty(
   const { data: after, error } = await supabase
     .from("properties")
     .update(row)
+    .eq("id", id)
+    .select(PROPERTY_COLUMNS)
+    .single();
+  if (error) mapWriteError(error.message);
+  return { before, after };
+}
+
+// Publicar/pausar/archivar sin pasar por todo el formulario: el detalle de la propiedad lo
+// usa como acción rápida junto al estado actual, para no obligar a tocar precio, tarifas y
+// el resto de los datos solo para cambiar esto.
+export async function setPropertyStatus(
+  id: string,
+  status: "draft" | "published" | "paused" | "archived",
+): Promise<{ before: unknown; after: unknown }> {
+  const supabase = createAdminClient();
+  const { data: before } = await supabase
+    .from("properties")
+    .select(PROPERTY_COLUMNS)
+    .eq("id", id)
+    .maybeSingle();
+  if (!before) throw new NotFoundError("Propiedad no encontrada");
+
+  const { data: after, error } = await supabase
+    .from("properties")
+    .update({ status })
     .eq("id", id)
     .select(PROPERTY_COLUMNS)
     .single();

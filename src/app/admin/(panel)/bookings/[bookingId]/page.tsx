@@ -19,7 +19,70 @@ import { listBookingCompanions, listCheckins, isAccessApproved } from "@/lib/adm
 import { CheckinPanel } from "@/components/access/checkin-forms";
 import { checkInPersonAction, undoCheckInAction } from "@/lib/admin/access-actions";
 import { uploadIdDocumentAction, deleteIdDocumentAction } from "@/lib/admin/id-document-actions";
-import { requireStaff } from "@/lib/auth";
+import { requireStaff, canPerformAdminAction } from "@/lib/auth";
+import { listReceiptsForBooking, type ReceiptRow } from "@/lib/admin/payments";
+
+// Etiqueta legible del resultado IA. Nunca se muestra el modelo ni el prompt. Espejo de la
+// misma tabla en el detalle de pago.
+const AI_RESULT_LABEL: Record<number, string> = {
+  1: "1 · Sin confirmar (permite reintento)",
+  2: "2 · Aprobado por IA",
+  3: "3 · Fuera de plazo",
+  4: "4 · Requiere revisión",
+};
+
+function ReceiptsPanel({ receipts }: { receipts: ReceiptRow[] }) {
+  return (
+    <Panel>
+      <PanelHeading helpKey="bookings.detail.receipts">Comprobantes de pago</PanelHeading>
+      {receipts.length === 0 ? (
+        <p className="mt-3 text-sm text-slate-500">Todavía no subió ningún comprobante.</p>
+      ) : (
+        <ul className="mt-3 grid gap-4 text-sm">
+          {receipts.map((r) => (
+            <li key={r.id} className="rounded-lg border border-slate-200 p-3">
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                <strong>Intento {r.attemptNo}</strong>
+                <span className="text-slate-500">{formatDateTime(r.createdAt)}</span>
+              </div>
+              <p className="mt-1">
+                Resultado IA:{" "}
+                {r.aiStatus === "unavailable" ? "IA no disponible" : AI_RESULT_LABEL[r.aiResult ?? 4] || "—"}
+              </p>
+              <div className="mt-2 flex flex-wrap items-center gap-3">
+                {r.url ? (
+                  <a
+                    className="inline-flex items-center gap-3 font-semibold text-cyan-700"
+                    href={r.url}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {r.mimeType.startsWith("image/") ? (
+                      /* eslint-disable-next-line @next/next/no-img-element -- URL firmada temporal de Storage */
+                      <img
+                        src={r.url}
+                        alt={`Comprobante intento ${r.attemptNo}`}
+                        className="h-24 w-24 rounded border border-slate-200 object-cover"
+                      />
+                    ) : null}
+                    Ver comprobante
+                  </a>
+                ) : null}
+                <Link
+                  href={`/admin/payments/${r.paymentId}`}
+                  className="text-xs font-semibold text-cyan-700 underline"
+                >
+                  Ir al pago
+                </Link>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Panel>
+  );
+}
+
 export default async function BookingDetailPage({
   params,
 }: {
@@ -28,6 +91,7 @@ export default async function BookingDetailPage({
   const session = await requireStaff();
   const { bookingId } = await params;
   const target = { bookingId, stayId: null };
+  const canReviewPayments = canPerformAdminAction(session.role, "payment.review");
   const [
     { booking, items, property },
     events,
@@ -36,6 +100,7 @@ export default async function BookingDetailPage({
     companions,
     checkins,
     accessApproved,
+    receipts,
   ] = await Promise.all([
     getBookingDetail(bookingId),
     listBookingEvents(bookingId),
@@ -44,6 +109,7 @@ export default async function BookingDetailPage({
     listBookingCompanions(bookingId),
     listCheckins(target),
     isAccessApproved(target),
+    canReviewPayments ? listReceiptsForBooking(bookingId) : Promise.resolve([]),
   ]);
 
   // El alquiler directo solo guarda el titular; los acompañantes los carga recepción desde
@@ -137,6 +203,7 @@ export default async function BookingDetailPage({
               />
             ))}
           </Panel>
+          {canReviewPayments ? <ReceiptsPanel receipts={receipts} /> : null}
           <Panel>
             <PanelHeading helpKey="registro.checkin">Registro de ingreso</PanelHeading>
             <CheckinPanel

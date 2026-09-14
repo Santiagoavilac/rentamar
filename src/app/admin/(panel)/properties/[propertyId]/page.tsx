@@ -7,8 +7,13 @@ import {
   listAmenities,
 } from "@/lib/admin/properties";
 import { listRates, listPriceHistory } from "@/lib/admin/rates";
-import { savePropertyAction, setPropertyAmenitiesAction } from "@/lib/admin/actions";
+import {
+  savePropertyAction,
+  setPropertyAmenitiesAction,
+  setPropertyStatusAction,
+} from "@/lib/admin/actions";
 import { AmenitiesPicker } from "@/components/admin/amenities-picker";
+import { PropertyStatusActions } from "@/components/admin/forms";
 import { AdminPageHeader, KeyValue, Money, Panel, StatusBadge } from "@/components/admin/ui";
 import { PanelHeading } from "@/components/admin/help";
 import { PropertyEditor } from "@/components/admin/property-editor";
@@ -74,6 +79,12 @@ export default async function PropertyDetailPage({
                 {selectedAmenities.length} de {amenities.length}
               </KeyValue>
             </dl>
+            <div className="mt-4 border-t border-slate-200 pt-4">
+              <PropertyStatusActions
+                action={setPropertyStatusAction.bind(null, propertyId)}
+                status={property.status}
+              />
+            </div>
           </Panel>
           <Panel>
             <PanelHeading helpKey="properties.detail.amenities" className="mb-1 font-bold">

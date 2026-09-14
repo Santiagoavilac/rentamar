@@ -11,6 +11,53 @@ import { PROPERTY_CLASS_OPTIONS } from "@/lib/property-classes";
 type FormAction = (state: ActionResult, formData: FormData) => Promise<ActionResult>;
 const initial: ActionResult = { ok: false, error: null };
 
+// Mismo orden que el enum property_status en la base.
+const PROPERTY_STATUS_OPTIONS = [
+  ["draft", "Borrador"],
+  ["published", "Publicada"],
+  ["paused", "Pausada"],
+  ["archived", "Archivada"],
+] as const;
+
+// Verbo en vez de sustantivo: son botones de acción, no un rótulo de estado.
+const PROPERTY_STATUS_ACTION_LABELS: Record<string, string> = {
+  draft: "Pasar a borrador",
+  published: "Publicar",
+  paused: "Pausar",
+  archived: "Archivar",
+};
+
+// Atajo junto al estado actual: cambia solo el estado, sin pasar por el resto del
+// formulario (precio, tarifas, fin de semana). Un botón por cada estado al que se puede
+// pasar desde el actual.
+export function PropertyStatusActions({
+  action,
+  status,
+}: {
+  action: (state: ActionResult, formData: FormData) => Promise<ActionResult>;
+  status: string;
+}) {
+  const [state, formAction] = useActionState(action, initial);
+  const targets = PROPERTY_STATUS_OPTIONS.map(([value]) => value).filter((value) => value !== status);
+
+  return (
+    <form action={formAction} className="flex flex-wrap items-center gap-2">
+      {targets.map((target) => (
+        <button
+          key={target}
+          type="submit"
+          name="status"
+          value={target}
+          className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold hover:bg-slate-50"
+        >
+          {PROPERTY_STATUS_ACTION_LABELS[target]}
+        </button>
+      ))}
+      <Feedback {...state} />
+    </form>
+  );
+}
+
 // `disabled` sirve para los formularios que exigen completar algo antes de enviar (p. ej.
 // el checklist de aprobación de ingreso). El pending sigue mandando siempre.
 export function Submit({
@@ -285,6 +332,18 @@ export type PropertyValues = Record<string, string | number | boolean | null | u
 
 // Solo los campos: se usan sueltos en el alta (PropertyForm) y dentro del editor
 // completo de la propiedad, que guarda todo junto con un unico boton.
+// De "Depto N° 5 (Vista laguna)" a "depto-n-5-vista-laguna": mismo formato que exige
+// slugSchema (minúsculas, números y guiones). Sin esto, cargar el nombre en el campo de
+// slug tal cual falla la validación sin decir por qué, y el alta de la propiedad "no anda".
+function slugify(text: string): string {
+  return text
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "") // saca tildes: "Baño" -> "Bano"
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 export function PropertyFields({
   values = {},
   towers = [],
@@ -295,6 +354,11 @@ export function PropertyFields({
   canManageAffiliates?: boolean;
 }) {
   const v = (key: string, fallback: string | number = "") => String(values[key] ?? fallback);
+  const [slug, setSlug] = useState(v("slug"));
+  // Si ya tiene slug (se está editando una propiedad existente) no se le pisa lo que
+  // ya eligió; si es de alta, se sigue autogenerando hasta que lo toque a mano.
+  const slugEditedRef = useRef(Boolean(v("slug")));
+
   return (
     <div className="grid gap-3 md:grid-cols-2">
       <label className="text-sm">
@@ -303,6 +367,9 @@ export function PropertyFields({
           required
           name="name"
           defaultValue={v("name")}
+          onChange={(event) => {
+            if (!slugEditedRef.current) setSlug(slugify(event.target.value));
+          }}
           className="mt-1 w-full rounded border p-2"
         />
       </label>
@@ -311,9 +378,16 @@ export function PropertyFields({
         <input
           required
           name="slug"
-          defaultValue={v("slug")}
+          value={slug}
+          onChange={(event) => {
+            slugEditedRef.current = true;
+            setSlug(slugify(event.target.value));
+          }}
           className="mt-1 w-full rounded border p-2"
         />
+        <span className="mt-1 block text-xs text-slate-500">
+          Se arma solo a partir del nombre; solo minúsculas, números y guiones.
+        </span>
       </label>
       <label className="text-sm">
         Zona
@@ -367,8 +441,10 @@ export function PropertyFields({
           defaultValue={v("status", "draft")}
           className="mt-1 w-full rounded border p-2"
         >
-          {["draft", "published", "paused", "archived"].map((x) => (
-            <option key={x}>{x}</option>
+          {PROPERTY_STATUS_OPTIONS.map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
           ))}
         </select>
       </label>

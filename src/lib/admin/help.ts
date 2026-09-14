@@ -233,6 +233,26 @@ export const HELP = {
       },
     ],
   },
+  "bookings.detail.receipts": {
+    title: "Comprobantes de pago",
+    short: "Los comprobantes que subió el huésped para esta reserva, con foto y resultado de la IA.",
+    long: [
+      {
+        tipo: "parrafo",
+        texto:
+          "Es el mismo listado que aparece en el detalle del pago, pero acá se ve junto con el resto de la reserva sin tener que ir a buscarlo. Si la reserva tuvo más de un pago (por ejemplo, un hold que venció y se reintentó), se ven los comprobantes de todos.",
+      },
+      {
+        tipo: "aviso",
+        texto:
+          "Solo lectura: para confirmar, rechazar o cambiar el modo de aprobación, usá \"Ir al pago\" y hacelo desde el detalle del pago correspondiente.",
+      },
+      {
+        tipo: "parrafo",
+        texto: "Solo lo ve el personal con permiso sobre Pagos.",
+      },
+    ],
+  },
   "bookings.detail.history": {
     title: "Historial de la reserva",
     short: "Todo lo que le pasó a esta reserva, en orden, con quién lo hizo.",
