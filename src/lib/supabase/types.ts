@@ -8,6 +8,63 @@ export type Database = {
   };
   public: {
     Tables: {
+      access_approvals: {
+        Row: {
+          approved_at: string;
+          approved_by: string;
+          booking_id: string | null;
+          created_at: string;
+          declaration_signed: boolean;
+          deposit_received: boolean;
+          id: string;
+          notes: string | null;
+          qr_token: string;
+          stay_id: string | null;
+          wristbands_delivered: boolean;
+        };
+        Insert: {
+          approved_at?: string;
+          approved_by: string;
+          booking_id?: string | null;
+          created_at?: string;
+          declaration_signed?: boolean;
+          deposit_received?: boolean;
+          id?: string;
+          notes?: string | null;
+          qr_token?: string;
+          stay_id?: string | null;
+          wristbands_delivered?: boolean;
+        };
+        Update: {
+          approved_at?: string;
+          approved_by?: string;
+          booking_id?: string | null;
+          created_at?: string;
+          declaration_signed?: boolean;
+          deposit_received?: boolean;
+          id?: string;
+          notes?: string | null;
+          qr_token?: string;
+          stay_id?: string | null;
+          wristbands_delivered?: boolean;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "access_approvals_booking_id_fkey";
+            columns: ["booking_id"];
+            isOneToOne: false;
+            referencedRelation: "bookings";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "access_approvals_stay_id_fkey";
+            columns: ["stay_id"];
+            isOneToOne: false;
+            referencedRelation: "co_owner_stays";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       access_checkins: {
         Row: {
           booking_id: string | null;
@@ -58,118 +115,6 @@ export type Database = {
           },
           {
             foreignKeyName: "access_checkins_stay_id_fkey";
-            columns: ["stay_id"];
-            isOneToOne: false;
-            referencedRelation: "co_owner_stays";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      banned_guests: {
-        Row: {
-          created_at: string;
-          created_by: string;
-          document_id: string;
-          document_normalized: string | null;
-          full_name: string;
-          id: string;
-          reason: string | null;
-          revoked_at: string | null;
-          revoked_by: string | null;
-        };
-        Insert: {
-          created_at?: string;
-          created_by: string;
-          document_id: string;
-          full_name: string;
-          id?: string;
-          reason?: string | null;
-          revoked_at?: string | null;
-          revoked_by?: string | null;
-        };
-        Update: {
-          created_at?: string;
-          created_by?: string;
-          document_id?: string;
-          full_name?: string;
-          id?: string;
-          reason?: string | null;
-          revoked_at?: string | null;
-          revoked_by?: string | null;
-        };
-        Relationships: [];
-      };
-      banned_guest_attempts: {
-        Row: {
-          channel: string;
-          created_at: string;
-          id: string;
-          ip_hash: string | null;
-          submitted: Json;
-        };
-        Insert: {
-          channel: string;
-          created_at?: string;
-          id?: string;
-          ip_hash?: string | null;
-          submitted?: Json;
-        };
-        Update: {
-          channel?: string;
-          created_at?: string;
-          id?: string;
-          ip_hash?: string | null;
-          submitted?: Json;
-        };
-        Relationships: [];
-      };
-      access_approvals: {
-        Row: {
-          approved_at: string;
-          approved_by: string;
-          booking_id: string | null;
-          created_at: string;
-          declaration_signed: boolean;
-          deposit_received: boolean;
-          id: string;
-          notes: string | null;
-          stay_id: string | null;
-          wristbands_delivered: boolean;
-        };
-        Insert: {
-          approved_at?: string;
-          approved_by: string;
-          booking_id?: string | null;
-          created_at?: string;
-          declaration_signed?: boolean;
-          deposit_received?: boolean;
-          id?: string;
-          notes?: string | null;
-          stay_id?: string | null;
-          wristbands_delivered?: boolean;
-        };
-        Update: {
-          approved_at?: string;
-          approved_by?: string;
-          booking_id?: string | null;
-          created_at?: string;
-          declaration_signed?: boolean;
-          deposit_received?: boolean;
-          id?: string;
-          notes?: string | null;
-          stay_id?: string | null;
-          wristbands_delivered?: boolean;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "access_approvals_booking_id_fkey";
-            columns: ["booking_id"];
-            isOneToOne: false;
-            referencedRelation: "bookings";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "access_approvals_stay_id_fkey";
             columns: ["stay_id"];
             isOneToOne: false;
             referencedRelation: "co_owner_stays";
@@ -316,6 +261,66 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      banned_guest_attempts: {
+        Row: {
+          channel: string;
+          created_at: string;
+          id: string;
+          ip_hash: string | null;
+          submitted: Json;
+        };
+        Insert: {
+          channel: string;
+          created_at?: string;
+          id?: string;
+          ip_hash?: string | null;
+          submitted?: Json;
+        };
+        Update: {
+          channel?: string;
+          created_at?: string;
+          id?: string;
+          ip_hash?: string | null;
+          submitted?: Json;
+        };
+        Relationships: [];
+      };
+      banned_guests: {
+        Row: {
+          created_at: string;
+          created_by: string;
+          document_id: string;
+          document_normalized: string | null;
+          full_name: string;
+          id: string;
+          reason: string | null;
+          revoked_at: string | null;
+          revoked_by: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          created_by: string;
+          document_id: string;
+          document_normalized?: string | null;
+          full_name: string;
+          id?: string;
+          reason?: string | null;
+          revoked_at?: string | null;
+          revoked_by?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string;
+          document_id?: string;
+          document_normalized?: string | null;
+          full_name?: string;
+          id?: string;
+          reason?: string | null;
+          revoked_at?: string | null;
+          revoked_by?: string | null;
+        };
+        Relationships: [];
       };
       booking_companions: {
         Row: {
@@ -1697,7 +1702,25 @@ export type Database = {
       };
     };
     Views: {
-      [_ in never]: never;
+      access_entries_view: {
+        Row: {
+          approved: boolean | null;
+          approved_at: string | null;
+          check_in: string | null;
+          check_out: string | null;
+          checked_in_count: number | null;
+          document_id: string | null;
+          entry_id: string | null;
+          guest_count: number | null;
+          lugar: string | null;
+          people: Json | null;
+          qr_token: string | null;
+          source: string | null;
+          titular: string | null;
+          titular_checked_in: boolean | null;
+        };
+        Relationships: [];
+      };
     };
     Functions: {
       admin_confirm_ai_payment: {
@@ -1731,6 +1754,10 @@ export type Database = {
           p_wristbands: boolean;
         };
         Returns: Json;
+      };
+      assert_not_banned: {
+        Args: { p_document: string; p_name: string };
+        Returns: undefined;
       };
       attach_payment_provider_data: {
         Args: {
@@ -1786,6 +1813,21 @@ export type Database = {
           p_new_role: Database["public"]["Enums"]["user_role"];
           p_reason: string;
           p_user_id: string;
+        };
+        Returns: Json;
+      };
+      check_in_person: {
+        Args: {
+          p_actor_id: string;
+          // Ajuste manual: mismo par excluyente que approve_access, y el titular no
+          // tiene person_ref.
+          p_booking_id: string | null;
+          p_person_document_id: string | null;
+          p_person_kind: string;
+          p_person_name: string;
+          p_person_ref: string | null;
+          p_stay_id: string | null;
+          p_wristband: boolean;
         };
         Returns: Json;
       };
@@ -1898,6 +1940,25 @@ export type Database = {
       expire_stale_holds: { Args: never; Returns: number };
       expire_stale_payments: { Args: never; Returns: number };
       generate_booking_code: { Args: never; Returns: string };
+      get_access_entry_by_qr_token: {
+        Args: { p_token: string };
+        Returns: {
+          approved: boolean;
+          // Ajuste manual: mismo shape que list_access_entries.
+          approved_at: string | null;
+          check_in: string;
+          check_out: string;
+          checked_in_count: number;
+          document_id: string | null;
+          entry_id: string;
+          guest_count: number;
+          lugar: string;
+          people: Json;
+          source: string;
+          titular: string;
+          titular_checked_in: boolean;
+        }[];
+      };
       get_property_availability: {
         Args: { p_from: string; p_property_id: string; p_to: string };
         Returns: {
@@ -1917,6 +1978,7 @@ export type Database = {
           approved_at: string | null;
           check_in: string;
           check_out: string;
+          checked_in_count: number;
           document_id: string | null;
           entry_id: string;
           guest_count: number;
@@ -1925,44 +1987,22 @@ export type Database = {
           source: string;
           titular: string;
           titular_checked_in: boolean;
-          checked_in_count: number;
         }[];
       };
       list_office_checkins: {
         Args: { p_from?: string | null; p_to?: string | null };
         Returns: {
-          source: string;
-          entry_id: string;
-          checked_in_at: string;
-          titular: string;
-          // Ajuste manual: el copropietario siempre carga teléfono, el huésped directo no.
-          phone: string | null;
           check_out: string;
+          checked_in_at: string;
+          entry_id: string;
+          guest_count: number;
           lugar: string;
           people_checked_in: number;
-          guest_count: number;
+          // Ajuste manual: el copropietario siempre carga teléfono, el huésped directo no.
+          phone: string | null;
+          source: string;
+          titular: string;
         }[];
-      };
-      check_in_person: {
-        Args: {
-          p_actor_id: string;
-          p_booking_id: string | null;
-          p_person_document_id: string | null;
-          p_person_kind: string;
-          p_person_name: string;
-          p_person_ref: string | null;
-          p_stay_id: string | null;
-          p_wristband: boolean;
-        };
-        Returns: Json;
-      };
-      undo_check_in: {
-        Args: {
-          p_booking_id: string | null;
-          p_person_ref: string | null;
-          p_stay_id: string | null;
-        };
-        Returns: Json;
       };
       mark_booking_manual_review: {
         Args: {
@@ -1973,6 +2013,7 @@ export type Database = {
         };
         Returns: Json;
       };
+      normalize_document: { Args: { p_document: string }; Returns: string };
       record_payment_error: {
         Args: {
           p_payment_id: string;
@@ -2037,6 +2078,15 @@ export type Database = {
           p_nightly_minor: number | null;
           p_property_id: string;
           p_reason: string;
+        };
+        Returns: Json;
+      };
+      undo_check_in: {
+        // Ajuste manual: mismo par excluyente, y el titular no tiene person_ref.
+        Args: {
+          p_booking_id: string | null;
+          p_person_ref: string | null;
+          p_stay_id: string | null;
         };
         Returns: Json;
       };

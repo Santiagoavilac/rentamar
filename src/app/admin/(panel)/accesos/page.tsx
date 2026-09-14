@@ -1,3 +1,4 @@
+import QRCode from "qrcode";
 import { requireStaff } from "@/lib/auth";
 import { assertAdminAction } from "@/lib/permissions";
 import { listAccessEntries, SOURCE_LABELS, type AccessEntry } from "@/lib/access";
@@ -6,6 +7,7 @@ import {
   revokeAccessAction,
   setAccessCompanionsAction,
 } from "@/lib/admin/access-actions";
+import { getAccessQrToken } from "@/lib/admin/access";
 import { todayInLaPaz } from "@/lib/admin/planner-query";
 import { AdminPageHeader, EmptyState, Panel, StatusBadge } from "@/components/admin/ui";
 import {
@@ -31,7 +33,48 @@ function shortDate(value: string): string {
   return `${day}/${month}/${year}`;
 }
 
-function EntryPanel({ entry }: { entry: AccessEntry }) {
+// QR opcional: es un atajo para que el guardia no tenga que tipear nombre o carnet, no
+// reemplaza la búsqueda. Se genera server-side a partir del token de la aprobación; sin
+// aprobación no hay token, así que no hay nada que mostrar.
+async function AccessQrCode({ entry }: { entry: AccessEntry }) {
+  const token = await getAccessQrToken({
+    bookingId: entry.isBooking ? entry.entryId : null,
+    stayId: entry.isBooking ? null : entry.entryId,
+  });
+  if (!token) return null;
+  const dataUrl = await QRCode.toDataURL(token, { margin: 1, width: 200 });
+  return (
+    <details className="mt-3">
+      <summary className="cursor-pointer text-sm text-slate-600">
+        Mostrar QR (extra, no hace falta para dejarlo pasar)
+      </summary>
+      <div className="mt-2 flex flex-wrap items-center gap-4">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={dataUrl}
+          alt={`Código QR de ${entry.titular}`}
+          width={160}
+          height={160}
+          className="rounded border border-slate-200 bg-white p-2"
+        />
+        <div className="max-w-xs text-xs text-slate-500">
+          <p>
+            Se lo mostrás al huésped (pantalla o impreso) para que lo tenga a mano en portería.
+            Sirve para todo el grupo durante toda la estadía; si le quitás la aprobación y volvés
+            a aprobar, este código deja de funcionar y se genera uno nuevo.
+          </p>
+          <p className="mt-2">
+            Código, por si el guardia lo tiene que pegar a mano:
+            <br />
+            <code className="break-all font-semibold text-slate-700">{token}</code>
+          </p>
+        </div>
+      </div>
+    </details>
+  );
+}
+
+async function EntryPanel({ entry }: { entry: AccessEntry }) {
   return (
     <Panel>
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -83,6 +126,7 @@ function EntryPanel({ entry }: { entry: AccessEntry }) {
                 El guardia lo ve en verde.
               </p>
               <RevokeAccessForm action={revokeAccessAction} entry={entry} />
+              <AccessQrCode entry={entry} />
             </>
           ) : (
             <ApproveAccessForm action={approveAccessAction} entry={entry} />

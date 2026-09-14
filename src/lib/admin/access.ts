@@ -207,3 +207,17 @@ export async function isAccessApproved(target: AccessTarget): Promise<boolean> {
   const { data } = await query.maybeSingle();
   return Boolean(data);
 }
+
+// ---------- QR de portería (atajo, no reemplaza la búsqueda) ----------
+
+// El token vive en la fila de aprobación: no existe hasta que RentaMar aprueba, y se rota
+// solo porque approve_access borra e inserta la fila cada vez que se aprueba de nuevo.
+export async function getAccessQrToken(target: AccessTarget): Promise<string | null> {
+  const supabase = createAdminClient();
+  let query = supabase.from("access_approvals").select("qr_token");
+  query = target.bookingId
+    ? query.eq("booking_id", target.bookingId)
+    : query.eq("stay_id", target.stayId as string);
+  const { data } = await query.maybeSingle();
+  return data?.qr_token ?? null;
+}

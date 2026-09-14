@@ -66,18 +66,22 @@ function toPeople(value: unknown): AccessPerson[] {
   });
 }
 
-export async function listAccessEntries(params: {
-  date?: string | null;
-  search?: string | null;
-}): Promise<AccessEntry[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase.rpc("list_access_entries", {
-    p_date: params.date ?? null,
-    p_search: params.search ?? null,
-  });
-  if (error) throw mapPostgresError(error.message);
-
-  return (data ?? []).map((row) => ({
+function toEntry(row: {
+  source: string;
+  entry_id: string;
+  titular: string;
+  document_id: string | null;
+  lugar: string;
+  check_in: string;
+  check_out: string;
+  guest_count: number;
+  approved: boolean;
+  approved_at: string | null;
+  people: unknown;
+  titular_checked_in: boolean;
+  checked_in_count: number;
+}): AccessEntry {
+  return {
     source: row.source,
     entryId: row.entry_id,
     isBooking: row.source !== "copropietario",
@@ -92,5 +96,32 @@ export async function listAccessEntries(params: {
     people: toPeople(row.people),
     titularCheckedIn: row.titular_checked_in,
     checkedInCount: row.checked_in_count,
-  }));
+  };
+}
+
+export async function listAccessEntries(params: {
+  date?: string | null;
+  search?: string | null;
+}): Promise<AccessEntry[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("list_access_entries", {
+    p_date: params.date ?? null,
+    p_search: params.search ?? null,
+  });
+  if (error) throw mapPostgresError(error.message);
+
+  return (data ?? []).map(toEntry);
+}
+
+// Atajo para portería: en vez de tipear nombre o carnet, escanea el QR que administración
+// generó al aprobar. El token es de un solo uso por reserva/estadía (se rota si se
+// revoca y se vuelve a aprobar) y nunca viaja en list_access_entries, solo acá.
+export async function getAccessEntryByToken(token: string): Promise<AccessEntry | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("get_access_entry_by_qr_token", {
+    p_token: token,
+  });
+  if (error) throw mapPostgresError(error.message);
+  const row = data?.[0];
+  return row ? toEntry(row) : null;
 }
