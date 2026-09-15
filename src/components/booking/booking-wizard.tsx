@@ -11,6 +11,12 @@ import { BookingCalendar, StayDatesSummary } from "./booking-calendar";
 import { QuoteLoading, QuoteSummary } from "./quote-summary";
 import { CompanionsFields, type Companion } from "./companions-fields";
 
+// Chequeo liviano, solo para habilitar "Continuar": alcanza con nombre@dominio.algo. La
+// validación real (que también permite tildes, longitud, etc.) es la del servidor.
+function isValidEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+}
+
 // Reservar paso a paso. Antes el calendario estaba incrustado en la ficha del departamento
 // y al tocar una fecha se desplegaban campos ahí mismo: el huésped se topaba de golpe con
 // todo y no entendía cómo terminar.
@@ -136,7 +142,7 @@ export function BookingWizard({
   // dejar avanzar, en vez de reimplementar esas reglas a mano.
   const holderComplete =
     guest.name.trim().length >= 2 &&
-    guest.email.includes("@") &&
+    isValidEmail(guest.email) &&
     guest.documentId.trim().length >= 4 &&
     guest.nationality.trim().length >= 3 &&
     guest.city.trim().length >= 2;

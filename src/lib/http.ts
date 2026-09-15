@@ -25,7 +25,12 @@ export async function parseJsonBody<T>(request: Request, schema: z.ZodType<T>): 
 
   const result = schema.safeParse(json);
   if (!result.success) {
-    throw new ValidationError("Datos inválidos", result.error.issues);
+    // El primer error puntual (en español, ver validation.ts) es más útil que un "datos
+    // inválidos" genérico que no dice qué campo está mal.
+    throw new ValidationError(
+      result.error.issues[0]?.message ?? "Datos inválidos",
+      result.error.issues,
+    );
   }
   return result.data;
 }

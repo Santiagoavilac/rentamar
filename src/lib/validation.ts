@@ -22,12 +22,12 @@ export const quoteSchema = z
 // documentId, nationality y city existen porque la declaración jurada los pide. Se
 // capturan en el formulario de reserva para no tener que perseguir al huésped después.
 export const guestSchema = z.object({
-  name: z.string().trim().min(2).max(120),
-  email: z.email().max(160),
-  phone: z.string().trim().min(6).max(30).optional(),
-  documentId: z.string().trim().min(4).max(40),
-  nationality: z.string().trim().min(3).max(60),
-  city: z.string().trim().min(2).max(80),
+  name: z.string().trim().min(2, "Ingresá el nombre completo").max(120, "El nombre es demasiado largo"),
+  email: z.email("El correo no es válido").max(160, "El correo es demasiado largo"),
+  phone: z.string().trim().min(6, "El teléfono es demasiado corto").max(30).optional(),
+  documentId: z.string().trim().min(4, "El carnet es demasiado corto").max(40),
+  nationality: z.string().trim().min(3, "Ingresá la nacionalidad").max(60),
+  city: z.string().trim().min(2, "Ingresá la ciudad").max(80),
 });
 
 export const companionSchema = z.object({
@@ -72,7 +72,7 @@ export const createAffiliateRequestSchema = z
       fullName: z.string().trim().min(2).max(120),
       documentId: z.string().trim().min(4).max(40),
       phone: z.string().trim().min(6).max(30),
-      email: z.email().max(160).optional().or(z.literal("")),
+      email: z.email("El correo no es válido").max(160).optional().or(z.literal("")),
       nationality: z.string().trim().min(3).max(60),
       city: z.string().trim().min(2).max(80),
     }),
@@ -293,7 +293,7 @@ const adminBookingBaseSchema = z.object({
   checkOut: isoDate,
   guestCount: z.number().int().min(1).max(50),
   guestName: z.string().trim().min(2).max(120),
-  guestEmail: z.email().max(160),
+  guestEmail: z.email("El correo no es válido").max(160),
   guestPhone: z.string().trim().min(6).max(30).optional().or(z.literal("")),
   kind: adminBookingKindSchema,
   holdExpiresLocal: localDateTime.optional().or(z.literal("")),
@@ -358,7 +358,7 @@ export const changeRoleInputSchema = z.object({
 });
 
 export const createUserInputSchema = z.object({
-  email: z.email().max(160),
+  email: z.email("El correo no es válido").max(160),
   password: z.string().min(10, "Mínimo 10 caracteres").max(200),
   fullName: z.string().trim().min(2).max(160),
   role: z.enum(["admin", "operator"]),
